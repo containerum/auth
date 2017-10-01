@@ -44,12 +44,12 @@ func NewBuntDBStorage(file string, tokenFactory token.IssuerValidator) (storage 
 }
 
 func (*BuntDBStorage) forTokensByIdentity(tx *buntdb.Tx,
-	userAgent, fingerprint, ip string,
+	req *auth.CreateTokenRequest,
 	iterator func(key, value string) bool) error {
 	pivot, _ := json.Marshal(auth.StoredToken{
-		Platform:    utils.ShortUserAgent(userAgent),
-		UserIp:      ip,
-		Fingerprint: fingerprint,
+		Platform:    utils.ShortUserAgent(req.UserAgent),
+		UserIp:      req.UserIp,
+		Fingerprint: req.Fingerprint,
 	})
 	return tx.AscendEqual(indexTokens, string(pivot), iterator)
 }
@@ -79,7 +79,7 @@ func (*BuntDBStorage) commitOrRollback(tx *buntdb.Tx, err error) error {
 func (s *BuntDBStorage) CreateToken(ctx context.Context, req *auth.CreateTokenRequest) (*auth.CreateTokenResponse, error) {
 	// remove already exist tokens
 	err := s.db.Update(func(tx *buntdb.Tx) error {
-		err := s.forTokensByIdentity(tx, req.UserAgent, req.Fingerprint, req.UserIp, func(key, value string) bool {
+		err := s.forTokensByIdentity(tx, req, func(key, value string) bool {
 			tx.Delete(key)
 			return true
 		})
