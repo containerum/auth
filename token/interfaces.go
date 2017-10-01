@@ -11,10 +11,16 @@ type ExtensionFields struct {
 	Role       string `json:"role"`
 }
 
+type IssuedToken struct {
+	Value string
+	Id *common.UUID
+	LifeTime time.Duration
+}
+
 // Issuer is interface for creating access and refresh tokens.
 type Issuer interface {
-	IssueAccessToken(ExtensionFields) (token string, id *common.UUID, lifeTime time.Duration, err error)
-	IssueRefreshToken(ExtensionFields) (token string, id *common.UUID, lifeTime time.Duration, err error)
+	IssueAccessToken(ExtensionFields) (token *IssuedToken, err error)
+	IssueRefreshToken(ExtensionFields) (token *IssuedToken, err error)
 }
 
 // Validator is interface for validating tokens

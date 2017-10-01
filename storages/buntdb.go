@@ -90,36 +90,35 @@ func (s *BuntDBStorage) CreateToken(ctx context.Context, req *auth.CreateTokenRe
 	}
 
 	// issue tokens
-	refreshToken, refreshTokenID, refreshTokenLifeTime, err := s.tokenFactory.IssueRefreshToken(token.ExtensionFields{
+	refreshToken, err := s.tokenFactory.IssueRefreshToken(token.ExtensionFields{
 		UserIDHash: hex.EncodeToString(md5.Sum([]byte(req.UserId.Value))[:]),
 		Role:       req.UserRole.String(),
 	})
-	accessToken, accessTokenID, accessTokenLifeTime, err := s.tokenFactory.IssueAccessToken(token.ExtensionFields{})
+	accessToken, err := s.tokenFactory.IssueAccessToken(token.ExtensionFields{})
 
 	// store tokens
 	err = s.db.Update(func(tx *buntdb.Tx) error {
-		_, _, err := tx.Set(refreshTokenID.Value,
-			s.marshalRecord(utils.RequestToRecord(req, refreshTokenID)),
+		_, _, err := tx.Set(refreshToken.Id.Value,
+			s.marshalRecord(utils.RequestToRecord(req, refreshToken)),
 			&buntdb.SetOptions{
 				Expires: true,
-				TTL:     refreshTokenLifeTime,
-			})
-		_, _, err = tx.Set(accessTokenID.Value,
-			s.marshalRecord(utils.RequestToRecord(req, accessTokenID)),
-			&buntdb.SetOptions{
-				Expires: true,
-				TTL:     accessTokenLifeTime,
+				TTL:     refreshToken.LifeTime,
 			})
 		if err != nil {
 			return tx.Rollback()
 		}
-		_, _, err = tx.Set(accessTokenID.Value, s.marshalRecord(utils.RequestToRecord(req, accessTokenID)), nil)
+		_, _, err = tx.Set(accessToken.Id.Value,
+			s.marshalRecord(utils.RequestToRecord(req, accessToken)),
+			&buntdb.SetOptions{
+				Expires: true,
+				TTL:     accessToken.LifeTime,
+			})
 		return s.commitOrRollback(tx, err)
 	})
 
 	return &auth.CreateTokenResponse{
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
+		AccessToken:  accessToken.Value,
+		RefreshToken: refreshToken.Value,
 	}, err
 }
 

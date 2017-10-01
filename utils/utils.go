@@ -6,6 +6,7 @@ import (
 
 	"bitbucket.org/exonch/ch-grpc/auth"
 	"bitbucket.org/exonch/ch-grpc/common"
+	"bitbucket.org/exonch/ch-auth/token"
 )
 
 // ShortUserAgent generates short user agent from normal user agent using base64
@@ -18,9 +19,9 @@ func EncodeAccessObjects(req []*auth.AccessObject) string {
 	return base64.StdEncoding.EncodeToString(ret)
 }
 
-func RequestToRecord(req *auth.CreateTokenRequest, tokenId *common.UUID) *auth.StoredToken {
+func RequestToRecord(req *auth.CreateTokenRequest, token *token.IssuedToken) *auth.StoredToken {
 	return &auth.StoredToken{
-		TokenId:       tokenId,
+		TokenId:       token.Id,
 		UserAgent:     req.UserAgent,
 		Platform:      ShortUserAgent(req.UserAgent),
 		Fingerprint:   req.Fingerprint,

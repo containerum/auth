@@ -35,41 +35,43 @@ func NewTokenFactory(config JWTIssuerValidatorConfig) *JWTIssuerValidator {
 	}
 }
 
-func (j *JWTIssuerValidator) IssueAccessToken(e ExtensionFields) (token string, id *common.UUID, lifeTime time.Duration, err error) {
+func (j *JWTIssuerValidator) IssueAccessToken(e ExtensionFields) (token *IssuedToken, err error) {
 	idBytes := make([]byte, JWTIDLength)
 	rand.Read(idBytes)
 	now := time.Now()
 
-	id = &common.UUID{
+	token = new(IssuedToken)
+	token.Id = &common.UUID{
 		Value: hex.EncodeToString(idBytes[:]),
 	}
-	token, err = jwt.NewWithClaims(j.config.SigningMethod, accessTokenClaims{
+	token.Value, err = jwt.NewWithClaims(j.config.SigningMethod, accessTokenClaims{
 		StandardClaims: jwt.StandardClaims{
 			Issuer:    j.config.Issuer,
 			IssuedAt:  now.Unix(),
 			ExpiresAt: now.Add(j.config.AccessTokenLifeTime).Unix(),
-			Id:        id.Value,
+			Id:        token.Id.Value,
 		},
 		ExtensionFields: e,
 	}).SignedString(j.config.SigningKey)
-	return token, id, j.config.AccessTokenLifeTime, err
+	return token, err
 }
 
-func (j *JWTIssuerValidator) IssueRefreshToken(ExtensionFields) (token string, id *common.UUID, lifeTime time.Duration, err error) {
+func (j *JWTIssuerValidator) IssueRefreshToken(ExtensionFields) (token *IssuedToken, err error) {
 	idBytes := make([]byte, JWTIDLength)
 	rand.Read(idBytes)
 	now := time.Now()
 
-	id = &common.UUID{
+	token = new(IssuedToken)
+	token.Id = &common.UUID{
 		Value: hex.EncodeToString(idBytes[:]),
 	}
-	token, err = jwt.NewWithClaims(j.config.SigningMethod, jwt.StandardClaims{
+	token.Value, err = jwt.NewWithClaims(j.config.SigningMethod, jwt.StandardClaims{
 		Issuer:    j.config.Issuer,
 		IssuedAt:  now.Unix(),
 		ExpiresAt: now.Add(j.config.RefreshTokenLifeTime).Unix(),
-		Id:        id.Value,
+		Id:        token.Id.Value,
 	}).SignedString(j.config.SigningKey)
-	return token, id, j.config.RefreshTokenLifeTime, err
+	return token, err
 }
 
 func (j *JWTIssuerValidator) ValidateToken(token string, fields ExtensionFields) (bool, error) {
