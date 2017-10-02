@@ -1,12 +1,13 @@
 package token
 
 import (
-	. "github.com/smartystreets/goconvey/convey"
 	"crypto/rand"
 	"testing"
-	"github.com/dgrijalva/jwt-go"
 	"time"
+
 	"bitbucket.org/exonch/ch-grpc/auth"
+	"github.com/dgrijalva/jwt-go"
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func genKey() []byte {
@@ -20,17 +21,17 @@ func genKey() []byte {
 var key = genKey()
 
 var testValidatorConfig = JWTIssuerValidatorConfig{
-		SigningMethod: jwt.SigningMethodHS512,
-		Issuer: "test",
-		AccessTokenLifeTime: time.Hour * 2,
-		RefreshTokenLifeTime: time.Hour * 48,
-		SigningKey: key,
-		ValidationKey: key,
+	SigningMethod:        jwt.SigningMethodHS512,
+	Issuer:               "test",
+	AccessTokenLifeTime:  time.Hour * 2,
+	RefreshTokenLifeTime: time.Hour * 48,
+	SigningKey:           key,
+	ValidationKey:        key,
 }
 
 var testExtensionFields = ExtensionFields{
 	UserIDHash: "something",
-	Role: auth.Role_USER.String(),
+	Role:       auth.Role_USER.String(),
 }
 
 func TestAccessToken(t *testing.T) {

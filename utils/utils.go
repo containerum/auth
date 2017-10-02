@@ -4,8 +4,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 
-	"bitbucket.org/exonch/ch-grpc/auth"
 	"bitbucket.org/exonch/ch-auth/token"
+	"bitbucket.org/exonch/ch-grpc/auth"
 )
 
 // ShortUserAgent generates short user agent from normal user agent using base64

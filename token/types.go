@@ -13,8 +13,8 @@ type ExtensionFields struct {
 }
 
 type IssuedToken struct {
-	Value string
-	Id *common.UUID
+	Value    string
+	Id       *common.UUID
 	LifeTime time.Duration
 }
 
