@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"bitbucket.org/exonch/ch-grpc/common"
+	"github.com/dgrijalva/jwt-go"
 )
 
 type ExtensionFields struct {
@@ -25,10 +26,30 @@ type Issuer interface {
 
 // Validator is interface for validating tokens
 type Validator interface {
-	ValidateToken(token string, fields ExtensionFields) (bool, error)
+	ValidateToken(token string) (bool, error)
 }
 
 type IssuerValidator interface {
 	Issuer
 	Validator
+}
+
+const JWTIDLength = 16
+
+type ourClaims struct {
+	jwt.StandardClaims
+	ExtensionFields
+}
+
+type JWTIssuerValidatorConfig struct {
+	SigningMethod        jwt.SigningMethod
+	Issuer               string
+	AccessTokenLifeTime  time.Duration
+	RefreshTokenLifeTime time.Duration
+	SigningKey           interface{}
+	ValidationKey        interface{}
+}
+
+type JWTIssuerValidator struct {
+	config JWTIssuerValidatorConfig
 }

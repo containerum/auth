@@ -9,72 +9,52 @@ import (
 	"github.com/dgrijalva/jwt-go"
 )
 
-const JWTIDLength = 16
-
-type accessTokenClaims struct {
-	jwt.StandardClaims
-	ExtensionFields
-}
-
-type JWTIssuerValidatorConfig struct {
-	SigningMethod        jwt.SigningMethod
-	Issuer               string
-	AccessTokenLifeTime  time.Duration
-	RefreshTokenLifeTime time.Duration
-	SigningKey           interface{}
-	ValidationKey        interface{}
-}
-
-type JWTIssuerValidator struct {
-	config JWTIssuerValidatorConfig
-}
-
-func NewTokenFactory(config JWTIssuerValidatorConfig) *JWTIssuerValidator {
+func NewJWTIssuerValidator(config JWTIssuerValidatorConfig) *JWTIssuerValidator {
 	return &JWTIssuerValidator{
 		config: config,
 	}
 }
 
-func (j *JWTIssuerValidator) IssueAccessToken(e ExtensionFields) (token *IssuedToken, err error) {
+func (j *JWTIssuerValidator) issueToken(claims ourClaims, lifetime time.Duration) (token *IssuedToken, err error) {
 	idBytes := make([]byte, JWTIDLength)
 	rand.Read(idBytes)
-	now := time.Now()
 
-	token = new(IssuedToken)
-	token.Id = &common.UUID{
-		Value: hex.EncodeToString(idBytes[:]),
+	token = &IssuedToken{
+		Id: &common.UUID{
+			Value: hex.EncodeToString(idBytes[:]),
+		},
+		LifeTime: lifetime,
 	}
-	token.Value, err = jwt.NewWithClaims(j.config.SigningMethod, accessTokenClaims{
+	claims.Id = token.Id.Value // expose token ID
+	token.Value, err = jwt.NewWithClaims(j.config.SigningMethod, claims).SignedString(j.config.SigningKey)
+	return token, err
+}
+
+func (j *JWTIssuerValidator) IssueAccessToken(e ExtensionFields) (token *IssuedToken, err error) {
+	now := time.Now()
+	return j.issueToken(ourClaims{
 		StandardClaims: jwt.StandardClaims{
 			Issuer:    j.config.Issuer,
 			IssuedAt:  now.Unix(),
 			ExpiresAt: now.Add(j.config.AccessTokenLifeTime).Unix(),
-			Id:        token.Id.Value,
 		},
 		ExtensionFields: e,
-	}).SignedString(j.config.SigningKey)
-	return token, err
+	}, j.config.AccessTokenLifeTime)
 }
 
-func (j *JWTIssuerValidator) IssueRefreshToken(ExtensionFields) (token *IssuedToken, err error) {
-	idBytes := make([]byte, JWTIDLength)
-	rand.Read(idBytes)
+func (j *JWTIssuerValidator) IssueRefreshToken(e ExtensionFields) (token *IssuedToken, err error) {
 	now := time.Now()
-
-	token = new(IssuedToken)
-	token.Id = &common.UUID{
-		Value: hex.EncodeToString(idBytes[:]),
-	}
-	token.Value, err = jwt.NewWithClaims(j.config.SigningMethod, jwt.StandardClaims{
-		Issuer:    j.config.Issuer,
-		IssuedAt:  now.Unix(),
-		ExpiresAt: now.Add(j.config.RefreshTokenLifeTime).Unix(),
-		Id:        token.Id.Value,
-	}).SignedString(j.config.SigningKey)
-	return token, err
+	return j.issueToken(ourClaims{
+		StandardClaims: jwt.StandardClaims{
+			Issuer:    j.config.Issuer,
+			IssuedAt:  now.Unix(),
+			ExpiresAt: now.Add(j.config.RefreshTokenLifeTime).Unix(),
+		},
+		ExtensionFields: e,
+	}, j.config.RefreshTokenLifeTime)
 }
 
-func (j *JWTIssuerValidator) ValidateToken(token string, fields ExtensionFields) (bool, error) {
+func (j *JWTIssuerValidator) ValidateToken(token string) (bool, error) {
 	claims := make(jwt.MapClaims)
 	tokenObj, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
 		return j.config.ValidationKey, nil
