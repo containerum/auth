@@ -32,9 +32,9 @@ func NewBuntDBStorage(file string, tokenFactory token.IssuerValidator) (storage 
 		return nil, err
 	}
 	err = db.Update(func(tx *buntdb.Tx) error {
-		tx.CreateIndex(indexTokens, "*", buntdb.IndexJSON("Platform"),
-			buntdb.IndexJSON("Fingerprint"), buntdb.IndexJSON("UserIP"))
-		tx.CreateIndex(indexUsers, "*", buntdb.IndexJSON("UserId.value"))
+		tx.CreateIndex(indexTokens, "*", buntdb.IndexJSON("platform"),
+			buntdb.IndexJSON("fingerprint"), buntdb.IndexJSON("user_ip"))
+		tx.CreateIndex(indexUsers, "*", buntdb.IndexJSON("user_id.value"))
 		return tx.Commit()
 	})
 	return &BuntDBStorage{
