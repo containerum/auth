@@ -7,8 +7,8 @@ import (
 )
 
 type ExtensionFields struct {
-	UserIDHash string `json:"userID"`
-	Role       string `json:"role"`
+	UserIDHash string `json:"userID,omitempty"`
+	Role       string `json:"role,omitempty"`
 }
 
 type IssuedToken struct {
