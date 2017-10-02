@@ -2,10 +2,9 @@ package token
 
 import (
 	"crypto/rand"
-	"encoding/hex"
 	"time"
 
-	"bitbucket.org/exonch/ch-grpc/common"
+	"bitbucket.org/exonch/ch-auth/utils"
 	"github.com/dgrijalva/jwt-go"
 )
 
@@ -20,9 +19,7 @@ func (j *JWTIssuerValidator) issueToken(claims ourClaims, lifetime time.Duration
 	rand.Read(idBytes)
 
 	token = &IssuedToken{
-		Id: &common.UUID{
-			Value: hex.EncodeToString(idBytes[:]),
-		},
+		Id:       utils.NewUUID(),
 		LifeTime: lifetime,
 	}
 	claims.Id = token.Id.Value // expose token ID

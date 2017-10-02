@@ -1,8 +1,12 @@
 package token
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"time"
 
+	"bitbucket.org/exonch/ch-auth/utils"
+	"bitbucket.org/exonch/ch-grpc/auth"
 	"bitbucket.org/exonch/ch-grpc/common"
 	"github.com/dgrijalva/jwt-go"
 )
@@ -52,4 +56,24 @@ type JWTIssuerValidatorConfig struct {
 
 type JWTIssuerValidator struct {
 	config JWTIssuerValidatorConfig
+}
+
+func EncodeAccessObjects(req []*auth.AccessObject) string {
+	ret, _ := json.Marshal(req)
+	return base64.StdEncoding.EncodeToString(ret)
+}
+
+func RequestToRecord(req *auth.CreateTokenRequest, token *IssuedToken) *auth.StoredToken {
+	return &auth.StoredToken{
+		TokenId:       token.Id,
+		UserAgent:     req.UserAgent,
+		Platform:      utils.ShortUserAgent(req.UserAgent),
+		Fingerprint:   req.Fingerprint,
+		UserId:        req.UserId,
+		UserRole:      req.UserRole,
+		UserNamespace: EncodeAccessObjects(req.Access.Namespace),
+		UserVolume:    EncodeAccessObjects(req.Access.Volume),
+		RwAccess:      req.RwAccess,
+		UserIp:        req.UserIp,
+	}
 }

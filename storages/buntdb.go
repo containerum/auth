@@ -99,7 +99,7 @@ func (s *BuntDBStorage) CreateToken(ctx context.Context, req *auth.CreateTokenRe
 	// store tokens
 	err = s.db.Update(func(tx *buntdb.Tx) error {
 		_, _, err := tx.Set(refreshToken.Id.Value,
-			s.marshalRecord(utils.RequestToRecord(req, refreshToken)),
+			s.marshalRecord(token.RequestToRecord(req, refreshToken)),
 			&buntdb.SetOptions{
 				Expires: true,
 				TTL:     refreshToken.LifeTime,
@@ -108,7 +108,7 @@ func (s *BuntDBStorage) CreateToken(ctx context.Context, req *auth.CreateTokenRe
 			return tx.Rollback()
 		}
 		_, _, err = tx.Set(accessToken.Id.Value,
-			s.marshalRecord(utils.RequestToRecord(req, accessToken)),
+			s.marshalRecord(token.RequestToRecord(req, accessToken)),
 			&buntdb.SetOptions{
 				Expires: true,
 				TTL:     accessToken.LifeTime,
