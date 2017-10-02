@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 
 	"bitbucket.org/exonch/ch-grpc/auth"
-	"bitbucket.org/exonch/ch-grpc/common"
 	"bitbucket.org/exonch/ch-auth/token"
 )
 
