@@ -88,19 +88,22 @@ func (*BuntDBStorage) commitOrRollback(tx *buntdb.Tx, err error) error {
 	}
 }
 
-func (s *BuntDBStorage) CreateToken(ctx context.Context, req *auth.CreateTokenRequest) (*auth.CreateTokenResponse, error) {
-	// remove already exist tokens
-	err := s.db.Update(func(tx *buntdb.Tx) error {
-		err := s.forTokensByIdentity(tx, &tokenOwnerIdentity{
-			UserAgent:   req.UserAgent,
-			UserIp:      req.UserIp,
-			Fingerprint: req.Fingerprint,
-		}, func(key, value string) bool {
-			tx.Delete(key)
-			return true
+func (s *BuntDBStorage) deleteTokenByIdentity(identity *tokenOwnerIdentity, keyToRemove string) error {
+	return s.db.Update(func(tx *buntdb.Tx) error {
+		err := s.forTokensByIdentity(tx, identity, func(key, value string) bool {
+			return keyToRemove == "" || keyToRemove == key
 		})
 		return s.commitOrRollback(tx, err)
 	})
+}
+
+func (s *BuntDBStorage) CreateToken(ctx context.Context, req *auth.CreateTokenRequest) (*auth.CreateTokenResponse, error) {
+	// remove already exist tokens
+	err := s.deleteTokenByIdentity(&tokenOwnerIdentity{
+		UserAgent:   req.UserAgent,
+		UserIp:      req.UserIp,
+		Fingerprint: req.Fingerprint,
+	}, "")
 	if err != nil {
 		return nil, err
 	}
@@ -188,17 +191,11 @@ func (s *BuntDBStorage) ExtendToken(ctx context.Context, req *auth.ExtendTokenRe
 	}
 
 	// remove old tokens
-	err = s.db.Update(func(tx *buntdb.Tx) error {
-		err := s.forTokensByIdentity(tx, &tokenOwnerIdentity{
-			UserAgent:   rec.UserAgent,
-			UserIp:      rec.UserIp,
-			Fingerprint: rec.Fingerprint,
-		}, func(key, value string) bool {
-			tx.Delete(key)
-			return true
-		})
-		return s.commitOrRollback(tx, err)
-	})
+	err = s.deleteTokenByIdentity(&tokenOwnerIdentity{
+		UserAgent:   rec.UserAgent,
+		UserIp:      rec.UserIp,
+		Fingerprint: rec.Fingerprint,
+	}, "")
 	if err != nil {
 		return nil, err
 	}
