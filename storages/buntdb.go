@@ -144,8 +144,8 @@ func (s *BuntDBStorage) CheckToken(ctx context.Context, req *auth.CheckTokenRequ
 		rec = s.unmarshalRecord(rawRec)
 		return nil
 	})
-	if err != nil {
-		return nil, err
+	if err != nil || rec.UserIp != req.UserIp || rec.Fingerprint != req.FingerPrint {
+		return nil, errors.New("can`t identify sender as token owner")
 	}
 	return &auth.CheckTokenResponse{
 		Access: &auth.ResourcesAccess{
