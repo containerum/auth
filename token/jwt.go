@@ -6,6 +6,7 @@ import (
 
 	"bitbucket.org/exonch/ch-auth/utils"
 	"github.com/dgrijalva/jwt-go"
+	"bitbucket.org/exonch/ch-grpc/common"
 )
 
 func NewJWTIssuerValidator(config JWTIssuerValidatorConfig) *JWTIssuerValidator {
@@ -51,13 +52,13 @@ func (j *JWTIssuerValidator) IssueRefreshToken(e ExtensionFields) (token *Issued
 	}, j.config.RefreshTokenLifeTime)
 }
 
-func (j *JWTIssuerValidator) ValidateToken(token string) (bool, error) {
-	claims := make(jwt.MapClaims)
+func (j *JWTIssuerValidator) ValidateToken(token string) (bool, *common.UUID, error) {
+	claims := &jwt.StandardClaims{}
 	tokenObj, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
 		return j.config.ValidationKey, nil
 	})
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
-	return tokenObj.Valid, nil
+	return tokenObj.Valid, &common.UUID{Value: claims.Id}, nil
 }

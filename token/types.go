@@ -31,7 +31,7 @@ type Issuer interface {
 
 // Validator is interface for validating tokens
 type Validator interface {
-	ValidateToken(token string) (bool, error)
+	ValidateToken(token string) (valid bool,tokenId *common.UUID,err error)
 }
 
 type IssuerValidator interface {

@@ -40,9 +40,10 @@ func TestAccessToken(t *testing.T) {
 		token, err := jwtiv.IssueAccessToken(ExtensionFields{})
 		So(err, ShouldBeNil)
 		So(token.LifeTime, ShouldEqual, testValidatorConfig.AccessTokenLifeTime)
-		valid, err := jwtiv.ValidateToken(token.Value)
+		valid, id, err := jwtiv.ValidateToken(token.Value)
 		So(err, ShouldBeNil)
 		So(valid, ShouldBeTrue)
+		So(id, ShouldResemble, token.Id)
 	})
 }
 
@@ -52,18 +53,19 @@ func TestRefreshToken(t *testing.T) {
 		token, err := jwtiv.IssueRefreshToken(testExtensionFields)
 		So(err, ShouldBeNil)
 		So(token.LifeTime, ShouldEqual, testValidatorConfig.RefreshTokenLifeTime)
-		valid, err := jwtiv.ValidateToken(token.Value)
+		valid, id, err := jwtiv.ValidateToken(token.Value)
 		So(err, ShouldBeNil)
 		So(valid, ShouldBeTrue)
+		So(id, ShouldResemble, token.Id)
 	})
 }
 
 func TestValidation(t *testing.T) {
 	jwtiv := NewJWTIssuerValidator(testValidatorConfig)
 	Convey("Test invalid token validation", t, func() {
-		_, err := jwtiv.ValidateToken("not token")
+		_, _, err := jwtiv.ValidateToken("not token")
 		So(err, ShouldNotBeNil)
-		valid, err := jwtiv.ValidateToken("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." +
+		valid, _, err := jwtiv.ValidateToken("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." +
 			"eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWV9." +
 			"TJVA95OrM7E2cBab30RMHrHDcEfxjoYZgeFONFh7HgQ")
 		So(err.Error(), ShouldEqual, jwt.ErrSignatureInvalid.Error())
