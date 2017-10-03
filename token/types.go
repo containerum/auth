@@ -31,7 +31,7 @@ type Issuer interface {
 
 // Validator is interface for validating tokens
 type Validator interface {
-	ValidateToken(token string) (valid bool,tokenId *common.UUID,err error)
+	ValidateToken(token string) (valid bool, tokenId *common.UUID, err error)
 }
 
 type IssuerValidator interface {
@@ -62,6 +62,18 @@ type JWTIssuerValidator struct {
 func EncodeAccessObjects(req []*auth.AccessObject) string {
 	ret, _ := json.Marshal(req)
 	return base64.StdEncoding.EncodeToString(ret)
+}
+
+func DecodeAccessObjects(value string) (ret []*auth.AccessObject) {
+	decoded, err := base64.StdEncoding.DecodeString(value)
+	if err != nil {
+		return make([]*auth.AccessObject, 0)
+	}
+	err = json.Unmarshal(decoded, ret)
+	if err != nil {
+		return make([]*auth.AccessObject, 0)
+	}
+	return
 }
 
 func RequestToRecord(req *auth.CreateTokenRequest, token *IssuedToken) *auth.StoredToken {

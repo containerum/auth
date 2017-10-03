@@ -6,6 +6,8 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 
+	"errors"
+
 	"bitbucket.org/exonch/ch-auth/token"
 	"bitbucket.org/exonch/ch-auth/utils"
 	"bitbucket.org/exonch/ch-grpc/auth"
@@ -68,6 +70,12 @@ func (*BuntDBStorage) marshalRecord(st *auth.StoredToken) string {
 	return string(ret)
 }
 
+func (*BuntDBStorage) unmarshalRecord(rawRecord string) *auth.StoredToken {
+	ret := new(auth.StoredToken)
+	json.Unmarshal([]byte(rawRecord), ret)
+	return ret
+}
+
 func (*BuntDBStorage) commitOrRollback(tx *buntdb.Tx, err error) error {
 	if err != nil {
 		return tx.Rollback()
@@ -122,8 +130,33 @@ func (s *BuntDBStorage) CreateToken(ctx context.Context, req *auth.CreateTokenRe
 	}, err
 }
 
-func (*BuntDBStorage) CheckToken(context.Context, *auth.CheckTokenRequest) (*auth.CheckTokenResponse, error) {
-	panic("implement me")
+func (s *BuntDBStorage) CheckToken(ctx context.Context, req *auth.CheckTokenRequest) (*auth.CheckTokenResponse, error) {
+	valid, id, err := s.tokenFactory.ValidateToken(req.AccessToken)
+	if err != nil || !valid {
+		return nil, errors.New("invalid token received")
+	}
+	var rec *auth.StoredToken
+	err = s.db.View(func(tx *buntdb.Tx) error {
+		rawRec, err := tx.Get(id.Value)
+		if err != nil {
+			return err
+		}
+		rec = s.unmarshalRecord(rawRec)
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &auth.CheckTokenResponse{
+		Access: &auth.ResourcesAccess{
+			Namespace: token.DecodeAccessObjects(rec.UserNamespace),
+			Volume:    token.DecodeAccessObjects(rec.UserVolume),
+		},
+		UserId:      rec.UserId,
+		UserRole:    rec.UserRole,
+		TokenId:     rec.TokenId,
+		PartTokenId: rec.PartTokenId,
+	}, nil
 }
 
 func (*BuntDBStorage) ExtendToken(context.Context, *auth.ExtendTokenRequest) (*auth.ExtendTokenResponse, error) {

@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"bitbucket.org/exonch/ch-auth/utils"
-	"github.com/dgrijalva/jwt-go"
 	"bitbucket.org/exonch/ch-grpc/common"
+	"github.com/dgrijalva/jwt-go"
 )
 
 func NewJWTIssuerValidator(config JWTIssuerValidatorConfig) *JWTIssuerValidator {
