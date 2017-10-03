@@ -12,8 +12,9 @@ import (
 )
 
 type ExtensionFields struct {
-	UserIDHash string `json:"userID,omitempty"`
-	Role       string `json:"role,omitempty"`
+	UserIDHash  string `json:"userID,omitempty"`
+	Role        string `json:"role,omitempty"`
+	PartTokenId string `json:"partTokenID,omitempty"`
 }
 
 type IssuedToken struct {
@@ -75,5 +76,6 @@ func RequestToRecord(req *auth.CreateTokenRequest, token *IssuedToken) *auth.Sto
 		UserVolume:    EncodeAccessObjects(req.Access.Volume),
 		RwAccess:      req.RwAccess,
 		UserIp:        req.UserIp,
+		PartTokenId:   req.PartTokenId,
 	}
 }
