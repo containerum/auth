@@ -241,8 +241,21 @@ func (*BuntDBStorage) UpdateAccess(context.Context, *auth.UpdateAccessRequest) (
 	panic("implement me")
 }
 
-func (*BuntDBStorage) GetUserTokens(context.Context, *auth.GetUserTokensRequest) (*auth.GetUserTokensResponse, error) {
-	panic("implement me")
+func (s *BuntDBStorage) GetUserTokens(ctx context.Context, req *auth.GetUserTokensRequest) (*auth.GetUserTokensResponse, error) {
+	resp := new(auth.GetUserTokensResponse)
+	err := s.db.View(func(tx *buntdb.Tx) error {
+		return s.forTokensByUsers(tx, req.UserId.Value, func(key, value string) bool {
+			rec := s.unmarshalRecord(value)
+			resp.Tokens = append(resp.Tokens, &auth.StoredTokenForUser{
+				Id:        rec.TokenId.Value,
+				UserAgent: rec.UserAgent,
+				Ip:        rec.UserIp,
+				// CreatedAt is not stored in db
+			})
+			return true
+		})
+	})
+	return resp, err
 }
 
 func (*BuntDBStorage) DeleteToken(context.Context, *auth.DeleteTokenRequest) (*empty.Empty, error) {
