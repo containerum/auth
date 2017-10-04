@@ -92,6 +92,18 @@ func (*BuntDBStorage) commitOrRollback(tx *buntdb.Tx, err error) error {
 	}
 }
 
+func (*BuntDBStorage) rollbackOnError(tx *buntdb.Tx, err error) error {
+	if err != nil {
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			return rollbackErr
+		} else {
+			return err
+		}
+	} else {
+		return nil
+	}
+}
+
 func (s *BuntDBStorage) deleteTokenByIdentity(identity *tokenOwnerIdentity, keyToRemove string) error {
 	return s.db.Update(func(tx *buntdb.Tx) error {
 		err := s.forTokensByIdentity(tx, identity, func(key, value string) bool {
@@ -127,8 +139,8 @@ func (s *BuntDBStorage) CreateToken(ctx context.Context, req *auth.CreateTokenRe
 				Expires: true,
 				TTL:     refreshToken.LifeTime,
 			})
-		if err != nil {
-			return tx.Rollback()
+		if chkErr := s.rollbackOnError(tx, err); chkErr != nil {
+			return chkErr
 		}
 		_, _, err = tx.Set(accessToken.Id.Value,
 			s.marshalRecord(token.RequestToRecord(req, accessToken)),
@@ -223,8 +235,8 @@ func (s *BuntDBStorage) ExtendToken(ctx context.Context, req *auth.ExtendTokenRe
 				Expires: true,
 				TTL:     refreshToken.LifeTime,
 			})
-		if err != nil {
-			return tx.Rollback()
+		if chkErr := s.rollbackOnError(tx, err); chkErr != nil {
+			return chkErr
 		}
 		_, _, err = tx.Set(accessToken.Id.Value,
 			s.marshalRecord(&refreshTokenRecord),
@@ -265,8 +277,8 @@ func (s *BuntDBStorage) GetUserTokens(ctx context.Context, req *auth.GetUserToke
 func (s *BuntDBStorage) DeleteToken(ctx context.Context, req *auth.DeleteTokenRequest) (*empty.Empty, error) {
 	return new(empty.Empty), s.db.Update(func(tx *buntdb.Tx) error {
 		value, err := tx.Delete(req.TokenId.Value)
-		if err != nil {
-			return tx.Rollback()
+		if chkErr := s.rollbackOnError(tx, err); chkErr != nil {
+			return chkErr
 		}
 		rec := s.unmarshalRecord(value)
 		if !utils.UUIDEquals(rec.UserId, req.UserId) {
