@@ -125,8 +125,9 @@ func (s *BuntDBStorage) CreateToken(ctx context.Context, req *auth.CreateTokenRe
 	}
 
 	// issue tokens
+	userIdHash := md5.Sum([]byte(req.UserId.Value))
 	refreshToken, err := s.tokenFactory.IssueRefreshToken(token.ExtensionFields{
-		UserIDHash: hex.EncodeToString(md5.Sum([]byte(req.UserId.Value))[:]),
+		UserIDHash: hex.EncodeToString(userIdHash[:]),
 		Role:       req.UserRole.String(),
 	})
 	accessToken, err := s.tokenFactory.IssueAccessToken(token.ExtensionFields{})
@@ -217,8 +218,9 @@ func (s *BuntDBStorage) ExtendToken(ctx context.Context, req *auth.ExtendTokenRe
 	}
 
 	// issue new tokens
+	userIdHash := md5.Sum([]byte(rec.UserId.Value))
 	refreshToken, err := s.tokenFactory.IssueRefreshToken(token.ExtensionFields{
-		UserIDHash: hex.EncodeToString(md5.Sum([]byte(rec.UserId.Value))[:]),
+		UserIDHash: hex.EncodeToString(userIdHash[:]),
 		Role:       rec.UserRole.String(),
 	})
 	refreshTokenRecord := *rec
@@ -288,7 +290,7 @@ func (s *BuntDBStorage) DeleteToken(ctx context.Context, req *auth.DeleteTokenRe
 	})
 }
 
-func (s *BuntDBStorage) DeleteUserTokens(ctx context.Context,req *auth.DeleteUserTokensRequest) (*empty.Empty, error) {
+func (s *BuntDBStorage) DeleteUserTokens(ctx context.Context, req *auth.DeleteUserTokensRequest) (*empty.Empty, error) {
 	return new(empty.Empty), s.db.Update(func(tx *buntdb.Tx) error {
 		err := s.forTokensByUsers(tx, req.UserId.Value, func(key, value string) bool {
 			_, err := tx.Delete(key)
