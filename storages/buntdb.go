@@ -247,7 +247,7 @@ func (s *BuntDBStorage) GetUserTokens(ctx context.Context, req *auth.GetUserToke
 		return s.forTokensByUsers(tx, req.UserId.Value, func(key, value string) bool {
 			rec := s.unmarshalRecord(value)
 			resp.Tokens = append(resp.Tokens, &auth.StoredTokenForUser{
-				Id:        rec.TokenId.Value,
+				TokenId:   rec.TokenId,
 				UserAgent: rec.UserAgent,
 				Ip:        rec.UserIp,
 				// CreatedAt is not stored in db
