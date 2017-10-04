@@ -82,7 +82,11 @@ func (*BuntDBStorage) unmarshalRecord(rawRecord string) *auth.StoredToken {
 
 func (*BuntDBStorage) commitOrRollback(tx *buntdb.Tx, err error) error {
 	if err != nil {
-		return tx.Rollback()
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			return rollbackErr
+		} else {
+			return err
+		}
 	} else {
 		return tx.Commit()
 	}
@@ -258,8 +262,18 @@ func (s *BuntDBStorage) GetUserTokens(ctx context.Context, req *auth.GetUserToke
 	return resp, err
 }
 
-func (*BuntDBStorage) DeleteToken(context.Context, *auth.DeleteTokenRequest) (*empty.Empty, error) {
-	panic("implement me")
+func (s *BuntDBStorage) DeleteToken(ctx context.Context, req *auth.DeleteTokenRequest) (*empty.Empty, error) {
+	return new(empty.Empty), s.db.Update(func(tx *buntdb.Tx) error {
+		value, err := tx.Delete(req.TokenId.Value)
+		if err != nil {
+			return tx.Rollback()
+		}
+		rec := s.unmarshalRecord(value)
+		if !utils.UUIDEquals(rec.UserId, req.UserId) {
+			err = errors.New("token not owned by user")
+		}
+		return s.commitOrRollback(tx, err)
+	})
 }
 
 func (*BuntDBStorage) DeleteUserTokens(context.Context, *auth.DeleteUserTokensRequest) (*empty.Empty, error) {
