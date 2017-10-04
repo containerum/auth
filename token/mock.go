@@ -15,7 +15,7 @@ type MockIssuerValidator struct {
 func NewMockIssuerValidator(returnedLifeTime time.Duration) *MockIssuerValidator {
 	return &MockIssuerValidator{
 		returnedLifeTime: returnedLifeTime,
-		issuedTokens: make(map[string]time.Time),
+		issuedTokens:     make(map[string]time.Time),
 	}
 }
 

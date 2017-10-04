@@ -2,8 +2,9 @@ package token
 
 import (
 	"testing"
-	. "github.com/smartystreets/goconvey/convey"
 	"time"
+
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestMockIssuerValidator(t *testing.T) {
