@@ -34,41 +34,37 @@ var testExtensionFields = ExtensionFields{
 	Role:       auth.Role_USER.String(),
 }
 
-func TestAccessToken(t *testing.T) {
+func TestJWTFlow(t *testing.T) {
 	jwtiv := NewJWTIssuerValidator(testValidatorConfig)
 	Convey("Generate and validate access token", t, func() {
-		token, err := jwtiv.IssueAccessToken(ExtensionFields{})
+		accessToken, refreshToken, err := jwtiv.IssueTokens(ExtensionFields{})
 		So(err, ShouldBeNil)
-		So(token.LifeTime, ShouldEqual, testValidatorConfig.AccessTokenLifeTime)
-		valid, id, err := jwtiv.ValidateToken(token.Value)
+		So(accessToken.LifeTime, ShouldEqual, testValidatorConfig.AccessTokenLifeTime)
+		So(accessToken.Id, ShouldResemble, refreshToken.Id)
+
+		result, err := jwtiv.ValidateToken(accessToken.Value)
 		So(err, ShouldBeNil)
-		So(valid, ShouldBeTrue)
-		So(id, ShouldResemble, token.Id)
+		So(result.Valid, ShouldBeTrue)
+		So(result.Kind, ShouldEqual, KindAccess)
+		So(accessToken.Id, ShouldResemble, result.Id)
+
+		result, err = jwtiv.ValidateToken(refreshToken.Value)
+		So(err, ShouldBeNil)
+		So(result.Valid, ShouldBeTrue)
+		So(result.Kind, ShouldEqual, KindRefresh)
+		So(accessToken.Id, ShouldResemble, result.Id)
 	})
 }
 
-func TestRefreshToken(t *testing.T) {
-	jwtiv := NewJWTIssuerValidator(testValidatorConfig)
-	Convey("Generate and validate refresh token", t, func() {
-		token, err := jwtiv.IssueRefreshToken(testExtensionFields)
-		So(err, ShouldBeNil)
-		So(token.LifeTime, ShouldEqual, testValidatorConfig.RefreshTokenLifeTime)
-		valid, id, err := jwtiv.ValidateToken(token.Value)
-		So(err, ShouldBeNil)
-		So(valid, ShouldBeTrue)
-		So(id, ShouldResemble, token.Id)
-	})
-}
-
-func TestValidation(t *testing.T) {
+func TestJWTValidation(t *testing.T) {
 	jwtiv := NewJWTIssuerValidator(testValidatorConfig)
 	Convey("Test invalid token validation", t, func() {
-		_, _, err := jwtiv.ValidateToken("not token")
+		_, err := jwtiv.ValidateToken("not token")
 		So(err, ShouldNotBeNil)
-		valid, _, err := jwtiv.ValidateToken("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." +
+		valid, err := jwtiv.ValidateToken("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." +
 			"eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWV9." +
 			"TJVA95OrM7E2cBab30RMHrHDcEfxjoYZgeFONFh7HgQ")
 		So(err.Error(), ShouldEqual, jwt.ErrSignatureInvalid.Error())
-		So(valid, ShouldBeFalse)
+		So(valid, ShouldBeNil)
 	})
 }

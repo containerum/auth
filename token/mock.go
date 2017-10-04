@@ -7,42 +7,54 @@ import (
 	"bitbucket.org/exonch/ch-grpc/common"
 )
 
+var _ IssuerValidator = &MockIssuerValidator{}
+
+type mockTokenRecord struct {
+	IssuedAt time.Time
+	Kind Kind
+}
+
 type MockIssuerValidator struct {
 	returnedLifeTime time.Duration
-	issuedTokens     map[string]time.Time
+	issuedTokens     map[string]mockTokenRecord
 }
 
 func NewMockIssuerValidator(returnedLifeTime time.Duration) *MockIssuerValidator {
 	return &MockIssuerValidator{
 		returnedLifeTime: returnedLifeTime,
-		issuedTokens:     make(map[string]time.Time),
+		issuedTokens:     make(map[string]mockTokenRecord),
 	}
 }
 
-func (m *MockIssuerValidator) IssueAccessToken(ExtensionFields) (token *IssuedToken, err error) {
-	id := utils.NewUUID()
-	m.issuedTokens[id.Value] = time.Now()
-	return &IssuedToken{
-		Value:    id.Value,
-		Id:       id,
+func (m *MockIssuerValidator) IssueTokens(extensionFields ExtensionFields) (accessToken, refreshToken *IssuedToken, err error) {
+	accessTokenId := utils.NewUUID()
+	accessToken = &IssuedToken{
+		Value:    accessTokenId.Value,
 		LifeTime: m.returnedLifeTime,
-	}, nil
-}
-
-func (m *MockIssuerValidator) IssueRefreshToken(ExtensionFields) (token *IssuedToken, err error) {
-	id := utils.NewUUID()
-	m.issuedTokens[id.Value] = time.Now()
-	return &IssuedToken{
-		Value:    id.Value,
-		Id:       utils.NewUUID(),
-		LifeTime: m.returnedLifeTime,
-	}, nil
-}
-
-func (m *MockIssuerValidator) ValidateToken(token string) (valid bool, tokenId *common.UUID, err error) {
-	issTime, present := m.issuedTokens[token]
-	if !present || time.Now().After(issTime.Add(m.returnedLifeTime)) {
-		return false, nil, nil
+		Id:       accessTokenId,
 	}
-	return true, &common.UUID{Value: token}, nil
+	m.issuedTokens[accessTokenId.Value] = mockTokenRecord{
+		IssuedAt: time.Now(),
+		Kind: KindAccess,
+	}
+	refreshTokenId := utils.NewUUID()
+	refreshToken = &IssuedToken{
+		Value: accessTokenId.Value,
+		LifeTime: m.returnedLifeTime,
+		Id: refreshTokenId,
+	}
+	m.issuedTokens[refreshTokenId.Value] = mockTokenRecord{
+		IssuedAt: time.Now(),
+		Kind: KindAccess,
+	}
+	return
+}
+
+func (m *MockIssuerValidator) ValidateToken(token string) (result *ValidationResult, err error) {
+	rec, present := m.issuedTokens[token]
+	return &ValidationResult{
+		Valid: present && time.Now().Before(rec.IssuedAt.Add(m.returnedLifeTime)),
+		Kind: rec.Kind,
+		Id: &common.UUID{Value: token},
+	}, nil
 }

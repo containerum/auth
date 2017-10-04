@@ -11,29 +11,25 @@ func TestMockIssuerValidator(t *testing.T) {
 	Convey("Test mock token issuer-validator", t, func() {
 		mockiv := NewMockIssuerValidator(time.Hour)
 		Convey("generate and validate tokens", func() {
-			accessToken, err := mockiv.IssueAccessToken(ExtensionFields{})
+			accessToken, refreshToken, err := mockiv.IssueTokens(ExtensionFields{})
 			So(err, ShouldBeNil)
 			So(accessToken.LifeTime, ShouldEqual, mockiv.returnedLifeTime)
-
-			refreshToken, err := mockiv.IssueRefreshToken(ExtensionFields{})
-			So(err, ShouldBeNil)
 			So(refreshToken.LifeTime, ShouldEqual, mockiv.returnedLifeTime)
 
-			valid, id, err := mockiv.ValidateToken(accessToken.Value)
+			valid, err := mockiv.ValidateToken(accessToken.Value)
 			So(err, ShouldBeNil)
-			So(id.Value, ShouldEqual, accessToken.Value)
-			So(valid, ShouldBeTrue)
+			So(valid.Id.Value, ShouldEqual, accessToken.Value)
+			So(valid.Valid, ShouldBeTrue)
 
-			valid, id, err = mockiv.ValidateToken(refreshToken.Value)
+			valid, err = mockiv.ValidateToken(refreshToken.Value)
 			So(err, ShouldBeNil)
-			So(id.Value, ShouldEqual, refreshToken.Value)
-			So(valid, ShouldBeTrue)
+			So(valid.Id.Value, ShouldEqual, refreshToken.Value)
+			So(valid.Valid, ShouldBeTrue)
 		})
 		Convey("validate non-existing token", func() {
-			valid, id, err := mockiv.ValidateToken("non-existing")
+			valid, err := mockiv.ValidateToken("non-existing")
 			So(err, ShouldBeNil)
-			So(id, ShouldBeNil)
-			So(valid, ShouldBeFalse)
+			So(valid.Valid, ShouldBeFalse)
 		})
 	})
 }

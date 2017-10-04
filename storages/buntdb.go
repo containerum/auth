@@ -126,11 +126,13 @@ func (s *BuntDBStorage) CreateToken(ctx context.Context, req *auth.CreateTokenRe
 
 	// issue tokens
 	userIdHash := md5.Sum([]byte(req.UserId.Value))
-	refreshToken, err := s.tokenFactory.IssueRefreshToken(token.ExtensionFields{
+	accessToken, refreshToken, err := s.tokenFactory.IssueTokens(token.ExtensionFields{
 		UserIDHash: hex.EncodeToString(userIdHash[:]),
 		Role:       req.UserRole.String(),
 	})
-	accessToken, err := s.tokenFactory.IssueAccessToken(token.ExtensionFields{})
+	if err != nil {
+		return nil, err
+	}
 
 	// store tokens
 	err = s.db.Update(func(tx *buntdb.Tx) error {
@@ -139,15 +141,6 @@ func (s *BuntDBStorage) CreateToken(ctx context.Context, req *auth.CreateTokenRe
 			&buntdb.SetOptions{
 				Expires: true,
 				TTL:     refreshToken.LifeTime,
-			})
-		if chkErr := s.rollbackOnError(tx, err); chkErr != nil {
-			return chkErr
-		}
-		_, _, err = tx.Set(accessToken.Id.Value,
-			s.marshalRecord(token.RequestToRecord(req, accessToken)),
-			&buntdb.SetOptions{
-				Expires: true,
-				TTL:     accessToken.LifeTime,
 			})
 		return s.commitOrRollback(tx, err)
 	})
@@ -159,13 +152,13 @@ func (s *BuntDBStorage) CreateToken(ctx context.Context, req *auth.CreateTokenRe
 }
 
 func (s *BuntDBStorage) CheckToken(ctx context.Context, req *auth.CheckTokenRequest) (*auth.CheckTokenResponse, error) {
-	valid, id, err := s.tokenFactory.ValidateToken(req.AccessToken)
-	if err != nil || !valid {
+	valid, err := s.tokenFactory.ValidateToken(req.AccessToken)
+	if err != nil || !valid.Valid {
 		return nil, errors.New("invalid token received")
 	}
 	var rec *auth.StoredToken
 	err = s.db.View(func(tx *buntdb.Tx) error {
-		rawRec, err := tx.Get(id.Value)
+		rawRec, err := tx.Get(valid.Id.Value)
 		if err != nil {
 			return err
 		}
@@ -190,13 +183,13 @@ func (s *BuntDBStorage) CheckToken(ctx context.Context, req *auth.CheckTokenRequ
 
 func (s *BuntDBStorage) ExtendToken(ctx context.Context, req *auth.ExtendTokenRequest) (*auth.ExtendTokenResponse, error) {
 	// validate received token
-	valid, id, err := s.tokenFactory.ValidateToken(req.RefreshToken)
-	if err != nil || !valid {
+	valid, err := s.tokenFactory.ValidateToken(req.RefreshToken)
+	if err != nil || !valid.Valid || valid.Kind != token.KindRefresh { // user must send refresh token
 		return nil, errors.New("invalid token received")
 	}
 	var rec *auth.StoredToken
 	err = s.db.View(func(tx *buntdb.Tx) error {
-		rawRec, err := tx.Get(id.Value)
+		rawRec, err := tx.Get(valid.Id.Value)
 		if err != nil {
 			return err
 		}
@@ -212,39 +205,30 @@ func (s *BuntDBStorage) ExtendToken(ctx context.Context, req *auth.ExtendTokenRe
 		UserAgent:   rec.UserAgent,
 		UserIp:      rec.UserIp,
 		Fingerprint: rec.Fingerprint,
-	}, "")
+	}, rec.TokenId.Value)
 	if err != nil {
 		return nil, err
 	}
 
 	// issue new tokens
 	userIdHash := md5.Sum([]byte(rec.UserId.Value))
-	refreshToken, err := s.tokenFactory.IssueRefreshToken(token.ExtensionFields{
+	accessToken, refreshToken, err := s.tokenFactory.IssueTokens(token.ExtensionFields{
 		UserIDHash: hex.EncodeToString(userIdHash[:]),
 		Role:       rec.UserRole.String(),
 	})
+	if err != nil {
+		return nil, err
+	}
 	refreshTokenRecord := *rec
 	refreshTokenRecord.TokenId = refreshToken.Id
-	accessToken, err := s.tokenFactory.IssueAccessToken(token.ExtensionFields{})
-	accessTokenRecord := *rec
-	accessTokenRecord.TokenId = accessToken.Id
 
 	// store new tokens
 	err = s.db.Update(func(tx *buntdb.Tx) error {
 		_, _, err := tx.Set(refreshToken.Id.Value,
-			s.marshalRecord(&accessTokenRecord),
-			&buntdb.SetOptions{
-				Expires: true,
-				TTL:     refreshToken.LifeTime,
-			})
-		if chkErr := s.rollbackOnError(tx, err); chkErr != nil {
-			return chkErr
-		}
-		_, _, err = tx.Set(accessToken.Id.Value,
 			s.marshalRecord(&refreshTokenRecord),
 			&buntdb.SetOptions{
 				Expires: true,
-				TTL:     accessToken.LifeTime,
+				TTL:     refreshToken.LifeTime,
 			})
 		return s.commitOrRollback(tx, err)
 	})
@@ -292,8 +276,9 @@ func (s *BuntDBStorage) DeleteToken(ctx context.Context, req *auth.DeleteTokenRe
 
 func (s *BuntDBStorage) DeleteUserTokens(ctx context.Context, req *auth.DeleteUserTokensRequest) (*empty.Empty, error) {
 	return new(empty.Empty), s.db.Update(func(tx *buntdb.Tx) error {
-		err := s.forTokensByUsers(tx, req.UserId.Value, func(key, value string) bool {
-			_, err := tx.Delete(key)
+		var err error
+		s.forTokensByUsers(tx, req.UserId.Value, func(key, value string) bool {
+			_, err = tx.Delete(key)
 			return err != nil
 		})
 		return s.commitOrRollback(tx, err)

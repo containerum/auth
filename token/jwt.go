@@ -1,13 +1,34 @@
 package token
 
 import (
-	"crypto/rand"
 	"time"
 
-	"bitbucket.org/exonch/ch-auth/utils"
 	"bitbucket.org/exonch/ch-grpc/common"
 	"github.com/dgrijalva/jwt-go"
+	"bitbucket.org/exonch/ch-auth/utils"
 )
+
+// compile-time assertion to check if our type implements IssuerValidator interface
+var _ IssuerValidator = &JWTIssuerValidator{}
+
+type extendedClaims struct {
+	jwt.StandardClaims
+	ExtensionFields
+	Kind Kind `json:"kind"`
+}
+
+type JWTIssuerValidatorConfig struct {
+	SigningMethod        jwt.SigningMethod
+	Issuer               string
+	AccessTokenLifeTime  time.Duration
+	RefreshTokenLifeTime time.Duration
+	SigningKey           interface{}
+	ValidationKey        interface{}
+}
+
+type JWTIssuerValidator struct {
+	config JWTIssuerValidatorConfig
+}
 
 func NewJWTIssuerValidator(config JWTIssuerValidatorConfig) *JWTIssuerValidator {
 	return &JWTIssuerValidator{
@@ -15,50 +36,49 @@ func NewJWTIssuerValidator(config JWTIssuerValidatorConfig) *JWTIssuerValidator 
 	}
 }
 
-func (j *JWTIssuerValidator) issueToken(claims ourClaims, lifetime time.Duration) (token *IssuedToken, err error) {
-	idBytes := make([]byte, JWTIDLength)
-	rand.Read(idBytes)
+func (j *JWTIssuerValidator) issueToken(id *common.UUID, kind Kind, lifeTime time.Duration, extendedFields ExtensionFields) (token *IssuedToken, err error) {
+	value, err := jwt.NewWithClaims(j.config.SigningMethod, extendedClaims{
+		StandardClaims: jwt.StandardClaims{
+			Id:        id.Value,
+			Issuer:    j.config.Issuer,
+			IssuedAt:  time.Now().Unix(),
+			ExpiresAt: time.Now().Add(lifeTime).Unix(),
+		},
+		ExtensionFields: extendedFields,
+		Kind:            kind,
+	}).SignedString(j.config.SigningKey)
 
-	token = &IssuedToken{
-		Id:       utils.NewUUID(),
-		LifeTime: lifetime,
+	return &IssuedToken{
+		Value:    value,
+		Id:       id,
+		LifeTime: lifeTime,
+	}, err
+}
+
+func (j *JWTIssuerValidator) IssueTokens(extensionFields ExtensionFields) (accessToken, refreshToken *IssuedToken, err error) {
+	id := utils.NewUUID()
+	refreshToken, err = j.issueToken(id, KindRefresh, j.config.RefreshTokenLifeTime, extensionFields)
+	if err != nil {
+		return
 	}
-	claims.Id = token.Id.Value // expose token ID
-	token.Value, err = jwt.NewWithClaims(j.config.SigningMethod, claims).SignedString(j.config.SigningKey)
-	return token, err
+	// do not include extension fields to access token
+	accessToken, err = j.issueToken(id, KindAccess, j.config.AccessTokenLifeTime, ExtensionFields{})
+	return
 }
 
-func (j *JWTIssuerValidator) IssueAccessToken(e ExtensionFields) (token *IssuedToken, err error) {
-	now := time.Now()
-	return j.issueToken(ourClaims{
-		StandardClaims: jwt.StandardClaims{
-			Issuer:    j.config.Issuer,
-			IssuedAt:  now.Unix(),
-			ExpiresAt: now.Add(j.config.AccessTokenLifeTime).Unix(),
-		},
-		ExtensionFields: e,
-	}, j.config.AccessTokenLifeTime)
-}
-
-func (j *JWTIssuerValidator) IssueRefreshToken(e ExtensionFields) (token *IssuedToken, err error) {
-	now := time.Now()
-	return j.issueToken(ourClaims{
-		StandardClaims: jwt.StandardClaims{
-			Issuer:    j.config.Issuer,
-			IssuedAt:  now.Unix(),
-			ExpiresAt: now.Add(j.config.RefreshTokenLifeTime).Unix(),
-		},
-		ExtensionFields: e,
-	}, j.config.RefreshTokenLifeTime)
-}
-
-func (j *JWTIssuerValidator) ValidateToken(token string) (bool, *common.UUID, error) {
-	claims := &jwt.StandardClaims{}
+func (j *JWTIssuerValidator) ValidateToken(token string) (result *ValidationResult, err error) {
+	claims := new(extendedClaims)
 	tokenObj, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
 		return j.config.ValidationKey, nil
 	})
 	if err != nil {
-		return false, nil, err
+		return
 	}
-	return tokenObj.Valid, &common.UUID{Value: claims.Id}, nil
+	return &ValidationResult{
+		Valid: tokenObj.Valid,
+		Id: &common.UUID{
+			Value: tokenObj.Claims.(*extendedClaims).Id,
+		},
+		Kind: tokenObj.Claims.(*extendedClaims).Kind,
+	}, nil
 }

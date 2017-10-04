@@ -8,7 +8,13 @@ import (
 	"bitbucket.org/exonch/ch-auth/utils"
 	"bitbucket.org/exonch/ch-grpc/auth"
 	"bitbucket.org/exonch/ch-grpc/common"
-	"github.com/dgrijalva/jwt-go"
+)
+
+type Kind int
+
+const (
+	KindAccess Kind = iota
+	KindRefresh
 )
 
 type ExtensionFields struct {
@@ -25,38 +31,23 @@ type IssuedToken struct {
 
 // Issuer is interface for creating access and refresh tokens.
 type Issuer interface {
-	IssueAccessToken(ExtensionFields) (token *IssuedToken, err error)
-	IssueRefreshToken(ExtensionFields) (token *IssuedToken, err error)
+	IssueTokens(extensionFields ExtensionFields) (accessToken, refreshToken *IssuedToken, err error)
+}
+
+type ValidationResult struct {
+	Valid bool
+	Id    *common.UUID
+	Kind  Kind
 }
 
 // Validator is interface for validating tokens
 type Validator interface {
-	ValidateToken(token string) (valid bool, tokenId *common.UUID, err error)
+	ValidateToken(token string) (result *ValidationResult, err error)
 }
 
 type IssuerValidator interface {
 	Issuer
 	Validator
-}
-
-const JWTIDLength = 16
-
-type ourClaims struct {
-	jwt.StandardClaims
-	ExtensionFields
-}
-
-type JWTIssuerValidatorConfig struct {
-	SigningMethod        jwt.SigningMethod
-	Issuer               string
-	AccessTokenLifeTime  time.Duration
-	RefreshTokenLifeTime time.Duration
-	SigningKey           interface{}
-	ValidationKey        interface{}
-}
-
-type JWTIssuerValidator struct {
-	config JWTIssuerValidatorConfig
 }
 
 func EncodeAccessObjects(req []*auth.AccessObject) string {
