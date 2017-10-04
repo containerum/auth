@@ -288,6 +288,12 @@ func (s *BuntDBStorage) DeleteToken(ctx context.Context, req *auth.DeleteTokenRe
 	})
 }
 
-func (*BuntDBStorage) DeleteUserTokens(context.Context, *auth.DeleteUserTokensRequest) (*empty.Empty, error) {
-	panic("implement me")
+func (s *BuntDBStorage) DeleteUserTokens(ctx context.Context,req *auth.DeleteUserTokensRequest) (*empty.Empty, error) {
+	return new(empty.Empty), s.db.Update(func(tx *buntdb.Tx) error {
+		err := s.forTokensByUsers(tx, req.UserId.Value, func(key, value string) bool {
+			_, err := tx.Delete(key)
+			return err != nil
+		})
+		return s.commitOrRollback(tx, err)
+	})
 }
