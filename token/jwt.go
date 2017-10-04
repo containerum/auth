@@ -3,9 +3,9 @@ package token
 import (
 	"time"
 
+	"bitbucket.org/exonch/ch-auth/utils"
 	"bitbucket.org/exonch/ch-grpc/common"
 	"github.com/dgrijalva/jwt-go"
-	"bitbucket.org/exonch/ch-auth/utils"
 )
 
 // compile-time assertion to check if our type implements IssuerValidator interface

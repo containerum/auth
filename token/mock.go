@@ -11,7 +11,7 @@ var _ IssuerValidator = &MockIssuerValidator{}
 
 type mockTokenRecord struct {
 	IssuedAt time.Time
-	Kind Kind
+	Kind     Kind
 }
 
 type MockIssuerValidator struct {
@@ -35,17 +35,17 @@ func (m *MockIssuerValidator) IssueTokens(extensionFields ExtensionFields) (acce
 	}
 	m.issuedTokens[accessTokenId.Value] = mockTokenRecord{
 		IssuedAt: time.Now(),
-		Kind: KindAccess,
+		Kind:     KindAccess,
 	}
 	refreshTokenId := utils.NewUUID()
 	refreshToken = &IssuedToken{
-		Value: accessTokenId.Value,
+		Value:    accessTokenId.Value,
 		LifeTime: m.returnedLifeTime,
-		Id: refreshTokenId,
+		Id:       refreshTokenId,
 	}
 	m.issuedTokens[refreshTokenId.Value] = mockTokenRecord{
 		IssuedAt: time.Now(),
-		Kind: KindAccess,
+		Kind:     KindAccess,
 	}
 	return
 }
@@ -54,7 +54,7 @@ func (m *MockIssuerValidator) ValidateToken(token string) (result *ValidationRes
 	rec, present := m.issuedTokens[token]
 	return &ValidationResult{
 		Valid: present && time.Now().Before(rec.IssuedAt.Add(m.returnedLifeTime)),
-		Kind: rec.Kind,
-		Id: &common.UUID{Value: token},
+		Kind:  rec.Kind,
+		Id:    &common.UUID{Value: token},
 	}, nil
 }
