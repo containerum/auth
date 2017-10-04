@@ -299,3 +299,8 @@ func (s *BuntDBStorage) DeleteUserTokens(ctx context.Context, req *auth.DeleteUs
 		return s.commitOrRollback(tx, err)
 	})
 }
+
+// Implement Closer interface
+func (s *BuntDBStorage) Close() error {
+	return s.db.Close()
+}
