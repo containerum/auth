@@ -67,8 +67,7 @@ func (j *JWTIssuerValidator) IssueTokens(extensionFields ExtensionFields) (acces
 }
 
 func (j *JWTIssuerValidator) ValidateToken(token string) (result *ValidationResult, err error) {
-	claims := new(extendedClaims)
-	tokenObj, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
+	tokenObj, err := jwt.ParseWithClaims(token, new(extendedClaims), func(token *jwt.Token) (interface{}, error) {
 		return j.config.ValidationKey, nil
 	})
 	if err != nil {
