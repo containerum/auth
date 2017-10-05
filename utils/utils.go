@@ -37,5 +37,5 @@ func NewUUID() *common.UUID {
 }
 
 func UUIDEquals(a, b *common.UUID) bool {
-	return a != nil && b != nil && a.Value == b.Value
+	return a == b || a != nil && b != nil && a.Value == b.Value
 }
