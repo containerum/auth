@@ -6,12 +6,21 @@ import (
 	"crypto/rand"
 	"fmt"
 
+	"strings"
+
 	"bitbucket.org/exonch/ch-grpc/common"
+	"github.com/mssola/user_agent"
 )
 
 // ShortUserAgent generates short user agent from normal user agent using base64
 func ShortUserAgent(userAgent string) string {
-	return base64.StdEncoding.EncodeToString([]byte(userAgent))
+	ua := user_agent.New(userAgent)
+	platform := ua.Platform()
+	engine, _ := ua.Engine()
+	os := ua.OS()
+	browser, _ := ua.Browser()
+	toEncode := strings.Join([]string{platform, os, engine, browser}, " ")
+	return base64.StdEncoding.EncodeToString([]byte(toEncode))
 }
 
 func NewUUID() *common.UUID {
