@@ -13,7 +13,10 @@ import (
 )
 
 func initTestBuntDBStorage() *BuntDBStorage {
-	testBuntDBStorage, err := NewBuntDBStorage(":memory:", token.NewMockIssuerValidator(time.Hour))
+	testBuntDBStorage, err := NewBuntDBStorage(BuntDBStorageConfig{
+		File:         ":memory:",
+		TokenFactory: token.NewMockIssuerValidator(time.Hour),
+	})
 	if err != nil {
 		panic(err)
 	}

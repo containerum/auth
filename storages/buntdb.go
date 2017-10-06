@@ -20,17 +20,28 @@ const (
 	indexUsers  = "users"
 )
 
-// TokenStorage using BuntDB library
-type BuntDBStorage struct {
-	db           *buntdb.DB
-	tokenFactory token.IssuerValidator
+type BuntDBStorageConfig struct {
+	File         string
+	BuntDBConfig buntdb.Config
+	TokenFactory token.IssuerValidator
 }
 
-func NewBuntDBStorage(file string, tokenFactory token.IssuerValidator) (storage *BuntDBStorage, err error) {
-	db, err := buntdb.Open(file)
+// TokenStorage using BuntDB library
+type BuntDBStorage struct {
+	db *buntdb.DB
+	BuntDBStorageConfig
+}
+
+func NewBuntDBStorage(config BuntDBStorageConfig) (storage *BuntDBStorage, err error) {
+	db, err := buntdb.Open(config.File)
 	if err != nil {
 		return nil, err
 	}
+
+	if err := db.SetConfig(config.BuntDBConfig); err != nil {
+		return nil, err
+	}
+
 	err = db.Update(func(tx *buntdb.Tx) error {
 		if err := tx.CreateIndex(indexTokens, "*", buntdb.IndexJSON("platform"),
 			buntdb.IndexJSON("fingerprint"), buntdb.IndexJSON("user_ip")); err != nil {
@@ -42,8 +53,8 @@ func NewBuntDBStorage(file string, tokenFactory token.IssuerValidator) (storage 
 		return nil
 	})
 	return &BuntDBStorage{
-		db:           db,
-		tokenFactory: tokenFactory,
+		db:                  db,
+		BuntDBStorageConfig: config,
 	}, err
 }
 
@@ -131,7 +142,7 @@ func (s *BuntDBStorage) CreateToken(ctx context.Context, req *auth.CreateTokenRe
 		// issue tokens
 		var err error
 		userIdHash := md5.Sum([]byte(req.UserId.Value))
-		accessToken, refreshToken, err = s.tokenFactory.IssueTokens(token.ExtensionFields{
+		accessToken, refreshToken, err = s.TokenFactory.IssueTokens(token.ExtensionFields{
 			UserIDHash: hex.EncodeToString(userIdHash[:]),
 			Role:       req.UserRole.String(),
 		})
@@ -156,7 +167,7 @@ func (s *BuntDBStorage) CreateToken(ctx context.Context, req *auth.CreateTokenRe
 }
 
 func (s *BuntDBStorage) CheckToken(ctx context.Context, req *auth.CheckTokenRequest) (*auth.CheckTokenResponse, error) {
-	valid, err := s.tokenFactory.ValidateToken(req.AccessToken)
+	valid, err := s.TokenFactory.ValidateToken(req.AccessToken)
 	if err != nil || !valid.Valid || valid.Kind != token.KindAccess { // only access tokens may be checked
 		return nil, ErrInvalidToken
 	}
@@ -187,7 +198,7 @@ func (s *BuntDBStorage) CheckToken(ctx context.Context, req *auth.CheckTokenRequ
 
 func (s *BuntDBStorage) ExtendToken(ctx context.Context, req *auth.ExtendTokenRequest) (*auth.ExtendTokenResponse, error) {
 	// validate received token
-	valid, err := s.tokenFactory.ValidateToken(req.RefreshToken)
+	valid, err := s.TokenFactory.ValidateToken(req.RefreshToken)
 	if err != nil || !valid.Valid || valid.Kind != token.KindRefresh { // user must send refresh token
 		return nil, ErrInvalidToken
 	}
@@ -215,7 +226,7 @@ func (s *BuntDBStorage) ExtendToken(ctx context.Context, req *auth.ExtendTokenRe
 
 		// issue new tokens
 		userIdHash := md5.Sum([]byte(rec.UserId.Value))
-		accessToken, refreshToken, err = s.tokenFactory.IssueTokens(token.ExtensionFields{
+		accessToken, refreshToken, err = s.TokenFactory.IssueTokens(token.ExtensionFields{
 			UserIDHash: hex.EncodeToString(userIdHash[:]),
 			Role:       rec.UserRole.String(),
 		})
