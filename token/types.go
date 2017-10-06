@@ -60,7 +60,7 @@ func DecodeAccessObjects(value string) (ret []*auth.AccessObject) {
 	if err != nil {
 		return make([]*auth.AccessObject, 0)
 	}
-	err = json.Unmarshal(decoded, ret)
+	err = json.Unmarshal(decoded, &ret)
 	if err != nil {
 		return make([]*auth.AccessObject, 0)
 	}
