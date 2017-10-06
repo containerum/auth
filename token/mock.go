@@ -3,6 +3,8 @@ package token
 import (
 	"time"
 
+	"errors"
+
 	"bitbucket.org/exonch/ch-auth/utils"
 	"bitbucket.org/exonch/ch-grpc/common"
 )
@@ -11,7 +13,6 @@ var _ IssuerValidator = &MockIssuerValidator{}
 
 type mockTokenRecord struct {
 	IssuedAt time.Time
-	Kind     Kind
 }
 
 type MockIssuerValidator struct {
@@ -29,23 +30,35 @@ func NewMockIssuerValidator(returnedLifeTime time.Duration) *MockIssuerValidator
 func (m *MockIssuerValidator) IssueTokens(extensionFields ExtensionFields) (accessToken, refreshToken *IssuedToken, err error) {
 	tokenId := utils.NewUUID()
 	accessToken = &IssuedToken{
-		Value:    tokenId.Value,
+		Value:    "a" + tokenId.Value,
 		LifeTime: m.returnedLifeTime,
 		Id:       tokenId,
 	}
 	m.issuedTokens[tokenId.Value] = mockTokenRecord{
 		IssuedAt: time.Now(),
-		Kind:     KindAccess,
 	}
-	refreshToken = accessToken
+	refreshToken = &IssuedToken{
+		Value:    "r" + tokenId.Value,
+		LifeTime: m.returnedLifeTime,
+		Id:       tokenId,
+	}
 	return
 }
 
 func (m *MockIssuerValidator) ValidateToken(token string) (result *ValidationResult, err error) {
-	rec, present := m.issuedTokens[token]
+	rec, present := m.issuedTokens[token[1:]]
+	var kind Kind
+	switch token[0] {
+	case 'a':
+		kind = KindAccess
+	case 'r':
+		kind = KindRefresh
+	default:
+		return nil, errors.New("invalid token received")
+	}
 	return &ValidationResult{
 		Valid: present && time.Now().Before(rec.IssuedAt.Add(m.returnedLifeTime)),
-		Kind:  rec.Kind,
-		Id:    &common.UUID{Value: token},
+		Kind:  kind,
+		Id:    &common.UUID{Value: token[1:]},
 	}, nil
 }

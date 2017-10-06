@@ -27,10 +27,9 @@ func TestMockIssuerValidator(t *testing.T) {
 			So(valid.Id, ShouldResemble, refreshToken.Id)
 			So(valid.Valid, ShouldBeTrue)
 		})
-		Convey("validate non-existing token", func() {
-			valid, err := mockiv.ValidateToken("non-existing")
-			So(err, ShouldBeNil)
-			So(valid.Valid, ShouldBeFalse)
+		Convey("validate invalid token", func() {
+			_, err := mockiv.ValidateToken("invalid")
+			So(err, ShouldNotBeNil)
 		})
 	})
 }
