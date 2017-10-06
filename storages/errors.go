@@ -1,6 +1,6 @@
 package storages
 
-import "github.com/pkg/errors"
+import "errors"
 
 var (
 	ErrInvalidToken          = errors.New("invalid token received")

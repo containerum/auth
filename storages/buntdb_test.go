@@ -246,6 +246,7 @@ func TestBuntDBExtra(t *testing.T) {
 				TokenId: tvr.TokenId,
 				UserId:  utils.NewUUID(),
 			})
+			So(err, ShouldNotBeNil)
 		})
 	})
 
