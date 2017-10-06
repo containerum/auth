@@ -189,3 +189,67 @@ func TestBuntDBNormal(t *testing.T) {
 		So(storage.Close(), ShouldBeNil)
 	})
 }
+
+func TestBuntDBExtra(t *testing.T) {
+	storage := initTestBuntDBStorage()
+
+	Convey("Test storage functions in bad-data mode", t, func() {
+		Convey("Check non-existing and invalid token", func() {
+			_, err := storage.CheckToken(context.Background(), &auth.CheckTokenRequest{
+				AccessToken: "not-token",
+				UserAgent:   "lol",
+				FingerPrint: "kek",
+				UserIp:      "127.0.0.1",
+			})
+			So(err, ShouldBeError, ErrInvalidToken)
+		})
+
+		Convey("Extend non-extendable token", func() {
+			issuedTokens, err := storage.CreateToken(context.Background(), testCreateTokenRequest)
+			So(err, ShouldBeNil)
+			So(issuedTokens, ShouldNotBeNil)
+
+			_, err = storage.ExtendToken(context.Background(), &auth.ExtendTokenRequest{
+				RefreshToken: issuedTokens.AccessToken,
+				Fingerprint:  testCreateTokenRequest.Fingerprint,
+			})
+			So(err, ShouldNotBeNil)
+
+			_, err = storage.ExtendToken(context.Background(), &auth.ExtendTokenRequest{
+				RefreshToken: "not-token",
+				Fingerprint:  testCreateTokenRequest.Fingerprint,
+			})
+			So(err, ShouldBeError, ErrInvalidToken)
+		})
+
+		Convey("Delete non-existing and not owned token", func() {
+			issuedTokens, err := storage.CreateToken(context.Background(), testCreateTokenRequest)
+			So(err, ShouldBeNil)
+			So(issuedTokens, ShouldNotBeNil)
+
+			_, err = storage.DeleteToken(context.Background(), &auth.DeleteTokenRequest{
+				TokenId: utils.NewUUID(),
+				UserId:  testCreateTokenRequest.UserId,
+			})
+			So(err, ShouldNotBeNil)
+
+			// acquire token id
+			tvr, err := storage.CheckToken(context.Background(), &auth.CheckTokenRequest{
+				AccessToken: issuedTokens.AccessToken,
+				UserAgent:   testCreateTokenRequest.UserAgent,
+				FingerPrint: testCreateTokenRequest.Fingerprint,
+				UserIp:      testCreateTokenRequest.UserIp,
+			})
+			So(err, ShouldBeNil)
+
+			_, err = storage.DeleteToken(context.Background(), &auth.DeleteTokenRequest{
+				TokenId: tvr.TokenId,
+				UserId:  utils.NewUUID(),
+			})
+		})
+	})
+
+	Convey("Close storage", t, func() {
+		So(storage.Close(), ShouldBeNil)
+	})
+}
