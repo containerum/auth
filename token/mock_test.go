@@ -15,15 +15,16 @@ func TestMockIssuerValidator(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(accessToken.LifeTime, ShouldEqual, mockiv.returnedLifeTime)
 			So(refreshToken.LifeTime, ShouldEqual, mockiv.returnedLifeTime)
+			So(accessToken.Id, ShouldResemble, refreshToken.Id)
 
 			valid, err := mockiv.ValidateToken(accessToken.Value)
 			So(err, ShouldBeNil)
-			So(valid.Id.Value, ShouldEqual, accessToken.Value)
+			So(valid.Id, ShouldResemble, accessToken.Id)
 			So(valid.Valid, ShouldBeTrue)
 
 			valid, err = mockiv.ValidateToken(refreshToken.Value)
 			So(err, ShouldBeNil)
-			So(valid.Id.Value, ShouldEqual, refreshToken.Value)
+			So(valid.Id, ShouldResemble, refreshToken.Id)
 			So(valid.Valid, ShouldBeTrue)
 		})
 		Convey("validate non-existing token", func() {

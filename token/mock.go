@@ -27,26 +27,17 @@ func NewMockIssuerValidator(returnedLifeTime time.Duration) *MockIssuerValidator
 }
 
 func (m *MockIssuerValidator) IssueTokens(extensionFields ExtensionFields) (accessToken, refreshToken *IssuedToken, err error) {
-	accessTokenId := utils.NewUUID()
+	tokenId := utils.NewUUID()
 	accessToken = &IssuedToken{
-		Value:    accessTokenId.Value,
+		Value:    tokenId.Value,
 		LifeTime: m.returnedLifeTime,
-		Id:       accessTokenId,
+		Id:       tokenId,
 	}
-	m.issuedTokens[accessTokenId.Value] = mockTokenRecord{
+	m.issuedTokens[tokenId.Value] = mockTokenRecord{
 		IssuedAt: time.Now(),
 		Kind:     KindAccess,
 	}
-	refreshTokenId := utils.NewUUID()
-	refreshToken = &IssuedToken{
-		Value:    accessTokenId.Value,
-		LifeTime: m.returnedLifeTime,
-		Id:       refreshTokenId,
-	}
-	m.issuedTokens[refreshTokenId.Value] = mockTokenRecord{
-		IssuedAt: time.Now(),
-		Kind:     KindAccess,
-	}
+	refreshToken = accessToken
 	return
 }
 
