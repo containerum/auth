@@ -34,10 +34,14 @@ func NewBuntDBStorage(file string, tokenFactory token.IssuerValidator) (storage 
 		return nil, err
 	}
 	err = db.Update(func(tx *buntdb.Tx) error {
-		tx.CreateIndex(indexTokens, "*", buntdb.IndexJSON("platform"),
-			buntdb.IndexJSON("fingerprint"), buntdb.IndexJSON("user_ip"))
-		tx.CreateIndex(indexUsers, "*", buntdb.IndexJSON("user_id.value"))
-		return tx.Commit()
+		if err := tx.CreateIndex(indexTokens, "*", buntdb.IndexJSON("platform"),
+			buntdb.IndexJSON("fingerprint"), buntdb.IndexJSON("user_ip")); err != nil {
+			return err
+		}
+		if err := tx.CreateIndex(indexUsers, "*", buntdb.IndexJSON("user_id.value")); err != nil {
+			return err
+		}
+		return nil
 	})
 	return &BuntDBStorage{
 		db:           db,
@@ -80,69 +84,72 @@ func (*BuntDBStorage) unmarshalRecord(rawRecord string) *auth.StoredToken {
 	return ret
 }
 
-func (*BuntDBStorage) commitOrRollback(tx *buntdb.Tx, err error) error {
-	if err != nil {
-		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			return rollbackErr
-		} else {
-			return err
-		}
-	} else {
-		return tx.Commit()
-	}
-}
-
-func (*BuntDBStorage) rollbackOnError(tx *buntdb.Tx, err error) error {
-	if err != nil {
-		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			return rollbackErr
-		} else {
-			return err
-		}
-	} else {
-		return nil
-	}
-}
-
-func (s *BuntDBStorage) deleteTokenByIdentity(identity *tokenOwnerIdentity, keyToRemove string) error {
-	return s.db.Update(func(tx *buntdb.Tx) error {
+func (s *BuntDBStorage) deleteTokenByIdentity(tx *buntdb.Tx, identity *tokenOwnerIdentity) error {
+		var keysToDelete []string
 		err := s.forTokensByIdentity(tx, identity, func(key, value string) bool {
-			return keyToRemove == "" || keyToRemove == key
+			keysToDelete = append(keysToDelete, key)
+			return true
 		})
-		return s.commitOrRollback(tx, err)
-	})
+		if err != nil {
+			return err
+		}
+		for _, v := range keysToDelete {
+			if _, err := tx.Delete(v); err != nil {
+				return err
+			}
+		}
+		return nil
 }
+
+func (s *BuntDBStorage) deleteTokenByUser(tx *buntdb.Tx, userId *common.UUID) error {
+	var keysToDelete []string
+	err := s.forTokensByUsers(tx, userId.Value, func(key, value string) bool {
+		keysToDelete = append(keysToDelete, key)
+		return true
+	})
+	if err != nil {
+		return err
+	}
+	for _, v := range keysToDelete {
+		if _, err := tx.Delete(v); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 
 func (s *BuntDBStorage) CreateToken(ctx context.Context, req *auth.CreateTokenRequest) (*auth.CreateTokenResponse, error) {
-	// remove already exist tokens
-	err := s.deleteTokenByIdentity(&tokenOwnerIdentity{
-		UserAgent:   req.UserAgent,
-		UserIp:      req.UserIp,
-		Fingerprint: req.Fingerprint,
-	}, "")
-	if err != nil {
-		return nil, err
-	}
+	var accessToken, refreshToken *token.IssuedToken
+	err := s.db.Update(func(tx *buntdb.Tx) error {
+		// remove already exist tokens
+		if err := s.deleteTokenByIdentity(tx, &tokenOwnerIdentity{
+			UserAgent:   req.UserAgent,
+			UserIp:      req.UserIp,
+			Fingerprint: req.Fingerprint,
+		}); err != nil {
+			return err
+		}
 
-	// issue tokens
-	userIdHash := md5.Sum([]byte(req.UserId.Value))
-	accessToken, refreshToken, err := s.tokenFactory.IssueTokens(token.ExtensionFields{
-		UserIDHash: hex.EncodeToString(userIdHash[:]),
-		Role:       req.UserRole.String(),
-	})
-	if err != nil {
-		return nil, err
-	}
+		// issue tokens
+		var err error
+		userIdHash := md5.Sum([]byte(req.UserId.Value))
+		accessToken, refreshToken, err = s.tokenFactory.IssueTokens(token.ExtensionFields{
+			UserIDHash: hex.EncodeToString(userIdHash[:]),
+			Role:       req.UserRole.String(),
+		})
+		if err != nil {
+			return err
+		}
 
-	// store tokens
-	err = s.db.Update(func(tx *buntdb.Tx) error {
-		_, _, err := tx.Set(refreshToken.Id.Value,
+		//store tokens
+		_, _, err = tx.Set(refreshToken.Id.Value,
 			s.marshalRecord(token.RequestToRecord(req, refreshToken)),
 			&buntdb.SetOptions{
 				Expires: true,
 				TTL:     refreshToken.LifeTime,
 			})
-		return s.commitOrRollback(tx, err)
+		return err
 	})
 
 	return &auth.CreateTokenResponse{
@@ -153,7 +160,7 @@ func (s *BuntDBStorage) CreateToken(ctx context.Context, req *auth.CreateTokenRe
 
 func (s *BuntDBStorage) CheckToken(ctx context.Context, req *auth.CheckTokenRequest) (*auth.CheckTokenResponse, error) {
 	valid, err := s.tokenFactory.ValidateToken(req.AccessToken)
-	if err != nil || !valid.Valid {
+	if err != nil || !valid.Valid || valid.Kind != token.KindAccess { // only access tokens may be checked
 		return nil, errors.New("invalid token received")
 	}
 	var rec *auth.StoredToken
@@ -187,50 +194,48 @@ func (s *BuntDBStorage) ExtendToken(ctx context.Context, req *auth.ExtendTokenRe
 	if err != nil || !valid.Valid || valid.Kind != token.KindRefresh { // user must send refresh token
 		return nil, errors.New("invalid token received")
 	}
-	var rec *auth.StoredToken
-	err = s.db.View(func(tx *buntdb.Tx) error {
+
+	var accessToken, refreshToken *token.IssuedToken
+	err = s.db.Update(func(tx *buntdb.Tx) error {
+		// identify token owner
 		rawRec, err := tx.Get(valid.Id.Value)
 		if err != nil {
 			return err
 		}
-		rec = s.unmarshalRecord(rawRec)
-		return nil
-	})
-	if err != nil || rec.Fingerprint != req.Fingerprint {
-		return nil, errors.New("can`t identify sender as token owner")
-	}
+		rec := s.unmarshalRecord(rawRec)
+		if rec.Fingerprint != req.Fingerprint {
+			return errors.New("can`t identify sender as token owner")
+		}
 
-	// remove old tokens
-	err = s.deleteTokenByIdentity(&tokenOwnerIdentity{
-		UserAgent:   rec.UserAgent,
-		UserIp:      rec.UserIp,
-		Fingerprint: rec.Fingerprint,
-	}, rec.TokenId.Value)
-	if err != nil {
-		return nil, err
-	}
+		// remove old tokens
+		if err := s.deleteTokenByIdentity(tx, &tokenOwnerIdentity{
+			UserAgent:   rec.UserAgent,
+			UserIp:      rec.UserIp,
+			Fingerprint: rec.Fingerprint,
+		}); err != nil {
+			return err
+		}
 
-	// issue new tokens
-	userIdHash := md5.Sum([]byte(rec.UserId.Value))
-	accessToken, refreshToken, err := s.tokenFactory.IssueTokens(token.ExtensionFields{
-		UserIDHash: hex.EncodeToString(userIdHash[:]),
-		Role:       rec.UserRole.String(),
-	})
-	if err != nil {
-		return nil, err
-	}
-	refreshTokenRecord := *rec
-	refreshTokenRecord.TokenId = refreshToken.Id
+		// issue new tokens
+		userIdHash := md5.Sum([]byte(rec.UserId.Value))
+		accessToken, refreshToken, err = s.tokenFactory.IssueTokens(token.ExtensionFields{
+			UserIDHash: hex.EncodeToString(userIdHash[:]),
+			Role:       rec.UserRole.String(),
+		})
+		if err != nil {
+			return err
+		}
+		refreshTokenRecord := *rec
+		refreshTokenRecord.TokenId = refreshToken.Id
 
-	// store new tokens
-	err = s.db.Update(func(tx *buntdb.Tx) error {
-		_, _, err := tx.Set(refreshToken.Id.Value,
+		// store new tokens
+		_, _, err = tx.Set(refreshToken.Id.Value,
 			s.marshalRecord(&refreshTokenRecord),
 			&buntdb.SetOptions{
 				Expires: true,
 				TTL:     refreshToken.LifeTime,
 			})
-		return s.commitOrRollback(tx, err)
+		return err
 	})
 
 	return &auth.ExtendTokenResponse{
@@ -263,25 +268,20 @@ func (s *BuntDBStorage) GetUserTokens(ctx context.Context, req *auth.GetUserToke
 func (s *BuntDBStorage) DeleteToken(ctx context.Context, req *auth.DeleteTokenRequest) (*empty.Empty, error) {
 	return new(empty.Empty), s.db.Update(func(tx *buntdb.Tx) error {
 		value, err := tx.Delete(req.TokenId.Value)
-		if chkErr := s.rollbackOnError(tx, err); chkErr != nil {
-			return chkErr
+		if err != nil {
+			return err
 		}
 		rec := s.unmarshalRecord(value)
 		if !utils.UUIDEquals(rec.UserId, req.UserId) {
 			err = errors.New("token not owned by user")
 		}
-		return s.commitOrRollback(tx, err)
+		return err
 	})
 }
 
 func (s *BuntDBStorage) DeleteUserTokens(ctx context.Context, req *auth.DeleteUserTokensRequest) (*empty.Empty, error) {
 	return new(empty.Empty), s.db.Update(func(tx *buntdb.Tx) error {
-		var err error
-		s.forTokensByUsers(tx, req.UserId.Value, func(key, value string) bool {
-			_, err = tx.Delete(key)
-			return err != nil
-		})
-		return s.commitOrRollback(tx, err)
+		return s.deleteTokenByUser(tx, req.UserId)
 	})
 }
 
