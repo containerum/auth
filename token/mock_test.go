@@ -21,11 +21,13 @@ func TestMockIssuerValidator(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(valid.Id, ShouldResemble, accessToken.Id)
 			So(valid.Valid, ShouldBeTrue)
+			So(valid.Kind, ShouldEqual, KindAccess)
 
 			valid, err = mockiv.ValidateToken(refreshToken.Value)
 			So(err, ShouldBeNil)
 			So(valid.Id, ShouldResemble, refreshToken.Id)
 			So(valid.Valid, ShouldBeTrue)
+			So(valid.Kind, ShouldEqual, KindRefresh)
 		})
 		Convey("validate invalid token", func() {
 			_, err := mockiv.ValidateToken("invalid")
