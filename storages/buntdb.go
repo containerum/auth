@@ -6,8 +6,6 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 
-	"errors"
-
 	"bitbucket.org/exonch/ch-auth/token"
 	"bitbucket.org/exonch/ch-auth/utils"
 	"bitbucket.org/exonch/ch-grpc/auth"
@@ -85,20 +83,20 @@ func (*BuntDBStorage) unmarshalRecord(rawRecord string) *auth.StoredToken {
 }
 
 func (s *BuntDBStorage) deleteTokenByIdentity(tx *buntdb.Tx, identity *tokenOwnerIdentity) error {
-		var keysToDelete []string
-		err := s.forTokensByIdentity(tx, identity, func(key, value string) bool {
-			keysToDelete = append(keysToDelete, key)
-			return true
-		})
-		if err != nil {
+	var keysToDelete []string
+	err := s.forTokensByIdentity(tx, identity, func(key, value string) bool {
+		keysToDelete = append(keysToDelete, key)
+		return true
+	})
+	if err != nil {
+		return err
+	}
+	for _, v := range keysToDelete {
+		if _, err := tx.Delete(v); err != nil {
 			return err
 		}
-		for _, v := range keysToDelete {
-			if _, err := tx.Delete(v); err != nil {
-				return err
-			}
-		}
-		return nil
+	}
+	return nil
 }
 
 func (s *BuntDBStorage) deleteTokenByUser(tx *buntdb.Tx, userId *common.UUID) error {
@@ -117,7 +115,6 @@ func (s *BuntDBStorage) deleteTokenByUser(tx *buntdb.Tx, userId *common.UUID) er
 	}
 	return nil
 }
-
 
 func (s *BuntDBStorage) CreateToken(ctx context.Context, req *auth.CreateTokenRequest) (*auth.CreateTokenResponse, error) {
 	var accessToken, refreshToken *token.IssuedToken
@@ -161,7 +158,7 @@ func (s *BuntDBStorage) CreateToken(ctx context.Context, req *auth.CreateTokenRe
 func (s *BuntDBStorage) CheckToken(ctx context.Context, req *auth.CheckTokenRequest) (*auth.CheckTokenResponse, error) {
 	valid, err := s.tokenFactory.ValidateToken(req.AccessToken)
 	if err != nil || !valid.Valid || valid.Kind != token.KindAccess { // only access tokens may be checked
-		return nil, errors.New("invalid token received")
+		return nil, ErrInvalidToken
 	}
 	var rec *auth.StoredToken
 	err = s.db.View(func(tx *buntdb.Tx) error {
@@ -173,7 +170,7 @@ func (s *BuntDBStorage) CheckToken(ctx context.Context, req *auth.CheckTokenRequ
 		return nil
 	})
 	if err != nil || rec.UserIp != req.UserIp || rec.Fingerprint != req.FingerPrint {
-		return nil, errors.New("can`t identify sender as token owner")
+		return nil, ErrTokenNotOwnedBySender
 	}
 
 	return &auth.CheckTokenResponse{
@@ -192,7 +189,7 @@ func (s *BuntDBStorage) ExtendToken(ctx context.Context, req *auth.ExtendTokenRe
 	// validate received token
 	valid, err := s.tokenFactory.ValidateToken(req.RefreshToken)
 	if err != nil || !valid.Valid || valid.Kind != token.KindRefresh { // user must send refresh token
-		return nil, errors.New("invalid token received")
+		return nil, ErrInvalidToken
 	}
 
 	var accessToken, refreshToken *token.IssuedToken
@@ -204,7 +201,7 @@ func (s *BuntDBStorage) ExtendToken(ctx context.Context, req *auth.ExtendTokenRe
 		}
 		rec := s.unmarshalRecord(rawRec)
 		if rec.Fingerprint != req.Fingerprint {
-			return errors.New("can`t identify sender as token owner")
+			return ErrTokenNotOwnedBySender
 		}
 
 		// remove old tokens
@@ -273,7 +270,7 @@ func (s *BuntDBStorage) DeleteToken(ctx context.Context, req *auth.DeleteTokenRe
 		}
 		rec := s.unmarshalRecord(value)
 		if !utils.UUIDEquals(rec.UserId, req.UserId) {
-			err = errors.New("token not owned by user")
+			err = ErrTokenNotOwnedBySender
 		}
 		return err
 	})

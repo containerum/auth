@@ -148,7 +148,7 @@ func TestBuntDBNormal(t *testing.T) {
 
 			_, err = storage.DeleteToken(context.Background(), &auth.DeleteTokenRequest{
 				TokenId: tvr.TokenId,
-				UserId: tvr.UserId,
+				UserId:  tvr.UserId,
 			})
 			So(err, ShouldBeNil)
 
