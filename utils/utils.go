@@ -39,3 +39,9 @@ func NewUUID() *common.UUID {
 func UUIDEquals(a, b *common.UUID) bool {
 	return a == b || a != nil && b != nil && a.Value == b.Value
 }
+
+func UUIDFromString(value string) *common.UUID {
+	return &common.UUID{
+		Value: value,
+	}
+}
