@@ -150,7 +150,7 @@ func (s *BuntDBStorage) CreateToken(ctx context.Context, req *auth.CreateTokenRe
 			return err
 		}
 
-		//store tokens
+		// store tokens
 		_, _, err = tx.Set(refreshToken.Id.Value,
 			s.marshalRecord(token.RequestToRecord(req, refreshToken)),
 			&buntdb.SetOptions{
