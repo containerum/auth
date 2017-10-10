@@ -64,6 +64,10 @@ func SetupRoutes(router *vestigo.Router, tracer opentracing.Tracer, storage auth
 
 const authServerContextKey = "authServer"
 
+func authServerFromRequestContext(r *http.Request) auth.AuthServer {
+	return r.Context().Value(authServerContextKey).(auth.AuthServer)
+}
+
 func createTokenHandler(w http.ResponseWriter, r *http.Request) {
 	req := &auth.CreateTokenRequest{
 		UserAgent:   r.Header.Get(HeaderUserAgent),
@@ -77,7 +81,7 @@ func createTokenHandler(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	json.Unmarshal(body, &req.Access)
 
-	resp, err := r.Context().Value(authServerContextKey).(auth.AuthServer).CreateToken(r.Context(), req)
+	resp, err := authServerFromRequestContext(r).CreateToken(r.Context(), req)
 	if err != nil {
 		sendError(w, err)
 		return
@@ -98,7 +102,7 @@ func checkTokenHandler(w http.ResponseWriter, r *http.Request) {
 
 	defer r.Body.Close()
 
-	resp, err := r.Context().Value(authServerContextKey).(auth.AuthServer).CheckToken(r.Context(), req)
+	resp, err := authServerFromRequestContext(r).CheckToken(r.Context(), req)
 	if err != nil {
 		sendError(w, err)
 		return
@@ -128,7 +132,7 @@ func extendTokenHandler(w http.ResponseWriter, r *http.Request) {
 
 	defer r.Body.Close()
 
-	resp, err := r.Context().Value(authServerContextKey).(auth.AuthServer).ExtendToken(r.Context(), req)
+	resp, err := authServerFromRequestContext(r).ExtendToken(r.Context(), req)
 	if err != nil {
 		sendError(w, err)
 		return
@@ -146,7 +150,7 @@ func getUserTokensHandler(w http.ResponseWriter, r *http.Request) {
 
 	defer r.Body.Close()
 
-	resp, err := r.Context().Value(authServerContextKey).(auth.AuthServer).GetUserTokens(r.Context(), req)
+	resp, err := authServerFromRequestContext(r).GetUserTokens(r.Context(), req)
 	if err != nil {
 		sendError(w, err)
 		return
@@ -165,7 +169,7 @@ func deleteTokenByIdHandler(w http.ResponseWriter, r *http.Request) {
 
 	defer r.Body.Close()
 
-	_, err := r.Context().Value(authServerContextKey).(auth.AuthServer).DeleteToken(r.Context(), req)
+	_, err := authServerFromRequestContext(r).DeleteToken(r.Context(), req)
 	if err != nil {
 		sendError(w, err)
 		return
@@ -180,7 +184,7 @@ func deleteUserTokensHandler(w http.ResponseWriter, r *http.Request) {
 
 	defer r.Body.Close()
 
-	_, err := r.Context().Value(authServerContextKey).(auth.AuthServer).DeleteUserTokens(r.Context(), req)
+	_, err := authServerFromRequestContext(r).DeleteUserTokens(r.Context(), req)
 	if err != nil {
 		sendError(w, err)
 		return
