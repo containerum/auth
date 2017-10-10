@@ -31,7 +31,7 @@ func newOpenTracingMiddleware(tracer opentracing.Tracer, operationName string) v
 			defer span.Finish()
 
 			ctx := opentracing.ContextWithSpan(r.Context(), span)
-			next.ServeHTTP(w, r.WithContext(ctx))
+			next(w, r.WithContext(ctx))
 		}
 	}
 }
@@ -41,7 +41,7 @@ func newStorageInjectionMiddleware(storage auth.AuthServer) vestigo.Middleware {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			ctx := context.WithValue(r.Context(), authServerContextKey, storage)
-			next.ServeHTTP(w, r.WithContext(ctx))
+			next(w, r.WithContext(ctx))
 		}
 	}
 }
