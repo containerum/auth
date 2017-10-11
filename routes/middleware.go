@@ -24,7 +24,7 @@ func newOpenTracingMiddleware(tracer opentracing.Tracer, operationName string) v
 				opentracing.HTTPHeadersCarrier(r.Header),
 			)
 			if err != nil {
-				logrus.Printf("Opentracing span extract: %v", err)
+				logrus.Errorf("Opentracing span extract: %v", err)
 			}
 
 			span := tracer.StartSpan(operationName, ext.RPCServerOption(wireContext))
