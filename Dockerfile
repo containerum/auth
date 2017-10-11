@@ -1,5 +1,6 @@
 FROM golang:1.9-alpine as builder
-COPY . src/bitbucket.org/exonch/ch-auth
+WORKDIR src/bitbucket.org/exonch/ch-auth
+COPY . .
 RUN go build -v -ldflags="-w -s" -o /bin/ch-auth
 
 FROM alpine:latest
