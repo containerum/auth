@@ -202,7 +202,7 @@ func logModeSetup() error {
 func logLevelSetup() error {
 	viper.SetDefault("log_level", logrus.InfoLevel)
 	level := logrus.Level(viper.GetInt("log_level"))
-	if level >= logrus.DebugLevel || level <= logrus.PanicLevel {
+	if level > logrus.DebugLevel || level < logrus.PanicLevel {
 		return errors.New("invalid log level")
 	}
 	return nil
