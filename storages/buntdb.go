@@ -10,8 +10,8 @@ import (
 	"bitbucket.org/exonch/ch-auth/utils"
 	"bitbucket.org/exonch/ch-grpc/auth"
 	"bitbucket.org/exonch/ch-grpc/common"
-	"github.com/Sirupsen/logrus"
 	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/sirupsen/logrus"
 	"github.com/tidwall/buntdb"
 	"golang.org/x/net/context"
 )

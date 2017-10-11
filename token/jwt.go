@@ -5,8 +5,8 @@ import (
 
 	"bitbucket.org/exonch/ch-auth/utils"
 	"bitbucket.org/exonch/ch-grpc/common"
-	"github.com/Sirupsen/logrus"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/sirupsen/logrus"
 )
 
 // compile-time assertion to check if our type implements IssuerValidator interface
