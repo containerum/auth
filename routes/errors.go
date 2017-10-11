@@ -16,6 +16,7 @@ func sendErrorsWithCode(w http.ResponseWriter, errs []string, code int) {
 	body, err := json.Marshal(&httpResponseErrorBody{
 		Error: errs,
 	})
+	logrus.WithField("errors", errs).WithField("code", code).Debugf("Sending errors")
 	if err != nil {
 		logrus.Errorf("JSON Marshal: %v", err)
 	}
@@ -39,6 +40,7 @@ func sendError(w http.ResponseWriter, err error) {
 		code = http.StatusInternalServerError
 	}
 
+	logrus.WithField("error", err).WithField("code", code).Debugf("Sending error")
 	_, err = w.Write(body)
 	if err != nil {
 		logrus.Errorf("Response write: %v", err)

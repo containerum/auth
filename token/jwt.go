@@ -5,6 +5,7 @@ import (
 
 	"bitbucket.org/exonch/ch-auth/utils"
 	"bitbucket.org/exonch/ch-grpc/common"
+	"github.com/Sirupsen/logrus"
 	"github.com/dgrijalva/jwt-go"
 )
 
@@ -28,16 +29,19 @@ type JWTIssuerValidatorConfig struct {
 
 type JWTIssuerValidator struct {
 	config JWTIssuerValidatorConfig
+	logger *logrus.Logger
 }
 
 func NewJWTIssuerValidator(config JWTIssuerValidatorConfig) *JWTIssuerValidator {
+	logrus.WithField("config", config).Info("Initialized JWTIssuerValidator")
 	return &JWTIssuerValidator{
 		config: config,
+		logger: logrus.WithField("component", "JWTIssuerValidator").Logger,
 	}
 }
 
 func (j *JWTIssuerValidator) issueToken(id *common.UUID, kind Kind, lifeTime time.Duration, extendedFields ExtensionFields) (token *IssuedToken, err error) {
-	value, err := jwt.NewWithClaims(j.config.SigningMethod, extendedClaims{
+	claims := extendedClaims{
 		StandardClaims: jwt.StandardClaims{
 			Id:        id.Value,
 			Issuer:    j.config.Issuer,
@@ -46,7 +50,15 @@ func (j *JWTIssuerValidator) issueToken(id *common.UUID, kind Kind, lifeTime tim
 		},
 		ExtensionFields: extendedFields,
 		Kind:            kind,
-	}).SignedString(j.config.SigningKey)
+	}
+	logCtx := logrus.Fields{
+		"kind":     kind,
+		"lifeTime": lifeTime,
+		"id":       id,
+		"claims":   claims,
+	}
+	j.logger.WithFields(logCtx).Debug("Issue token")
+	value, err := jwt.NewWithClaims(j.config.SigningMethod, claims).SignedString(j.config.SigningKey)
 
 	return &IssuedToken{
 		Value:    value,
@@ -67,17 +79,21 @@ func (j *JWTIssuerValidator) IssueTokens(extensionFields ExtensionFields) (acces
 }
 
 func (j *JWTIssuerValidator) ValidateToken(token string) (result *ValidationResult, err error) {
+	j.logger.Debugf("Validating token %s", token)
 	tokenObj, err := jwt.ParseWithClaims(token, new(extendedClaims), func(token *jwt.Token) (interface{}, error) {
 		return j.config.ValidationKey, nil
 	})
 	if err != nil {
 		return
 	}
-	return &ValidationResult{
+
+	validationResult := &ValidationResult{
 		Valid: tokenObj.Valid,
 		Id: &common.UUID{
 			Value: tokenObj.Claims.(*extendedClaims).Id,
 		},
 		Kind: tokenObj.Claims.(*extendedClaims).Kind,
-	}, nil
+	}
+	j.logger.WithField("result", validationResult).Debugf("Validated token: %s", token)
+	return validationResult, nil
 }
