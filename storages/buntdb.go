@@ -84,11 +84,9 @@ func (s *BuntDBStorage) forTokensByIdentity(tx *buntdb.Tx,
 	return tx.AscendEqual(indexTokens, string(pivot), iterator)
 }
 
-func (s *BuntDBStorage) forTokensByUsers(tx *buntdb.Tx, UserId string, iterator func(key, value string) bool) error {
+func (s *BuntDBStorage) forTokensByUsers(tx *buntdb.Tx, userId *common.UUID, iterator func(key, value string) bool) error {
 	pivot, _ := json.Marshal(auth.StoredToken{
-		UserId: &common.UUID{
-			Value: UserId,
-		},
+		UserId: userId,
 	})
 	s.logger.WithField("pivot", pivot).Debugf("Iterating by user")
 	return tx.AscendEqual(indexUsers, string(pivot), iterator)
@@ -130,7 +128,7 @@ func (s *BuntDBStorage) deleteTokenByUser(tx *buntdb.Tx, userId *common.UUID) er
 	s.logger.WithField("userId", userId).Debugf("Delete token by user")
 
 	var keysToDelete []string
-	err := s.forTokensByUsers(tx, userId.Value, func(key, value string) bool {
+	err := s.forTokensByUsers(tx, userId, func(key, value string) bool {
 		keysToDelete = append(keysToDelete, key)
 		return true
 	})
@@ -301,7 +299,7 @@ func (s *BuntDBStorage) GetUserTokens(ctx context.Context, req *auth.GetUserToke
 	logger.Infof("Get user tokens")
 	resp := new(auth.GetUserTokensResponse)
 	err := s.db.View(func(tx *buntdb.Tx) error {
-		return s.forTokensByUsers(tx, req.UserId.Value, func(key, value string) bool {
+		return s.forTokensByUsers(tx, req.UserId, func(key, value string) bool {
 			rec := s.unmarshalRecord(value)
 			resp.Tokens = append(resp.Tokens, &auth.StoredTokenForUser{
 				TokenId:   rec.TokenId,
