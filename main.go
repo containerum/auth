@@ -29,9 +29,11 @@ func main() {
 		return
 	}
 
+	viper.SetDefault("http_listenaddr", ":8080")
 	httpTracer, err := getTracer(viper.GetString("http_listenaddr"), "ch-auth-rest")
 	logExit(err)
 
+	viper.SetDefault("grpc_listenaddr", ":8888")
 	grpcTracer, err := getTracer(viper.GetString("grpc_listenaddr"), "ch-auth-grpc")
 	logExit(err)
 
