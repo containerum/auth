@@ -53,8 +53,12 @@ func main() {
 		os.Exit(1)
 	}
 
+	opts := []grpc.DialOption{
+		grpc.WithInsecure(), // disable transport security
+	}
+
 	log.Infof("Setup connection to %v", serverAddress)
-	conn, err := grpc.Dial(serverAddress)
+	conn, err := grpc.Dial(serverAddress, opts...)
 	chkErr(err)
 	client := auth.NewAuthClient(conn)
 	switch flag.Arg(0) {
