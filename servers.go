@@ -65,13 +65,13 @@ func RunServers(servers ...Runnable) {
 	wg := &sync.WaitGroup{}
 	wg.Add(len(servers))
 	for _, server := range servers {
-		go func() {
-			if err := server.Run(); err != nil {
+		go func(s Runnable) {
+			if err := s.Run(); err != nil {
 				logrus.Errorf("run server: %v", err)
 				os.Exit(1)
 			}
 			wg.Done()
-		}()
+		}(server)
 	}
 	wg.Wait()
 }
