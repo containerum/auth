@@ -3,6 +3,7 @@ package main
 import (
 	"net"
 	"net/http"
+	"os"
 	"sync"
 
 	"bitbucket.org/exonch/ch-auth/routes"
@@ -63,8 +64,10 @@ func RunServers(servers ...Runnable) {
 	wg.Add(len(servers))
 	for _, server := range servers {
 		go func() {
-			err := server.Run()
-			logrus.Errorf("run server: %v", err)
+			if err := server.Run(); err != nil {
+				logrus.Errorf("run server: %v", err)
+				os.Exit(1)
+			}
 			wg.Done()
 		}()
 	}
