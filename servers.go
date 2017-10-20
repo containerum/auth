@@ -30,6 +30,7 @@ func NewHTTPServer(listenAddr string, tracer opentracing.Tracer, storage auth.Au
 }
 
 func (s *HTTPServer) Run() error {
+	logrus.WithField("listenAddr", s.listenAddr).Info("Starting HTTP server")
 	return http.ListenAndServe(s.listenAddr, s.router)
 }
 
@@ -48,6 +49,7 @@ func NewGRPCServer(listenAddr string, tracer opentracing.Tracer, storage auth.Au
 }
 
 func (s *GRPCServer) Run() error {
+	logrus.WithField("listenAddr", s.listenAddr).Infof("Starting GRPC server")
 	listener, err := net.Listen("tcp", s.listenAddr)
 	if err != nil {
 		return err
