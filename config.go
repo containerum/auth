@@ -44,14 +44,14 @@ func getJWTConfig() (cfg token.JWTIssuerValidatorConfig, err error) {
 
 	cfg.Issuer = viper.GetString("issuer")
 
-	viper.SetDefault("jwt_access_token_lifetime", 15*time.Minute)
-	cfg.AccessTokenLifeTime = viper.GetDuration("jwt_access_token_lifetime")
+	viper.SetDefault("access_token_lifetime", 15*time.Minute)
+	cfg.AccessTokenLifeTime = viper.GetDuration("access_token_lifetime")
 	if cfg.AccessTokenLifeTime <= 0 {
 		errs = append(errs, "access token lifetime is invalid or not set")
 	}
 
-	viper.SetDefault("jwt_refresh_token_lifetime", 48*time.Hour)
-	cfg.RefreshTokenLifeTime = viper.GetDuration("jwt_refresh_token_lifetime")
+	viper.SetDefault("refresh_token_lifetime", 48*time.Hour)
+	cfg.RefreshTokenLifeTime = viper.GetDuration("refresh_token_lifetime")
 	if cfg.RefreshTokenLifeTime <= cfg.AccessTokenLifeTime {
 		errs = append(errs, "refresh token lifetime must be greater than access token lifetime")
 	}
