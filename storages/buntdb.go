@@ -6,8 +6,8 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 
-	"bitbucket.org/exonch/ch-auth/token"
-	"bitbucket.org/exonch/ch-auth/utils"
+	"git.containerum.net/ch/auth/token"
+	"git.containerum.net/ch/auth/utils"
 	"bitbucket.org/exonch/ch-grpc/auth"
 	"bitbucket.org/exonch/ch-grpc/common"
 	"github.com/golang/protobuf/ptypes/empty"

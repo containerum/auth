@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"bitbucket.org/exonch/ch-auth/utils"
+	"git.containerum.net/ch/auth/utils"
 	"bitbucket.org/exonch/ch-grpc/auth"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/context"

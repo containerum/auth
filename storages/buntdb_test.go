@@ -6,8 +6,8 @@ import (
 	"context"
 	"testing"
 
-	"bitbucket.org/exonch/ch-auth/token"
-	"bitbucket.org/exonch/ch-auth/utils"
+	"git.containerum.net/ch/auth/token"
+	"git.containerum.net/ch/auth/utils"
 	"bitbucket.org/exonch/ch-grpc/auth"
 	. "github.com/smartystreets/goconvey/convey"
 )

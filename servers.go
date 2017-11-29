@@ -6,7 +6,7 @@ import (
 	"os"
 	"sync"
 
-	"bitbucket.org/exonch/ch-auth/routes"
+	"git.containerum.net/ch/auth/routes"
 	"bitbucket.org/exonch/ch-grpc/auth"
 	"github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
 	"github.com/husobee/vestigo"

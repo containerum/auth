@@ -3,7 +3,7 @@ package token
 import (
 	"time"
 
-	"bitbucket.org/exonch/ch-auth/utils"
+	"git.containerum.net/ch/auth/utils"
 	"bitbucket.org/exonch/ch-grpc/common"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/sirupsen/logrus"

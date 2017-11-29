@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"bitbucket.org/exonch/ch-auth/storages"
+	"git.containerum.net/ch/auth/storages"
 	"github.com/sirupsen/logrus"
 )
 

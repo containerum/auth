@@ -1,6 +1,6 @@
-[submodule "vendor/bitbucket.org/exonch/ch-grpc"]
-	path = vendor/bitbucket.org/exonch/ch-grpc
-	url = https://bitbucket.org/exonch/ch-grpc
+[submodule "vendor/git.containerum.net/ch/grpc-proto-files"]
+	path = vendor/git.containerum.net/ch/grpc-proto-files
+	url = https://git.containerum.net/ch/grpc-proto-files
 [submodule "vendor/github.com/Shopify/sarama"]
 	path = vendor/github.com/Shopify/sarama
 	url = https://github.com/Shopify/sarama

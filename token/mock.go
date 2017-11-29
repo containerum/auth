@@ -5,7 +5,7 @@ import (
 
 	"errors"
 
-	"bitbucket.org/exonch/ch-auth/utils"
+	"git.containerum.net/ch/auth/utils"
 	"bitbucket.org/exonch/ch-grpc/common"
 )
 

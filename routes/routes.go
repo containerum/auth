@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"bitbucket.org/exonch/ch-auth/utils"
+	"git.containerum.net/ch/auth/utils"
 	"bitbucket.org/exonch/ch-grpc/auth"
 	"github.com/husobee/vestigo"
 	"github.com/opentracing/opentracing-go"

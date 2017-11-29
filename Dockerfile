@@ -1,7 +1,7 @@
 FROM golang:1.9-alpine as builder
-WORKDIR src/bitbucket.org/exonch/ch-auth
+WORKDIR src/git.containerum.net/ch/auth
 COPY . .
-RUN CGO_ENABLED=0 go build -v -ldflags="-w -s -extldflags '-static'" -o /bin/ch-auth
+RUN CGO_ENABLED=0 go build -v -ldflags="-w -s -extldflags '-static'" -o /bin/auth
 
 FROM alpine:latest as alpine
 RUN apk --no-cache add tzdata zip ca-certificates
@@ -12,7 +12,7 @@ RUN zip -r -0 /zoneinfo.zip .
 
 FROM scratch
 # app
-COPY --from=builder /bin/ch-auth /
+COPY --from=builder /bin/auth /
 # timezone data
 ENV ZONEINFO /zoneinfo.zip
 COPY --from=alpine /zoneinfo.zip /
@@ -35,4 +35,4 @@ ENV CH_AUTH_HTTP_LISTENADDR=0.0.0.0:8080 \
     CH_AUTH_ZIPKIN_COLLECTOR=nop
 VOLUME ["/keys", "/storage"]
 EXPOSE 8080 8888
-ENTRYPOINT ["/ch-auth"]
+ENTRYPOINT ["/auth"]

@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"bitbucket.org/exonch/ch-auth/storages"
-	"bitbucket.org/exonch/ch-auth/token"
+	"git.containerum.net/ch/auth/storages"
+	"git.containerum.net/ch/auth/token"
 	"bitbucket.org/exonch/ch-grpc/auth"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/opentracing/opentracing-go"
