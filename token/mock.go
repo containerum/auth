@@ -6,7 +6,7 @@ import (
 	"errors"
 
 	"git.containerum.net/ch/auth/utils"
-	"bitbucket.org/exonch/ch-grpc/common"
+	"git.containerum.net/ch/grpc-proto-files/common"
 )
 
 var _ IssuerValidator = &MockIssuerValidator{}

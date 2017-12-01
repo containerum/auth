@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"git.containerum.net/ch/auth/utils"
-	"bitbucket.org/exonch/ch-grpc/common"
+	"git.containerum.net/ch/grpc-proto-files/common"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/sirupsen/logrus"
 )
