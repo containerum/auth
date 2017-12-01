@@ -8,7 +8,7 @@ import (
 
 	"git.containerum.net/ch/auth/token"
 	"git.containerum.net/ch/auth/utils"
-	"bitbucket.org/exonch/ch-grpc/auth"
+	"git.containerum.net/ch/grpc-proto-files/auth"
 	. "github.com/smartystreets/goconvey/convey"
 )
 

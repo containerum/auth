@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"git.containerum.net/ch/auth/utils"
-	"bitbucket.org/exonch/ch-grpc/auth"
+	"git.containerum.net/ch/grpc-proto-files/auth"
 	"github.com/husobee/vestigo"
 	"github.com/opentracing/opentracing-go"
 )

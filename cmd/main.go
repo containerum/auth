@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"git.containerum.net/ch/auth/utils"
-	"bitbucket.org/exonch/ch-grpc/auth"
+	"git.containerum.net/ch/grpc-proto-files/auth"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"

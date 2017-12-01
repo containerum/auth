@@ -6,7 +6,7 @@ import (
 	"net"
 	"regexp"
 
-	"bitbucket.org/exonch/ch-grpc/auth"
+	"git.containerum.net/ch/grpc-proto-files/auth"
 )
 
 var uuidRegexp = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)

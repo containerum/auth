@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"bitbucket.org/exonch/ch-grpc/auth"
+	"git.containerum.net/ch/grpc-proto-files/auth"
 	"github.com/husobee/vestigo"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"

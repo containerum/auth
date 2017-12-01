@@ -8,7 +8,7 @@ import (
 
 	"git.containerum.net/ch/auth/token"
 	"git.containerum.net/ch/auth/utils"
-	"bitbucket.org/exonch/ch-grpc/auth"
+	"git.containerum.net/ch/grpc-proto-files/auth"
 	"bitbucket.org/exonch/ch-grpc/common"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/sirupsen/logrus"
