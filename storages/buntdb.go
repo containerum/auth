@@ -184,10 +184,14 @@ func (s *BuntDBStorage) CreateToken(ctx context.Context, req *auth.CreateTokenRe
 		return err
 	})
 
+	if err != nil {
+		return nil, err
+	}
+
 	return &auth.CreateTokenResponse{
 		AccessToken:  accessToken.Value,
 		RefreshToken: refreshToken.Value,
-	}, err
+	}, nil
 }
 
 func (s *BuntDBStorage) CheckToken(ctx context.Context, req *auth.CheckTokenRequest) (*auth.CheckTokenResponse, error) {
@@ -283,10 +287,14 @@ func (s *BuntDBStorage) ExtendToken(ctx context.Context, req *auth.ExtendTokenRe
 		return err
 	})
 
+	if err != nil {
+		return nil, err
+	}
+
 	return &auth.ExtendTokenResponse{
 		AccessToken:  accessToken.Value,
 		RefreshToken: refreshToken.Value,
-	}, err
+	}, nil
 }
 
 func (*BuntDBStorage) UpdateAccess(context.Context, *auth.UpdateAccessRequest) (*empty.Empty, error) {
