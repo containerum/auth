@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net"
 	"net/http"
 	"os"
@@ -13,6 +14,9 @@ import (
 	"github.com/opentracing/opentracing-go"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
+	"github.com/grpc-ecosystem/go-grpc-middleware/recovery"
+	"github.com/grpc-ecosystem/go-grpc-middleware"
+	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
 )
 
 type HTTPServer struct {
@@ -39,8 +43,18 @@ type GRPCServer struct {
 	server     *grpc.Server
 }
 
+func panicHandler(p interface{}) (err error) {
+	return fmt.Errorf("panic: %v", p)
+}
+
 func NewGRPCServer(listenAddr string, tracer opentracing.Tracer, storage auth.AuthServer) *GRPCServer {
-	server := grpc.NewServer(grpc.UnaryInterceptor(otgrpc.OpenTracingServerInterceptor(tracer, otgrpc.LogPayloads())))
+	server := grpc.NewServer(
+		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
+			otgrpc.OpenTracingServerInterceptor(tracer, otgrpc.LogPayloads()),
+			grpc_recovery.UnaryServerInterceptor(grpc_recovery.WithRecoveryHandler(panicHandler)),
+			grpc_logrus.UnaryServerInterceptor(logrus.WithField("component", "grpc_server")),
+		)),
+	)
 	auth.RegisterAuthServer(server, storage)
 	return &GRPCServer{
 		listenAddr: listenAddr,
