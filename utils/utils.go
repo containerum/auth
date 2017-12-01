@@ -8,7 +8,7 @@ import (
 
 	"strings"
 
-	"bitbucket.org/exonch/ch-grpc/common"
+	"git.containerum.net/ch/grpc-proto-files/common"
 	"github.com/mssola/user_agent"
 )
 

@@ -9,7 +9,7 @@ import (
 
 	"git.containerum.net/ch/auth/storages"
 	"git.containerum.net/ch/auth/token"
-	"bitbucket.org/exonch/ch-grpc/auth"
+	"git.containerum.net/ch/grpc-proto-files/auth"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/opentracing/opentracing-go"
 	"github.com/openzipkin/zipkin-go-opentracing"

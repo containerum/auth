@@ -7,7 +7,7 @@ import (
 
 	"git.containerum.net/ch/auth/utils"
 	"git.containerum.net/ch/grpc-proto-files/auth"
-	"bitbucket.org/exonch/ch-grpc/common"
+	"git.containerum.net/ch/grpc-proto-files/common"
 )
 
 type Kind int

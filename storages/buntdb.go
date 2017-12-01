@@ -9,7 +9,7 @@ import (
 	"git.containerum.net/ch/auth/token"
 	"git.containerum.net/ch/auth/utils"
 	"git.containerum.net/ch/grpc-proto-files/auth"
-	"bitbucket.org/exonch/ch-grpc/common"
+	"git.containerum.net/ch/grpc-proto-files/common"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/sirupsen/logrus"
 	"github.com/tidwall/buntdb"
