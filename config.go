@@ -78,8 +78,10 @@ func getJWTConfig() (cfg token.JWTIssuerValidatorConfig, err error) {
 		validationKeyBuf := make([]byte, base64.StdEncoding.DecodedLen(len(validationKeyFileCont)))
 		_, err := base64.StdEncoding.Decode(signingKeyBuf, signingKeyFileCont)
 		errs = appendError(errs, err)
+		cfg.SigningKey = signingKeyBuf
 		_, err = base64.StdEncoding.Decode(validationKeyBuf, validationKeyFileCont)
 		errs = appendError(errs, err)
+		cfg.ValidationKey = validationKeyBuf
 	}
 
 	err = setError(errs)
