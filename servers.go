@@ -17,6 +17,7 @@ import (
 	"github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	"github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
+	"runtime/debug"
 )
 
 type HTTPServer struct {
@@ -44,6 +45,8 @@ type GRPCServer struct {
 }
 
 func panicHandler(p interface{}) (err error) {
+	logrus.Errorf("panic: %v", p)
+	debug.PrintStack()
 	return fmt.Errorf("panic: %v", p)
 }
 
