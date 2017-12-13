@@ -1,6 +1,6 @@
 [submodule "vendor/git.containerum.net/ch/grpc-proto-files"]
 	path = vendor/git.containerum.net/ch/grpc-proto-files
-	url = https://git.containerum.net/ch/grpc-proto-files.git
+	url = ../grpc-proto-files.git
 [submodule "vendor/github.com/Shopify/sarama"]
 	path = vendor/github.com/Shopify/sarama
 	url = https://github.com/Shopify/sarama
