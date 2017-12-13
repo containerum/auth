@@ -7,6 +7,9 @@ stages:
     - export DATE=$(date +"%Y-%m-%d")
     - export TAG="${DATE}-${CI_COMMIT_SHA:0:8}"
 
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+
 build-master:
   <<: *create_tag
   services:
