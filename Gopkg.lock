@@ -104,10 +104,10 @@
   revision = "23c074d0eceb2b8a5bfdbb271ab780cde70f05a8"
 
 [[projects]]
+  branch = "master"
   name = "github.com/husobee/vestigo"
   packages = ["."]
-  revision = "8ad6f810576cc32c82c6e59d46003cd011b331a0"
-  version = "v1.0.2"
+  revision = "f8f5b5dc2bd74408887fd4b462055e324c4cbd63"
 
 [[projects]]
   name = "github.com/jtolds/gls"
@@ -281,7 +281,7 @@
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix","windows"]
-  revision = "d5840adf789d732bc8b00f37b26ca956a7cc8e79"
+  revision = "571f7bbbe08da2a8955aed9d4db316e78630e9a3"
 
 [[projects]]
   branch = "master"
@@ -310,6 +310,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "9d52b78b5ec8e73068c868a4721a738d7f505b6a3f6a1eec2a3af063b4213a8b"
+  inputs-digest = "e0f3690bad96735e6f76d20e476b8a1e9de1e938da2d45038d93c5f1b6468986"
   solver-name = "gps-cdcl"
   solver-version = 1
