@@ -25,7 +25,7 @@ build-and-push-develop:
   only:
     - develop
 
-deploy-to-kubernetes:
+deploy-to-kubernetes-develop:
   <<: *create_tag
   image: mastanggt/kubectl:latest
   stage: deploy
@@ -40,7 +40,7 @@ deploy-to-kubernetes:
     - develop
 
 
-build-test-mr:
+docker-build-test:
   <<: *create_tag
   services:
     - docker:dind
