@@ -5,9 +5,11 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"sync"
 
 	"runtime/debug"
+
+	"context"
+	"time"
 
 	"git.containerum.net/ch/auth/routes"
 	"git.containerum.net/ch/grpc-proto-files/auth"
@@ -23,21 +25,32 @@ import (
 
 type HTTPServer struct {
 	listenAddr string
-	router     *vestigo.Router
+	server     *http.Server
 }
 
 func NewHTTPServer(listenAddr string, tracer opentracing.Tracer, storage auth.AuthServer) *HTTPServer {
 	router := vestigo.NewRouter()
 	routes.SetupRoutes(router, tracer, storage)
+	server := &http.Server{
+		Addr:    listenAddr,
+		Handler: router,
+	}
 	return &HTTPServer{
 		listenAddr: listenAddr,
-		router:     router,
+		server:     server,
 	}
 }
 
 func (s *HTTPServer) Run() error {
 	logrus.WithField("listenAddr", s.listenAddr).Info("Starting HTTP server")
-	return http.ListenAndServe(s.listenAddr, s.router)
+	return s.server.ListenAndServe()
+}
+
+func (s *HTTPServer) Stop() error {
+	logrus.Info("Stopping HTTP server")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	return s.server.Shutdown(ctx)
 }
 
 type GRPCServer struct {
@@ -75,21 +88,32 @@ func (s *GRPCServer) Run() error {
 	return s.server.Serve(listener)
 }
 
-type Runnable interface {
-	Run() error
+func (s *GRPCServer) Stop() error {
+	logrus.Infof("Stopping GRPC server")
+	s.server.GracefulStop()
+	return nil
 }
 
-func RunServers(servers ...Runnable) {
-	wg := &sync.WaitGroup{}
-	wg.Add(len(servers))
+type Server interface {
+	Run() error
+	Stop() error
+}
+
+func RunServers(servers ...Server) {
 	for _, server := range servers {
-		go func(s Runnable) {
+		go func(s Server) {
 			if err := s.Run(); err != nil {
-				logrus.Errorf("run server: %v", err)
+				logrus.WithError(err).Error("Run server failed")
 				os.Exit(1)
 			}
-			wg.Done()
 		}(server)
 	}
-	wg.Wait()
+}
+
+func StopServers(servers ...Server) {
+	for _, server := range servers {
+		if err := server.Stop(); err != nil {
+			logrus.WithError(err).Error("Error at stopping server")
+		}
+	}
 }

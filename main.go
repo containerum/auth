@@ -3,9 +3,12 @@ package main
 import (
 	"fmt"
 
+	"os"
+
+	"os/signal"
+
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"os"
 )
 
 func logExit(err error) {
@@ -40,8 +43,15 @@ func main() {
 	storage, err := getStorage()
 	logExit(err)
 
-	RunServers(
+	servers := []Server{
 		NewHTTPServer(viper.GetString("http_listenaddr"), httpTracer, storage),
 		NewGRPCServer(viper.GetString("grpc_listenaddr"), grpcTracer, storage),
-	)
+	}
+
+	RunServers(servers...)
+
+	quit := make(chan os.Signal)
+	signal.Notify(quit, os.Interrupt)
+	<-quit
+	StopServers(servers...)
 }
