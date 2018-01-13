@@ -13,7 +13,7 @@ import (
 
 func logExit(err error) {
 	if err != nil {
-		logrus.Error(err)
+		logrus.WithError(err).Fatalf("Setup error")
 		os.Exit(1)
 	}
 }
@@ -24,12 +24,12 @@ func main() {
 
 	if err := logLevelSetup(); err != nil {
 		fmt.Println(err)
-		return
+		os.Exit(1)
 	}
 
 	if err := logModeSetup(); err != nil {
 		fmt.Println(err)
-		return
+		os.Exit(1)
 	}
 
 	viper.SetDefault("http_listenaddr", ":8080")
