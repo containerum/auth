@@ -23,37 +23,47 @@ import (
 	"google.golang.org/grpc"
 )
 
-type HTTPServer struct {
+type httpServer struct {
 	listenAddr string
 	server     *http.Server
 }
 
-func NewHTTPServer(listenAddr string, tracer opentracing.Tracer, storage auth.AuthServer) *HTTPServer {
+// Server interface for grpc, http, etc. servers
+type Server interface {
+	// Run starts server. Call must be blocking
+	Run() error
+
+	// Stop stops server. Server should support graceful shutdown
+	Stop() error
+}
+
+// NewHTTPServer returns server which servers REST requests
+func NewHTTPServer(listenAddr string, tracer opentracing.Tracer, storage auth.AuthServer) Server {
 	router := vestigo.NewRouter()
 	routes.SetupRoutes(router, tracer, storage)
 	server := &http.Server{
 		Addr:    listenAddr,
 		Handler: router,
 	}
-	return &HTTPServer{
+	return &httpServer{
 		listenAddr: listenAddr,
 		server:     server,
 	}
 }
 
-func (s *HTTPServer) Run() error {
+func (s *httpServer) Run() error {
 	logrus.WithField("listenAddr", s.listenAddr).Info("Starting HTTP server")
 	return s.server.ListenAndServe()
 }
 
-func (s *HTTPServer) Stop() error {
+func (s *httpServer) Stop() error {
 	logrus.Info("Stopping HTTP server")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	return s.server.Shutdown(ctx)
 }
 
-type GRPCServer struct {
+type grpcServer struct {
 	listenAddr string
 	server     *grpc.Server
 }
@@ -64,7 +74,8 @@ func panicHandler(p interface{}) (err error) {
 	return fmt.Errorf("panic: %v", p)
 }
 
-func NewGRPCServer(listenAddr string, tracer opentracing.Tracer, storage auth.AuthServer) *GRPCServer {
+// NewGRPCServer reteurns server which servers request using grpc protocol
+func NewGRPCServer(listenAddr string, tracer opentracing.Tracer, storage auth.AuthServer) Server {
 	server := grpc.NewServer(
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
 			otgrpc.OpenTracingServerInterceptor(tracer, otgrpc.LogPayloads()),
@@ -73,13 +84,13 @@ func NewGRPCServer(listenAddr string, tracer opentracing.Tracer, storage auth.Au
 		)),
 	)
 	auth.RegisterAuthServer(server, storage)
-	return &GRPCServer{
+	return &grpcServer{
 		listenAddr: listenAddr,
 		server:     server,
 	}
 }
 
-func (s *GRPCServer) Run() error {
+func (s *grpcServer) Run() error {
 	logrus.WithField("listenAddr", s.listenAddr).Infof("Starting GRPC server")
 	listener, err := net.Listen("tcp", s.listenAddr)
 	if err != nil {
@@ -88,17 +99,14 @@ func (s *GRPCServer) Run() error {
 	return s.server.Serve(listener)
 }
 
-func (s *GRPCServer) Stop() error {
+func (s *grpcServer) Stop() error {
 	logrus.Infof("Stopping GRPC server")
 	s.server.GracefulStop()
 	return nil
 }
 
-type Server interface {
-	Run() error
-	Stop() error
-}
-
+// RunServers runs multiple servers in dedicated goroutines.
+// Error on starting causes exit with code 1
 func RunServers(servers ...Server) {
 	for _, server := range servers {
 		go func(s Server) {
@@ -110,6 +118,8 @@ func RunServers(servers ...Server) {
 	}
 }
 
+// StopServers stops servers.
+// It should be triggered after receiving interrupt signal from OS.
 func StopServers(servers ...Server) {
 	for _, server := range servers {
 		if err := server.Stop(); err != nil {
