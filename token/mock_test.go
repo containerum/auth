@@ -13,8 +13,8 @@ func TestMockIssuerValidator(t *testing.T) {
 		Convey("generate and validate tokens", func() {
 			accessToken, refreshToken, err := mockiv.IssueTokens(ExtensionFields{})
 			So(err, ShouldBeNil)
-			So(accessToken.LifeTime, ShouldEqual, mockiv.returnedLifeTime)
-			So(refreshToken.LifeTime, ShouldEqual, mockiv.returnedLifeTime)
+			So(accessToken.LifeTime, ShouldEqual, mockiv.(*mockIssuerValidator).returnedLifeTime)
+			So(refreshToken.LifeTime, ShouldEqual, mockiv.(*mockIssuerValidator).returnedLifeTime)
 			So(accessToken.ID, ShouldResemble, refreshToken.ID)
 
 			valid, err := mockiv.ValidateToken(accessToken.Value)
