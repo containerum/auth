@@ -40,19 +40,19 @@ func TestJWTFlow(t *testing.T) {
 		accessToken, refreshToken, err := jwtiv.IssueTokens(ExtensionFields{})
 		So(err, ShouldBeNil)
 		So(accessToken.LifeTime, ShouldEqual, testValidatorConfig.AccessTokenLifeTime)
-		So(accessToken.Id, ShouldResemble, refreshToken.Id)
+		So(accessToken.ID, ShouldResemble, refreshToken.ID)
 
 		result, err := jwtiv.ValidateToken(accessToken.Value)
 		So(err, ShouldBeNil)
 		So(result.Valid, ShouldBeTrue)
 		So(result.Kind, ShouldEqual, KindAccess)
-		So(accessToken.Id, ShouldResemble, result.Id)
+		So(accessToken.ID, ShouldResemble, result.ID)
 
 		result, err = jwtiv.ValidateToken(refreshToken.Value)
 		So(err, ShouldBeNil)
 		So(result.Valid, ShouldBeTrue)
 		So(result.Kind, ShouldEqual, KindRefresh)
-		So(accessToken.Id, ShouldResemble, result.Id)
+		So(accessToken.ID, ShouldResemble, result.ID)
 	})
 }
 
