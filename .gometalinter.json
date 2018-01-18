@@ -7,7 +7,6 @@
     }
   },
   "disable": ["gas"],
-  "enable": ["gas_nosec"],
   "fast": true,
   "vendor": true
 }
