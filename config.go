@@ -30,7 +30,7 @@ func setError(errs []string) error {
 	if len(errs) == 0 {
 		return nil
 	} else {
-		return errors.New(strings.Join(errs, "\n"))
+		return errors.New(strings.Join(errs, ";"))
 	}
 }
 
@@ -84,8 +84,7 @@ func getJWTConfig() (cfg token.JWTIssuerValidatorConfig, err error) {
 		cfg.ValidationKey = validationKeyBuf
 	}
 
-	err = setError(errs)
-	return
+	return cfg, setError(errs)
 }
 
 func getTokenIssuerValidator() (iv token.IssuerValidator, err error) {
