@@ -21,10 +21,6 @@ type (
 	children []*node
 )
 
-// middleware takes in HandlerFunc (which can be another middleware or handler)
-// and wraps it within another one
-type Middleware func(http.HandlerFunc) http.HandlerFunc
-
 // Router - The main vestigo router data structure
 type Router struct {
 	root       *node
@@ -68,57 +64,57 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 // Get - Helper method to add HTTP GET Method to router
-func (r *Router) Get(path string, handler http.HandlerFunc, middleware ...Middleware) {
-	r.Add(http.MethodGet, path, handler, middleware...)
+func (r *Router) Get(path string, handler http.HandlerFunc) {
+	r.Add(http.MethodGet, path, handler)
 }
 
 // Post - Helper method to add HTTP POST Method to router
-func (r *Router) Post(path string, handler http.HandlerFunc, middleware ...Middleware) {
-	r.Add(http.MethodPost, path, handler, middleware...)
+func (r *Router) Post(path string, handler http.HandlerFunc) {
+	r.Add(http.MethodPost, path, handler)
 }
 
 // Connect - Helper method to add HTTP CONNECT Method to router
-func (r *Router) Connect(path string, handler http.HandlerFunc, middleware ...Middleware) {
-	r.Add(http.MethodConnect, path, handler, middleware...)
+func (r *Router) Connect(path string, handler http.HandlerFunc) {
+	r.Add(http.MethodConnect, path, handler)
 }
 
 // Delete - Helper method to add HTTP DELETE Method to router
-func (r *Router) Delete(path string, handler http.HandlerFunc, middleware ...Middleware) {
-	r.Add(http.MethodDelete, path, handler, middleware...)
+func (r *Router) Delete(path string, handler http.HandlerFunc) {
+	r.Add(http.MethodDelete, path, handler)
 }
 
 // Patch - Helper method to add HTTP PATCH Method to router
-func (r *Router) Patch(path string, handler http.HandlerFunc, middleware ...Middleware) {
-	r.Add(http.MethodPatch, path, handler, middleware...)
+func (r *Router) Patch(path string, handler http.HandlerFunc) {
+	r.Add(http.MethodPatch, path, handler)
 }
 
 // Put - Helper method to add HTTP PUT Method to router
-func (r *Router) Put(path string, handler http.HandlerFunc, middleware ...Middleware) {
-	r.Add(http.MethodPut, path, handler, middleware...)
+func (r *Router) Put(path string, handler http.HandlerFunc) {
+	r.Add(http.MethodPut, path, handler)
 }
 
 // Trace - Helper method to add HTTP TRACE Method to router
-func (r *Router) Trace(path string, handler http.HandlerFunc, middleware ...Middleware) {
-	r.Add(http.MethodTrace, path, handler, middleware...)
+func (r *Router) Trace(path string, handler http.HandlerFunc) {
+	r.Add(http.MethodTrace, path, handler)
 }
 
 // Handle - Helper method to add all HTTP Methods to router
-func (r *Router) Handle(path string, handler http.Handler, middleware ...Middleware) {
+func (r *Router) Handle(path string, handler http.Handler) {
 	for k := range methods {
 		if k == http.MethodHead || k == http.MethodOptions || k == http.MethodTrace {
 			continue
 		}
-		r.Add(k, path, handler.ServeHTTP, middleware...)
+		r.Add(k, path, handler.ServeHTTP)
 	}
 }
 
 // HandleFunc - Helper method to add all HTTP Methods to router
-func (r *Router) HandleFunc(path string, handler http.HandlerFunc, middleware ...Middleware) {
+func (r *Router) HandleFunc(path string, handler http.HandlerFunc) {
 	for k := range methods {
 		if k == http.MethodHead || k == http.MethodOptions || k == http.MethodTrace {
 			continue
 		}
-		r.Add(k, path, handler.ServeHTTP, middleware...)
+		r.Add(k, path, handler.ServeHTTP)
 	}
 }
 
@@ -128,13 +124,12 @@ func (r *Router) addWithCors(method, path string, h http.HandlerFunc, cors *Cors
 }
 
 // Add - Add a method/handler combination to the router
-func (r *Router) Add(method, path string, h http.HandlerFunc, middleware ...Middleware) {
-	r.add(method, path, h, nil, middleware...)
+func (r *Router) Add(method, path string, h http.HandlerFunc) {
+	r.add(method, path, h, nil)
 }
 
 // Add - Add a method/handler combination to the router
-func (r *Router) add(method, path string, h http.HandlerFunc, cors *CorsAccessControl, middleware ...Middleware) {
-	h = buildChain(h, middleware...)
+func (r *Router) add(method, path string, h http.HandlerFunc, cors *CorsAccessControl) {
 	pnames := make(pNames)
 	pnames[method] = []string{}
 
@@ -473,14 +468,4 @@ func (r *Router) insert(method, path string, h http.HandlerFunc, t ntype, pnames
 		}
 		return
 	}
-}
-
-func buildChain(f http.HandlerFunc, m ...Middleware) http.HandlerFunc {
-
-	// if our chain is done, use the original handlerfunc
-	if len(m) == 0 {
-		return f
-	}
-	// otherwise nest the handlerfuncs
-	return m[0](buildChain(f, m[1:cap(m)]...))
 }
