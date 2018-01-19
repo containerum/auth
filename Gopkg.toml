@@ -30,8 +30,8 @@
   name = "github.com/grpc-ecosystem/go-grpc-middleware"
 
 [[constraint]]
+  branch = "master"
   name = "github.com/husobee/vestigo"
-  version = "master"
 
 [[constraint]]
   name = "github.com/mssola/user_agent"
