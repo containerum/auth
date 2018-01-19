@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"git.containerum.net/ch/grpc-proto-files/auth"
 	"github.com/dgrijalva/jwt-go"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -31,7 +30,7 @@ var testValidatorConfig = JWTIssuerValidatorConfig{
 
 var testExtensionFields = ExtensionFields{
 	UserIDHash: "something",
-	Role:       auth.Role_USER.String(),
+	Role:       "user",
 }
 
 func TestJWTFlow(t *testing.T) {
