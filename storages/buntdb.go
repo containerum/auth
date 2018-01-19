@@ -167,20 +167,20 @@ func (s *BuntDBStorage) CreateToken(ctx context.Context, req *auth.CreateTokenRe
 		// remove already exist tokens
 		logger.Debug("Remove already exist tokens")
 		if err := s.deleteTokenByIdentity(tx, &tokenOwnerIdentity{
-			UserAgent:   req.UserAgent,
-			UserIP:      req.UserIp,
-			Fingerprint: req.Fingerprint,
+			UserAgent:   req.GetUserAgent(),
+			UserIP:      req.GetUserIp(),
+			Fingerprint: req.GetFingerprint(),
 		}); err != nil {
 			return err
 		}
 
 		// issue tokens
 		var err error
-		userIDHash := sha256.Sum256([]byte(req.UserId.Value))
+		userIDHash := sha256.Sum256([]byte(req.GetUserId().Value))
 		logger.WithField("userIDHash", userIDHash).Debug("Issue tokens")
 		accessToken, refreshToken, err = s.TokenFactory.IssueTokens(token.ExtensionFields{
 			UserIDHash: hex.EncodeToString(userIDHash[:]),
-			Role:       req.UserRole,
+			Role:       req.GetUserRole(),
 		})
 		if err != nil {
 			s.logger.WithError(err).Error("token issue failed")
@@ -213,7 +213,7 @@ func (s *BuntDBStorage) CheckToken(ctx context.Context, req *auth.CheckTokenRequ
 	logger := s.logger.WithField("request", req)
 
 	logger.Infof("Validating token")
-	valid, err := s.TokenFactory.ValidateToken(req.AccessToken)
+	valid, err := s.TokenFactory.ValidateToken(req.GetAccessToken())
 	if err != nil || !valid.Valid || valid.Kind != token.KindAccess {
 		return nil, errInvalidToken
 	}
@@ -230,7 +230,7 @@ func (s *BuntDBStorage) CheckToken(ctx context.Context, req *auth.CheckTokenRequ
 	if txErr := s.wrapTXError(err); txErr != nil {
 		return nil, err
 	}
-	if rec.UserIp != req.UserIp || rec.Fingerprint != req.FingerPrint {
+	if rec.UserIp != req.GetUserIp() || rec.Fingerprint != req.GetFingerPrint() {
 		return nil, errTokenNotOwnedBySender
 	}
 
@@ -254,7 +254,7 @@ func (s *BuntDBStorage) ExtendToken(ctx context.Context, req *auth.ExtendTokenRe
 
 	// validate received token
 	logger.Debugf("Validate token")
-	valid, err := s.TokenFactory.ValidateToken(req.RefreshToken)
+	valid, err := s.TokenFactory.ValidateToken(req.GetRefreshToken())
 	if err != nil {
 		s.logger.WithError(err).Info("malformed token received")
 		return nil, errInvalidToken
@@ -272,7 +272,7 @@ func (s *BuntDBStorage) ExtendToken(ctx context.Context, req *auth.ExtendTokenRe
 			return txErr
 		}
 		rec := s.unmarshalRecord(rawRec)
-		if rec.Fingerprint != req.Fingerprint {
+		if rec.Fingerprint != req.GetFingerprint() {
 			return errTokenNotOwnedBySender
 		}
 
@@ -329,7 +329,7 @@ func (s *BuntDBStorage) GetUserTokens(ctx context.Context, req *auth.GetUserToke
 	logger.Infof("Get user tokens")
 	resp := new(auth.GetUserTokensResponse)
 	err := s.db.View(func(tx *buntdb.Tx) error {
-		return s.forTokensByUsers(tx, req.UserId, func(key, value string) bool {
+		return s.forTokensByUsers(tx, req.GetUserId(), func(key, value string) bool {
 			rec := s.unmarshalRecord(value)
 			resp.Tokens = append(resp.Tokens, &auth.StoredTokenForUser{
 				TokenId:   rec.TokenId,
@@ -350,12 +350,12 @@ func (s *BuntDBStorage) DeleteToken(ctx context.Context, req *auth.DeleteTokenRe
 
 	logger.Infof("Delete token")
 	return new(empty.Empty), s.wrapTXError(s.db.Update(func(tx *buntdb.Tx) error {
-		value, err := tx.Delete(req.TokenId.Value)
+		value, err := tx.Delete(req.GetTokenId().Value)
 		if err != nil {
 			return err
 		}
 		rec := s.unmarshalRecord(value)
-		if !utils.UUIDEquals(rec.UserId, req.UserId) {
+		if !utils.UUIDEquals(rec.UserId, req.GetUserId()) {
 			err = errTokenNotOwnedBySender
 		}
 		return err
@@ -368,7 +368,7 @@ func (s *BuntDBStorage) DeleteUserTokens(ctx context.Context, req *auth.DeleteUs
 
 	logger.Infof("Delete user tokens")
 	return new(empty.Empty), s.wrapTXError(s.db.Update(func(tx *buntdb.Tx) error {
-		return s.deleteTokenByUser(tx, req.UserId)
+		return s.deleteTokenByUser(tx, req.GetUserId())
 	}))
 }
 
