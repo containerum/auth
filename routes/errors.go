@@ -28,7 +28,11 @@ func sendError(w http.ResponseWriter, err error) {
 	var code int
 	if grpcStatus, ok := status.FromError(err); ok {
 		body, _ = json.Marshal(errors.New(grpcStatus.Message()))
-		code = grpcutils.GRPCToHTTPCode[grpcStatus.Code()]
+		var haveCode bool
+		code, haveCode = grpcutils.GRPCToHTTPCode[grpcStatus.Code()]
+		if !haveCode {
+			code = http.StatusInternalServerError
+		}
 	} else {
 		body, _ = json.Marshal(errors.New(err.Error()))
 		code = http.StatusInternalServerError
