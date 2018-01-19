@@ -18,7 +18,7 @@ const (
 	HeaderUserID      = "X-User-ID"
 	HeaderUserIP      = "X-User-IP"
 	HeaderUserRole    = "X-User-Role"
-	HeaderPartTokenID = "X-User-Part-Token" // #nosec
+	HeaderPartTokenID = "X-User-Part-Token" // nolint: gas
 	HeaderTokenID     = "X-User-Token-ID"
 )
 

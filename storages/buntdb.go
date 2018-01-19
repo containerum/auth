@@ -212,9 +212,9 @@ func (s *BuntDBStorage) CheckToken(ctx context.Context, req *auth.CheckTokenRequ
 	var rec *auth.StoredToken
 	logger.Debugf("Find record in storage")
 	err = s.db.View(func(tx *buntdb.Tx) error {
-		rawRec, err := tx.Get(valid.ID.Value)
-		if err != nil {
-			return err
+		rawRec, getErr := tx.Get(valid.ID.Value)
+		if getErr != nil {
+			return getErr
 		}
 		rec = s.unmarshalRecord(rawRec)
 		return nil
@@ -254,9 +254,9 @@ func (s *BuntDBStorage) ExtendToken(ctx context.Context, req *auth.ExtendTokenRe
 	err = s.db.Update(func(tx *buntdb.Tx) error {
 		// identify token owner
 		logger.Debugf("Identify token owner")
-		rawRec, err := tx.Get(valid.ID.Value)
-		if err != nil {
-			return err
+		rawRec, getErr := tx.Get(valid.ID.Value)
+		if getErr != nil {
+			return getErr
 		}
 		rec := s.unmarshalRecord(rawRec)
 		if rec.Fingerprint != req.Fingerprint {
@@ -276,25 +276,25 @@ func (s *BuntDBStorage) ExtendToken(ctx context.Context, req *auth.ExtendTokenRe
 		// issue new tokens
 		userIDHash := sha256.Sum256([]byte(rec.UserId.Value))
 		logger.WithField("userIDHash", userIDHash).Debug("Issue new tokens")
-		accessToken, refreshToken, err = s.TokenFactory.IssueTokens(token.ExtensionFields{
+		accessToken, refreshToken, getErr = s.TokenFactory.IssueTokens(token.ExtensionFields{
 			UserIDHash: hex.EncodeToString(userIDHash[:]),
 			Role:       rec.UserRole.String(),
 		})
-		if err != nil {
-			return err
+		if getErr != nil {
+			return getErr
 		}
 		refreshTokenRecord := *rec
 		refreshTokenRecord.TokenId = refreshToken.ID
 
 		// store new tokens
 		logger.WithField("record", refreshTokenRecord).Debug("Store new tokens")
-		_, _, err = tx.Set(refreshToken.ID.Value,
+		_, _, getErr = tx.Set(refreshToken.ID.Value,
 			s.marshalRecord(&refreshTokenRecord),
 			&buntdb.SetOptions{
 				Expires: true,
 				TTL:     refreshToken.LifeTime,
 			})
-		return err
+		return getErr
 	})
 
 	if err != nil {
