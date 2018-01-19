@@ -14,7 +14,6 @@ var uuidRegexp = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-
 var standardHeaderValidators = validators{
 	"X-User-ID":         uuidValidator,
 	"X-User-IP":         ipValidator,
-	"X-User-Role":       roleValidator,
 	"X-User-Part-Token": uuidValidator,
 }
 
@@ -30,13 +29,6 @@ func ipValidator(value string) error {
 		return nil
 	}
 	return errors.New("invalid IP format")
-}
-
-func roleValidator(value string) error {
-	if _, ok := auth.Role_value[value]; ok {
-		return nil
-	}
-	return errors.New("invalid role")
 }
 
 func resourcesAccessBodyValidator(body []byte) error {

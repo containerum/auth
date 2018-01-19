@@ -68,7 +68,7 @@ func main() {
 			UserAgent:   userAgent,
 			Fingerprint: fingerprint,
 			UserId:      utils.NewUUID(),
-			UserRole:    auth.Role_USER,
+			UserRole:    "user",
 			RwAccess:    true,
 			Access:      &auth.ResourcesAccess{},
 			PartTokenId: nil,

@@ -28,21 +28,21 @@ var testCreateTokenRequest = &auth.CreateTokenRequest{
 	Fingerprint: "myfingerprint",
 	UserId:      utils.NewUUID(),
 	UserIp:      "127.0.0.1",
-	UserRole:    auth.Role_USER,
+	UserRole:    "user",
 	RwAccess:    true,
 	Access: &auth.ResourcesAccess{
 		Namespace: []*auth.AccessObject{
 			{
 				Label:  "ns1",
 				Id:     "ns1",
-				Access: auth.AccessLevel_OWNER,
+				Access: "owner",
 			},
 		},
 		Volume: []*auth.AccessObject{
 			{
 				Label:  "vol1",
 				Id:     "vol1",
-				Access: auth.AccessLevel_OWNER,
+				Access: "owner",
 			},
 		},
 	},
