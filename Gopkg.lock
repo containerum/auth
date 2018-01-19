@@ -4,8 +4,14 @@
 [[projects]]
   branch = "master"
   name = "git.containerum.net/ch/grpc-proto-files"
-  packages = ["auth","common"]
-  revision = "6a2a13ef872ed316b4a60dcc180395ea86b2c811"
+  packages = ["auth","common","utils"]
+  revision = "e1b1aaa600426e40dc1fc470c9f887f7f16fddef"
+
+[[projects]]
+  branch = "master"
+  name = "git.containerum.net/ch/json-types"
+  packages = ["errors"]
+  revision = "0427e400408db6e486f87f06596433fb84df0659"
 
 [[projects]]
   name = "github.com/Shopify/sarama"
@@ -310,6 +316,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "e0f3690bad96735e6f76d20e476b8a1e9de1e938da2d45038d93c5f1b6468986"
+  inputs-digest = "71a306a95941f60f54163439dd42ea77e3bb632f49deacd9c0c19ae965bcfa05"
   solver-name = "gps-cdcl"
   solver-version = 1
