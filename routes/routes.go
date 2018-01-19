@@ -75,7 +75,7 @@ func createTokenHandler(w http.ResponseWriter, r *http.Request) {
 		Fingerprint: r.Header.Get(HeaderFingerprint),
 		UserId:      utils.UUIDFromString(r.Header.Get(HeaderUserID)),
 		UserIp:      r.Header.Get(HeaderUserIP),
-		UserRole:    auth.Role(auth.Role_value[r.Header.Get(HeaderUserRole)]),
+		UserRole:    r.Header.Get(HeaderUserRole),
 		PartTokenId: utils.UUIDFromString(r.Header.Get(HeaderPartTokenID)),
 	}
 	body, _ := ioutil.ReadAll(r.Body)
@@ -116,7 +116,7 @@ func checkTokenHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Add(HeaderUserID, resp.UserId.Value)
-	w.Header().Add(HeaderUserRole, resp.UserRole.String())
+	w.Header().Add(HeaderUserRole, resp.UserRole)
 	w.Header().Add(HeaderTokenID, resp.TokenId.Value)
 	w.Header().Add(HeaderPartTokenID, resp.PartTokenId.Value)
 

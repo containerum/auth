@@ -169,7 +169,7 @@ func (s *BuntDBStorage) CreateToken(ctx context.Context, req *auth.CreateTokenRe
 		logger.WithField("userIDHash", userIDHash).Debug("Issue tokens")
 		accessToken, refreshToken, err = s.TokenFactory.IssueTokens(token.ExtensionFields{
 			UserIDHash: hex.EncodeToString(userIDHash[:]),
-			Role:       req.UserRole.String(),
+			Role:       req.UserRole,
 		})
 		if err != nil {
 			return err
@@ -278,7 +278,7 @@ func (s *BuntDBStorage) ExtendToken(ctx context.Context, req *auth.ExtendTokenRe
 		logger.WithField("userIDHash", userIDHash).Debug("Issue new tokens")
 		accessToken, refreshToken, getErr = s.TokenFactory.IssueTokens(token.ExtensionFields{
 			UserIDHash: hex.EncodeToString(userIDHash[:]),
-			Role:       rec.UserRole.String(),
+			Role:       rec.UserRole,
 		})
 		if getErr != nil {
 			return getErr
