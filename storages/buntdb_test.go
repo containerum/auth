@@ -204,7 +204,7 @@ func TestBuntDBExtra(t *testing.T) {
 				FingerPrint: "kek",
 				UserIp:      "127.0.0.1",
 			})
-			So(err, ShouldBeError, ErrInvalidToken)
+			So(err, ShouldBeError, errInvalidToken)
 		})
 
 		Convey("Extend non-extendable token", func() {
@@ -222,7 +222,7 @@ func TestBuntDBExtra(t *testing.T) {
 				RefreshToken: "not-token",
 				Fingerprint:  testCreateTokenRequest.Fingerprint,
 			})
-			So(err, ShouldBeError, ErrInvalidToken)
+			So(err, ShouldBeError, errInvalidToken)
 		})
 
 		Convey("Delete non-existing and not owned token", func() {

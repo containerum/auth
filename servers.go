@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net"
 	"net/http"
 	"os"
@@ -21,6 +20,8 @@ import (
 	"github.com/opentracing/opentracing-go"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type httpServer struct {
@@ -71,7 +72,7 @@ type grpcServer struct {
 func panicHandler(p interface{}) (err error) {
 	logrus.Errorf("panic: %v", p)
 	debug.PrintStack()
-	return fmt.Errorf("panic: %v", p)
+	return status.Errorf(codes.Internal, "panic: %v", p)
 }
 
 // NewGRPCServer reteurns server which servers request using grpc protocol

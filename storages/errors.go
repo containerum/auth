@@ -1,11 +1,13 @@
 package storages
 
-import "errors"
+import (
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+)
 
 var (
-	// ErrInvalidToken returned if token is not valid for operation
-	ErrInvalidToken = errors.New("invalid token received")
-
-	// ErrTokenNotOwnedBySender returned if user is not token owner
-	ErrTokenNotOwnedBySender = errors.New("can`t identify sender as token owner")
+	errInvalidToken          = status.Error(codes.InvalidArgument, "invalid token received")
+	errTokenNotOwnedBySender = status.Error(codes.PermissionDenied, "can`t identify sender as token owner")
+	errStorage               = status.Error(codes.Internal, "storage internal error")
+	errTokenFactory          = status.Error(codes.Internal, "token factory failed")
 )

@@ -4,18 +4,14 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"git.containerum.net/ch/auth/storages"
+	"git.containerum.net/ch/grpc-proto-files/utils"
+	"git.containerum.net/ch/json-types/errors"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/grpc/status"
 )
 
-type httpResponseErrorBody struct {
-	Error []string `json:"error"`
-}
-
 func sendErrorsWithCode(w http.ResponseWriter, errs []string, code int) {
-	body, err := json.Marshal(&httpResponseErrorBody{
-		Error: errs,
-	})
+	body, err := json.Marshal(errors.Format("%v", errs))
 	logrus.WithField("errors", errs).WithField("code", code).Debugf("Sending errors")
 	if err != nil {
 		logrus.Errorf("JSON Marshal: %v", err)
@@ -28,19 +24,21 @@ func sendErrorsWithCode(w http.ResponseWriter, errs []string, code int) {
 }
 
 func sendError(w http.ResponseWriter, err error) {
-	body, err := json.Marshal(&httpResponseErrorBody{
-		Error: []string{err.Error()},
-	})
+	var body []byte
 	var code int
-
-	switch err {
-	case storages.ErrInvalidToken, storages.ErrTokenNotOwnedBySender:
-		code = http.StatusUnauthorized
-	default:
+	if grpcStatus, ok := status.FromError(err); ok {
+		body, _ = json.Marshal(errors.New(grpcStatus.Message()))
+		var haveCode bool
+		code, haveCode = grpcutils.GRPCToHTTPCode[grpcStatus.Code()]
+		if !haveCode {
+			code = http.StatusInternalServerError
+		}
+	} else {
+		body, _ = json.Marshal(errors.New(err.Error()))
 		code = http.StatusInternalServerError
 	}
 
-	logrus.WithField("error", err).WithField("code", code).Debugf("Sending error")
+	logrus.WithError(err).WithField("code", code).Debugf("Sending error")
 	_, err = w.Write(body)
 	if err != nil {
 		logrus.Errorf("Response write: %v", err)
