@@ -5,7 +5,7 @@
   branch = "master"
   name = "git.containerum.net/ch/grpc-proto-files"
   packages = ["auth","common","utils"]
-  revision = "e1b1aaa600426e40dc1fc470c9f887f7f16fddef"
+  revision = "88c149b05138ce6362b2ffd66842176c6cfe4c8d"
 
 [[projects]]
   branch = "master"
