@@ -33,7 +33,7 @@ spec:
         group: local
     spec:
       containers:
-      - image: exon/ch-auth:v0.9
+      - image: ${IMAGE}
         name: ch-auth
         volumeMounts:
         - mountPath: '/keys'
