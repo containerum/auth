@@ -1,193 +1,161 @@
 package routes
 
 import (
-	"encoding/json"
-	"io/ioutil"
 	"net/http"
 
 	"git.containerum.net/ch/auth/utils"
 	"git.containerum.net/ch/grpc-proto-files/auth"
-	"github.com/husobee/vestigo"
-	"github.com/opentracing/opentracing-go"
+	"git.containerum.net/ch/json-types/errors"
+	umtypes "git.containerum.net/ch/json-types/user-manager"
+	"github.com/gin-gonic/gin"
 )
 
-// Headers used in REST mode
-const (
-	HeaderUserAgent   = "X-User-Agent"
-	HeaderFingerprint = "X-User-Fingerprint"
-	HeaderUserID      = "X-User-ID"
-	HeaderUserIP      = "X-User-IP"
-	HeaderUserRole    = "X-User-Role"
-	HeaderPartTokenID = "X-User-Part-Token" // nolint: gas
-	HeaderTokenID     = "X-User-Token-ID"
-)
+var srv auth.AuthServer
 
 // SetupRoutes sets up router and services needed for server operation
-func SetupRoutes(router *vestigo.Router, tracer opentracing.Tracer, storage auth.AuthServer) {
+func SetupRoutes(engine *gin.Engine, server auth.AuthServer) {
+	srv = server
+
+	group := engine.Group("/token")
+
 	// Create token
-	router.Post("/token", createTokenHandler,
-		newOpenTracingMiddleware(tracer, "Create Token"),
-		newStorageInjectionMiddleware(storage),
-		newHeaderValidationMiddleware(standardHeaderValidators),
-		newBodyValidationMiddleware(resourcesAccessBodyValidator))
+	group.POST("", requireHeaders(
+		umtypes.UserAgentHeader,
+		umtypes.FingerprintHeader,
+		umtypes.UserIDHeader,
+		umtypes.ClientIPHeader,
+		umtypes.UserRoleHeader,
+	), validateHeaders, createTokenHandler)
 
 	// Check token
-	router.Get("/token/:access_token", checkTokenHandler,
-		newOpenTracingMiddleware(tracer, "Check Token"),
-		newStorageInjectionMiddleware(storage),
-		newHeaderValidationMiddleware(standardHeaderValidators))
+	group.GET("/:access_token", requireHeaders(
+		umtypes.UserAgentHeader,
+		umtypes.FingerprintHeader,
+		umtypes.ClientIPHeader,
+	), validateHeaders, checkTokenHandler)
 
-	// Extend token
-	router.Put("/token/:refresh_token", extendTokenHandler,
-		newOpenTracingMiddleware(tracer, "Extend Token"),
-		newStorageInjectionMiddleware(storage),
-		newHeaderValidationMiddleware(standardHeaderValidators))
+	// Extend token (refresh only)
+	group.PUT("/:refresh_token", requireHeaders(umtypes.FingerprintHeader), validateHeaders, extendTokenHandler)
 
 	// Get user tokens
-	router.Get("/token", getUserTokensHandler,
-		newOpenTracingMiddleware(tracer, "Get user tokens"),
-		newStorageInjectionMiddleware(storage),
-		newHeaderValidationMiddleware(standardHeaderValidators))
+	group.GET("", requireHeaders(umtypes.UserIDHeader), validateHeaders, getUserTokensHandler)
 
 	// Delete token by ID
-	router.Delete("/token/:token_id", deleteTokenByIDHandler,
-		newOpenTracingMiddleware(tracer, "Delete token by ID"),
-		newStorageInjectionMiddleware(storage),
-		newParameterValidationMiddleware(validators{"token_id": uuidValidator}),
-		newHeaderValidationMiddleware(standardHeaderValidators))
+	group.DELETE("/:token_id", requireHeaders(umtypes.UserIDHeader),
+		validateHeaders,
+		validateURLParam("token_id", "uuid4"),
+		deleteTokenByIDHandler)
 
 	// Delete user tokens
-	router.Delete("/token/user/:user_id", deleteUserTokensHandler,
-		newStorageInjectionMiddleware(storage),
-		newParameterValidationMiddleware(validators{"user_id": uuidValidator}),
-		newOpenTracingMiddleware(tracer, "Delete user tokens"))
+	group.DELETE("/user", deleteUserTokensHandler)
 }
 
-var authServerContextKey = struct{}{}
-
-func authServerFromRequestContext(r *http.Request) auth.AuthServer {
-	return r.Context().Value(authServerContextKey).(auth.AuthServer)
-}
-
-func createTokenHandler(w http.ResponseWriter, r *http.Request) {
+func createTokenHandler(ctx *gin.Context) {
 	req := &auth.CreateTokenRequest{
-		UserAgent:   r.Header.Get(HeaderUserAgent),
-		Fingerprint: r.Header.Get(HeaderFingerprint),
-		UserId:      utils.UUIDFromString(r.Header.Get(HeaderUserID)),
-		UserIp:      r.Header.Get(HeaderUserIP),
-		UserRole:    r.Header.Get(HeaderUserRole),
-		PartTokenId: utils.UUIDFromString(r.Header.Get(HeaderPartTokenID)),
+		UserAgent:   ctx.GetHeader(umtypes.UserAgentHeader),
+		Fingerprint: ctx.GetHeader(umtypes.FingerprintHeader),
+		UserId:      utils.UUIDFromString(ctx.GetHeader(umtypes.UserIDHeader)),
+		UserIp:      ctx.GetHeader(umtypes.ClientIPHeader),
+		UserRole:    ctx.GetHeader(umtypes.UserRoleHeader),
+		PartTokenId: utils.UUIDFromString(ctx.GetHeader(umtypes.PartTokenIDHeader)),
 	}
-	body, _ := ioutil.ReadAll(r.Body)
-	defer r.Body.Close()
-	json.Unmarshal(body, &req.Access)
 
-	resp, err := authServerFromRequestContext(r).CreateToken(r.Context(), req)
+	resp, err := srv.CreateToken(ctx.Request.Context(), req)
 	if err != nil {
-		sendError(w, err)
+		ctx.AbortWithStatusJSON(handleServerError(err))
 		return
 	}
 
-	body, _ = json.Marshal(resp)
-
-	w.Write(body)
+	ctx.JSON(http.StatusOK, resp)
 }
 
-func checkTokenHandler(w http.ResponseWriter, r *http.Request) {
+func checkTokenHandler(ctx *gin.Context) {
 	req := &auth.CheckTokenRequest{
-		AccessToken: vestigo.Param(r, "access_token"),
-		UserAgent:   r.Header.Get(HeaderUserAgent),
-		FingerPrint: r.Header.Get(HeaderFingerprint),
-		UserIp:      r.Header.Get(HeaderUserIP),
+		AccessToken: ctx.Param("access_token"),
+		UserAgent:   ctx.GetHeader(umtypes.UserAgentHeader),
+		FingerPrint: ctx.GetHeader(umtypes.FingerprintHeader),
+		UserIp:      ctx.GetHeader(umtypes.ClientIPHeader),
 	}
 
-	defer r.Body.Close()
-
-	resp, err := authServerFromRequestContext(r).CheckToken(r.Context(), req)
+	resp, err := srv.CheckToken(ctx.Request.Context(), req)
 	if err != nil {
-		sendError(w, err)
+		ctx.AbortWithStatusJSON(handleServerError(err))
 		return
 	}
 
-	var checkTokenResponseBody = struct {
-		Access *auth.ResourcesAccess `json:"access"`
-	}{
-		Access: resp.Access,
-	}
+	ctx.Set(umtypes.UserIDHeader, resp.UserId.Value)
+	ctx.Set(umtypes.UserRoleHeader, resp.UserRole)
+	ctx.Set(umtypes.TokenIDHeader, resp.TokenId.Value)
+	ctx.Set(umtypes.PartTokenIDHeader, resp.PartTokenId.Value)
 
-	w.Header().Add(HeaderUserID, resp.UserId.Value)
-	w.Header().Add(HeaderUserRole, resp.UserRole)
-	w.Header().Add(HeaderTokenID, resp.TokenId.Value)
-	w.Header().Add(HeaderPartTokenID, resp.PartTokenId.Value)
-
-	body, _ := json.Marshal(checkTokenResponseBody)
-
-	w.Write(body)
+	ctx.JSON(http.StatusOK, gin.H{
+		"access": resp.Access,
+	})
 }
 
-func extendTokenHandler(w http.ResponseWriter, r *http.Request) {
+func extendTokenHandler(ctx *gin.Context) {
 	req := &auth.ExtendTokenRequest{
-		RefreshToken: vestigo.Param(r, "refresh_token"),
-		Fingerprint:  r.Header.Get(HeaderFingerprint),
+		RefreshToken: ctx.Param("refresh_token"),
+		Fingerprint:  ctx.GetHeader(umtypes.FingerprintHeader),
 	}
 
-	defer r.Body.Close()
-
-	resp, err := authServerFromRequestContext(r).ExtendToken(r.Context(), req)
+	resp, err := srv.ExtendToken(ctx.Request.Context(), req)
 	if err != nil {
-		sendError(w, err)
+		ctx.AbortWithStatusJSON(handleServerError(err))
 		return
 	}
 
-	body, _ := json.Marshal(resp)
-
-	w.Write(body)
+	ctx.JSON(http.StatusOK, resp)
 }
 
-func getUserTokensHandler(w http.ResponseWriter, r *http.Request) {
+func getUserTokensHandler(ctx *gin.Context) {
 	req := &auth.GetUserTokensRequest{
-		UserId: utils.UUIDFromString(r.Header.Get(HeaderUserID)),
+		UserId: utils.UUIDFromString(ctx.GetHeader(umtypes.UserIDHeader)),
 	}
 
-	defer r.Body.Close()
-
-	resp, err := authServerFromRequestContext(r).GetUserTokens(r.Context(), req)
+	resp, err := srv.GetUserTokens(ctx.Request.Context(), req)
 	if err != nil {
-		sendError(w, err)
+		ctx.AbortWithStatusJSON(handleServerError(err))
 		return
 	}
 
-	body, _ := json.Marshal(resp)
-
-	w.Write(body)
+	ctx.JSON(http.StatusOK, resp)
 }
 
-func deleteTokenByIDHandler(w http.ResponseWriter, r *http.Request) {
+func deleteTokenByIDHandler(ctx *gin.Context) {
 	req := &auth.DeleteTokenRequest{
-		TokenId: utils.UUIDFromString(vestigo.Param(r, "token_id")),
-		UserId:  utils.UUIDFromString(r.Header.Get(HeaderUserID)),
+		TokenId: utils.UUIDFromString(ctx.Param("token_id")),
+		UserId:  utils.UUIDFromString(ctx.GetHeader(umtypes.UserIDHeader)),
 	}
 
-	defer r.Body.Close()
-
-	_, err := authServerFromRequestContext(r).DeleteToken(r.Context(), req)
+	_, err := srv.DeleteToken(ctx.Request.Context(), req)
 	if err != nil {
-		sendError(w, err)
+		ctx.AbortWithStatusJSON(handleServerError(err))
 		return
 	}
 
+	ctx.Status(http.StatusOK)
 }
 
-func deleteUserTokensHandler(w http.ResponseWriter, r *http.Request) {
-	req := &auth.DeleteUserTokensRequest{
-		UserId: utils.UUIDFromString(vestigo.Param(r, "user_id")),
-	}
+func deleteUserTokensHandler(ctx *gin.Context) {
+	query := struct {
+		UserID string `form:"user_id" binding:"uuid4"`
+	}{}
 
-	defer r.Body.Close()
-
-	_, err := authServerFromRequestContext(r).DeleteUserTokens(r.Context(), req)
-	if err != nil {
-		sendError(w, err)
+	if err := ctx.ShouldBindQuery(&query); err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, errors.New(err.Error()))
 		return
 	}
+
+	req := &auth.DeleteUserTokensRequest{
+		UserId: utils.UUIDFromString(query.UserID),
+	}
+
+	_, err := srv.DeleteUserTokens(ctx.Request.Context(), req)
+	if err != nil {
+		ctx.AbortWithStatusJSON(handleServerError(err))
+		return
+	}
+
+	ctx.Status(http.StatusOK)
 }

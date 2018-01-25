@@ -6,9 +6,12 @@ import (
 	"context"
 	"testing"
 
+	"os"
+
 	"git.containerum.net/ch/auth/token"
 	"git.containerum.net/ch/auth/utils"
 	"git.containerum.net/ch/grpc-proto-files/auth"
+	"github.com/sirupsen/logrus"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -21,6 +24,15 @@ func initTestBuntDBStorage() *BuntDBStorage {
 		panic(err)
 	}
 	return testBuntDBStorage
+}
+
+func TestMain(m *testing.M) {
+	if os.Getenv("TEST_DEBUG") != "" {
+		logrus.SetLevel(logrus.DebugLevel)
+	} else {
+		logrus.SetLevel(logrus.PanicLevel)
+	}
+	os.Exit(m.Run())
 }
 
 var testCreateTokenRequest = &auth.CreateTokenRequest{
@@ -57,7 +69,7 @@ func TestBuntDBNormal(t *testing.T) {
 			issuedTokens, err := storage.CreateToken(context.Background(), testCreateTokenRequest)
 			So(err, ShouldBeNil)
 			So(issuedTokens, ShouldNotBeNil)
-			Printf("\nGenerated issuedTokens: %v\n", issuedTokens)
+			logrus.Debugf("\nGenerated issuedTokens: %v\n", issuedTokens)
 
 			tvr, err := storage.CheckToken(context.Background(), &auth.CheckTokenRequest{
 				AccessToken: issuedTokens.AccessToken,
@@ -101,6 +113,14 @@ func TestBuntDBNormal(t *testing.T) {
 			So(storageErr, ShouldBeNil)
 			So(ter.AccessToken, ShouldNotEqual, issuedTokens.AccessToken)
 			So(ter.RefreshToken, ShouldNotEqual, issuedTokens.RefreshToken)
+
+			Convey("Old tokens should not be valid for refreshing", func() {
+				_, err := storage.ExtendToken(context.Background(), &auth.ExtendTokenRequest{
+					RefreshToken: issuedTokens.RefreshToken,
+					Fingerprint:  testCreateTokenRequest.Fingerprint,
+				})
+				So(err, ShouldEqual, errTokenNotFound)
+			})
 
 			Convey("Old tokens now should be invalid", func() {
 				_, err := storage.CheckToken(context.Background(), &auth.CheckTokenRequest{

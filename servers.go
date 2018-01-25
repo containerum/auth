@@ -12,11 +12,12 @@ import (
 
 	"git.containerum.net/ch/auth/routes"
 	"git.containerum.net/ch/grpc-proto-files/auth"
+	"github.com/gin-gonic/contrib/ginrus"
+	"github.com/gin-gonic/gin"
 	"github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
 	"github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	"github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
-	"github.com/husobee/vestigo"
 	"github.com/opentracing/opentracing-go"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -40,11 +41,16 @@ type Server interface {
 
 // NewHTTPServer returns server which servers REST requests
 func NewHTTPServer(listenAddr string, tracer opentracing.Tracer, storage auth.AuthServer) Server {
-	router := vestigo.NewRouter()
-	routes.SetupRoutes(router, tracer, storage)
+	engine := gin.New()
+
+	engine.Use(gin.RecoveryWithWriter(logrus.WithField("component", "gin_recovery").WriterLevel(logrus.ErrorLevel)))
+	engine.Use(ginrus.Ginrus(logrus.StandardLogger(), time.RFC3339, true))
+
+	routes.SetupRoutes(engine, storage)
+
 	server := &http.Server{
 		Addr:    listenAddr,
-		Handler: router,
+		Handler: engine,
 	}
 	return &httpServer{
 		listenAddr: listenAddr,

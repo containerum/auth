@@ -10,7 +10,7 @@
 [[projects]]
   branch = "master"
   name = "git.containerum.net/ch/json-types"
-  packages = ["errors"]
+  packages = ["errors","user-manager"]
   revision = "0427e400408db6e486f87f06596433fb84df0659"
 
 [[projects]]
@@ -62,6 +62,24 @@
   version = "v1.4.2"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/gin-contrib/sse"
+  packages = ["."]
+  revision = "22d885f9ecc78bf4ee5d72b937e4bbcdc58e8cae"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/gin-gonic/contrib"
+  packages = ["ginrus"]
+  revision = "dccbb4a462e965297e21372a9ad3ea05e0df3e5f"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/gin-gonic/gin"
+  packages = [".","binding","json","render"]
+  revision = "2fbb97117cda046278ad34bd7bac35cbc38c68d5"
+
+[[projects]]
   name = "github.com/go-logfmt/logfmt"
   packages = ["."]
   revision = "390ab7935ee28ec6b286364bba9b4dd6410cb3d5"
@@ -110,10 +128,10 @@
   revision = "23c074d0eceb2b8a5bfdbb271ab780cde70f05a8"
 
 [[projects]]
-  branch = "master"
-  name = "github.com/husobee/vestigo"
+  name = "github.com/json-iterator/go"
   packages = ["."]
-  revision = "f8f5b5dc2bd74408887fd4b462055e324c4cbd63"
+  revision = "f7279a603edee96fe7764d3de9c6ff8cf9970994"
+  version = "1.0.4"
 
 [[projects]]
   name = "github.com/jtolds/gls"
@@ -132,6 +150,12 @@
   packages = ["."]
   revision = "d419a98cdbed11a922bf76f257b7c4be79b50e73"
   version = "v1.7.4"
+
+[[projects]]
+  name = "github.com/mattn/go-isatty"
+  packages = ["."]
+  revision = "0360b2af4f38e8d38c7fce2a9f4e702702d73a39"
+  version = "v0.0.3"
 
 [[projects]]
   branch = "master"
@@ -272,6 +296,12 @@
   revision = "d4a8a3d30d5729f85edfba1745241f3a621d0359"
 
 [[projects]]
+  name = "github.com/ugorji/go"
+  packages = ["codec"]
+  revision = "9831f2c3ac1068a78f50999a30db84270f647af6"
+  version = "v1.1"
+
+[[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
@@ -308,6 +338,12 @@
   version = "v1.8.2"
 
 [[projects]]
+  name = "gopkg.in/go-playground/validator.v8"
+  packages = ["."]
+  revision = "5f1438d3fca68893a817e4a66806cea46a9e4ebf"
+  version = "v8.18.2"
+
+[[projects]]
   branch = "v2"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
@@ -316,6 +352,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "71a306a95941f60f54163439dd42ea77e3bb632f49deacd9c0c19ae965bcfa05"
+  inputs-digest = "145f5db9a936c379237e925101f1459be5977d711ca63bb5cea8105195ed4a1b"
   solver-name = "gps-cdcl"
   solver-version = 1

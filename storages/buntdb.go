@@ -1,8 +1,6 @@
 package storages
 
 import (
-	"encoding/json"
-
 	"encoding/hex"
 
 	"crypto/sha256"
@@ -12,11 +10,14 @@ import (
 	"git.containerum.net/ch/grpc-proto-files/auth"
 	"git.containerum.net/ch/grpc-proto-files/common"
 	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/json-iterator/go"
 	"github.com/sirupsen/logrus"
 	"github.com/tidwall/buntdb"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/status"
 )
+
+var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 const (
 	indexTokens = "tokens"
@@ -81,33 +82,33 @@ type tokenOwnerIdentity struct {
 func (s *BuntDBStorage) forTokensByIdentity(tx *buntdb.Tx,
 	identity *tokenOwnerIdentity,
 	iterator func(key, value string) bool) error {
-	pivot, _ := json.Marshal(auth.StoredToken{
+	pivot, err := json.Marshal(auth.StoredToken{
 		Platform:    utils.ShortUserAgent(identity.UserAgent),
 		UserIp:      identity.UserIP,
 		Fingerprint: identity.Fingerprint,
 	})
-	s.logger.WithField("pivot", pivot).Debugf("Iterating by identity")
+	s.logger.WithError(err).WithField("pivot", pivot).Debugf("Iterating by identity")
 	return tx.AscendEqual(indexTokens, string(pivot), iterator)
 }
 
 func (s *BuntDBStorage) forTokensByUsers(tx *buntdb.Tx, userID *common.UUID, iterator func(key, value string) bool) error {
-	pivot, _ := json.Marshal(auth.StoredToken{
+	pivot, err := json.Marshal(auth.StoredToken{
 		UserId: userID,
 	})
-	s.logger.WithField("pivot", pivot).Debugf("Iterating by user")
+	s.logger.WithError(err).WithField("pivot", pivot).Debugf("Iterating by user")
 	return tx.AscendEqual(indexUsers, string(pivot), iterator)
 }
 
 func (s *BuntDBStorage) marshalRecord(st *auth.StoredToken) string {
-	ret, _ := json.Marshal(st)
-	s.logger.WithField("record", st).Debugf("Marshal record")
+	ret, err := json.Marshal(st)
+	s.logger.WithError(err).WithField("record", st).Debugf("Marshal record")
 	return string(ret)
 }
 
 func (s *BuntDBStorage) unmarshalRecord(rawRecord string) *auth.StoredToken {
 	ret := new(auth.StoredToken)
-	json.Unmarshal([]byte(rawRecord), ret)
-	s.logger.WithField("rawRecord", rawRecord).Debugf("Unmarshal record")
+	err := json.Unmarshal([]byte(rawRecord), ret)
+	s.logger.WithError(err).WithField("rawRecord", rawRecord).Debugf("Unmarshal record")
 	return ret
 }
 
@@ -155,6 +156,15 @@ func (s *BuntDBStorage) wrapTXError(err error) error {
 	}
 	s.logger.WithError(err).Error("transaction error")
 	return errStorage
+}
+
+func (s *BuntDBStorage) handleGetError(err error) error {
+	switch err {
+	case buntdb.ErrNotFound:
+		return errTokenNotFound
+	default:
+		return err
+	}
 }
 
 // CreateToken creates token with parameters given in req. This operation is transactional.
@@ -222,7 +232,7 @@ func (s *BuntDBStorage) CheckToken(ctx context.Context, req *auth.CheckTokenRequ
 	err = s.db.View(func(tx *buntdb.Tx) error {
 		rawRec, getErr := tx.Get(valid.ID.Value)
 		if getErr != nil {
-			return getErr
+			return s.handleGetError(getErr)
 		}
 		rec = s.unmarshalRecord(rawRec)
 		return nil
@@ -269,7 +279,7 @@ func (s *BuntDBStorage) ExtendToken(ctx context.Context, req *auth.ExtendTokenRe
 		logger.Debugf("Identify token owner")
 		rawRec, txErr := tx.Get(valid.ID.Value)
 		if txErr != nil {
-			return txErr
+			return s.handleGetError(txErr)
 		}
 		rec := s.unmarshalRecord(rawRec)
 		if rec.Fingerprint != req.GetFingerprint() {
@@ -294,7 +304,7 @@ func (s *BuntDBStorage) ExtendToken(ctx context.Context, req *auth.ExtendTokenRe
 			Role:       rec.UserRole,
 		})
 		if txErr != nil {
-			s.logger.WithError(err).Error("token issue failed")
+			s.logger.WithError(txErr).Error("token issue failed")
 			return errTokenFactory
 		}
 		refreshTokenRecord := *rec
@@ -311,10 +321,14 @@ func (s *BuntDBStorage) ExtendToken(ctx context.Context, req *auth.ExtendTokenRe
 		return txErr
 	})
 
+	if err = s.wrapTXError(err); err != nil {
+		return nil, err
+	}
+
 	return &auth.ExtendTokenResponse{
 		AccessToken:  accessToken.Value,
 		RefreshToken: refreshToken.Value,
-	}, s.wrapTXError(err)
+	}, nil
 }
 
 // UpdateAccess currently not designed

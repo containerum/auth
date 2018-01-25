@@ -10,4 +10,5 @@ var (
 	errTokenNotOwnedBySender = status.Error(codes.PermissionDenied, "can`t identify sender as token owner")
 	errStorage               = status.Error(codes.Internal, "storage internal error")
 	errTokenFactory          = status.Error(codes.Internal, "token factory failed")
+	errTokenNotFound         = status.Error(codes.NotFound, "token was not found in storage")
 )
