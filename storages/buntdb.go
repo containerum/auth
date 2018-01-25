@@ -158,6 +158,15 @@ func (s *BuntDBStorage) wrapTXError(err error) error {
 	return errStorage
 }
 
+func (s *BuntDBStorage) handleGetError(err error) error {
+	switch err {
+	case buntdb.ErrNotFound:
+		return errTokenNotFound
+	default:
+		return err
+	}
+}
+
 // CreateToken creates token with parameters given in req. This operation is transactional.
 func (s *BuntDBStorage) CreateToken(ctx context.Context, req *auth.CreateTokenRequest) (*auth.CreateTokenResponse, error) {
 	logger := s.logger.WithField("request", req)
@@ -223,7 +232,7 @@ func (s *BuntDBStorage) CheckToken(ctx context.Context, req *auth.CheckTokenRequ
 	err = s.db.View(func(tx *buntdb.Tx) error {
 		rawRec, getErr := tx.Get(valid.ID.Value)
 		if getErr != nil {
-			return getErr
+			return s.handleGetError(getErr)
 		}
 		rec = s.unmarshalRecord(rawRec)
 		return nil
@@ -270,7 +279,7 @@ func (s *BuntDBStorage) ExtendToken(ctx context.Context, req *auth.ExtendTokenRe
 		logger.Debugf("Identify token owner")
 		rawRec, txErr := tx.Get(valid.ID.Value)
 		if txErr != nil {
-			return txErr
+			return s.handleGetError(txErr)
 		}
 		rec := s.unmarshalRecord(rawRec)
 		if rec.Fingerprint != req.GetFingerprint() {
