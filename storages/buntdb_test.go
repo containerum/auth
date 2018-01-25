@@ -114,6 +114,14 @@ func TestBuntDBNormal(t *testing.T) {
 			So(ter.AccessToken, ShouldNotEqual, issuedTokens.AccessToken)
 			So(ter.RefreshToken, ShouldNotEqual, issuedTokens.RefreshToken)
 
+			Convey("Old tokens should not be valid for refreshing", func() {
+				_, err := storage.ExtendToken(context.Background(), &auth.ExtendTokenRequest{
+					RefreshToken: issuedTokens.RefreshToken,
+					Fingerprint:  testCreateTokenRequest.Fingerprint,
+				})
+				So(err, ShouldEqual, errTokenNotFound)
+			})
+
 			Convey("Old tokens now should be invalid", func() {
 				_, err := storage.CheckToken(context.Background(), &auth.CheckTokenRequest{
 					AccessToken: issuedTokens.AccessToken,
@@ -149,14 +157,6 @@ func TestBuntDBNormal(t *testing.T) {
 				So(gtr.Tokens, ShouldHaveLength, 1)
 				So(gtr.Tokens[0].UserAgent, ShouldResemble, testCreateTokenRequest.UserAgent)
 				So(gtr.Tokens[0].Ip, ShouldResemble, testCreateTokenRequest.UserIp)
-			})
-
-			Convey("Old tokens should not be valid for refreshing", func() {
-				_, storageErr := storage.ExtendToken(context.Background(), &auth.ExtendTokenRequest{
-					RefreshToken: issuedTokens.RefreshToken,
-					Fingerprint:  testCreateTokenRequest.Fingerprint,
-				})
-				So(storageErr, ShouldEqual, errTokenNotFound)
 			})
 		})
 

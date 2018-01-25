@@ -304,7 +304,7 @@ func (s *BuntDBStorage) ExtendToken(ctx context.Context, req *auth.ExtendTokenRe
 			Role:       rec.UserRole,
 		})
 		if txErr != nil {
-			s.logger.WithError(err).Error("token issue failed")
+			s.logger.WithError(txErr).Error("token issue failed")
 			return errTokenFactory
 		}
 		refreshTokenRecord := *rec
@@ -321,10 +321,14 @@ func (s *BuntDBStorage) ExtendToken(ctx context.Context, req *auth.ExtendTokenRe
 		return txErr
 	})
 
+	if err = s.wrapTXError(err); err != nil {
+		return nil, err
+	}
+
 	return &auth.ExtendTokenResponse{
 		AccessToken:  accessToken.Value,
 		RefreshToken: refreshToken.Value,
-	}, s.wrapTXError(err)
+	}, nil
 }
 
 // UpdateAccess currently not designed
