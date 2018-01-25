@@ -82,33 +82,33 @@ type tokenOwnerIdentity struct {
 func (s *BuntDBStorage) forTokensByIdentity(tx *buntdb.Tx,
 	identity *tokenOwnerIdentity,
 	iterator func(key, value string) bool) error {
-	pivot, _ := json.Marshal(auth.StoredToken{
+	pivot, err := json.Marshal(auth.StoredToken{
 		Platform:    utils.ShortUserAgent(identity.UserAgent),
 		UserIp:      identity.UserIP,
 		Fingerprint: identity.Fingerprint,
 	})
-	s.logger.WithField("pivot", pivot).Debugf("Iterating by identity")
+	s.logger.WithError(err).WithField("pivot", pivot).Debugf("Iterating by identity")
 	return tx.AscendEqual(indexTokens, string(pivot), iterator)
 }
 
 func (s *BuntDBStorage) forTokensByUsers(tx *buntdb.Tx, userID *common.UUID, iterator func(key, value string) bool) error {
-	pivot, _ := json.Marshal(auth.StoredToken{
+	pivot, err := json.Marshal(auth.StoredToken{
 		UserId: userID,
 	})
-	s.logger.WithField("pivot", pivot).Debugf("Iterating by user")
+	s.logger.WithError(err).WithField("pivot", pivot).Debugf("Iterating by user")
 	return tx.AscendEqual(indexUsers, string(pivot), iterator)
 }
 
 func (s *BuntDBStorage) marshalRecord(st *auth.StoredToken) string {
-	ret, _ := json.Marshal(st)
-	s.logger.WithField("record", st).Debugf("Marshal record")
+	ret, err := json.Marshal(st)
+	s.logger.WithError(err).WithField("record", st).Debugf("Marshal record")
 	return string(ret)
 }
 
 func (s *BuntDBStorage) unmarshalRecord(rawRecord string) *auth.StoredToken {
 	ret := new(auth.StoredToken)
-	json.Unmarshal([]byte(rawRecord), ret)
-	s.logger.WithField("rawRecord", rawRecord).Debugf("Unmarshal record")
+	err := json.Unmarshal([]byte(rawRecord), ret)
+	s.logger.WithError(err).WithField("rawRecord", rawRecord).Debugf("Unmarshal record")
 	return ret
 }
 
