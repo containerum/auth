@@ -1,8 +1,6 @@
 package storages
 
 import (
-	"encoding/json"
-
 	"encoding/hex"
 
 	"crypto/sha256"
@@ -12,11 +10,14 @@ import (
 	"git.containerum.net/ch/grpc-proto-files/auth"
 	"git.containerum.net/ch/grpc-proto-files/common"
 	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/json-iterator/go"
 	"github.com/sirupsen/logrus"
 	"github.com/tidwall/buntdb"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/status"
 )
+
+var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 const (
 	indexTokens = "tokens"
