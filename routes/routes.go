@@ -5,7 +5,6 @@ import (
 
 	"git.containerum.net/ch/auth/utils"
 	"git.containerum.net/ch/grpc-proto-files/auth"
-	"git.containerum.net/ch/json-types/errors"
 	umtypes "git.containerum.net/ch/json-types/user-manager"
 	"github.com/gin-gonic/gin"
 )
@@ -16,38 +15,51 @@ var srv auth.AuthServer
 func SetupRoutes(engine *gin.Engine, server auth.AuthServer) {
 	srv = server
 
-	group := engine.Group("/token")
+	token := engine.Group("/token")
+	{
+		// Create token
+		token.POST("", requireHeaders(
+			umtypes.UserAgentHeader,
+			umtypes.FingerprintHeader,
+			umtypes.UserIDHeader,
+			umtypes.ClientIPHeader,
+			umtypes.UserRoleHeader,
+		), validateHeaders, createTokenHandler)
 
-	// Create token
-	group.POST("", requireHeaders(
-		umtypes.UserAgentHeader,
-		umtypes.FingerprintHeader,
-		umtypes.UserIDHeader,
-		umtypes.ClientIPHeader,
-		umtypes.UserRoleHeader,
-	), validateHeaders, createTokenHandler)
+		// Check token
+		token.GET("/:access_token", requireHeaders(
+			umtypes.UserAgentHeader,
+			umtypes.FingerprintHeader,
+			umtypes.ClientIPHeader,
+		), validateHeaders, checkTokenHandler)
 
-	// Check token
-	group.GET("/:access_token", requireHeaders(
-		umtypes.UserAgentHeader,
-		umtypes.FingerprintHeader,
-		umtypes.ClientIPHeader,
-	), validateHeaders, checkTokenHandler)
+		// Get user tokens
+		token.GET("",
+			requireHeaders(umtypes.UserIDHeader),
+			validateHeaders,
+			getUserTokensHandler)
 
-	// Extend token (refresh only)
-	group.PUT("/:refresh_token", requireHeaders(umtypes.FingerprintHeader), validateHeaders, extendTokenHandler)
+		// Extend token (refresh only)
+		token.PUT("/:refresh_token",
+			requireHeaders(umtypes.FingerprintHeader),
+			validateHeaders,
+			extendTokenHandler)
 
-	// Get user tokens
-	group.GET("", requireHeaders(umtypes.UserIDHeader), validateHeaders, getUserTokensHandler)
+		// Delete token by ID
+		token.DELETE("/:token_id",
+			requireHeaders(umtypes.UserIDHeader),
+			validateHeaders,
+			validateURLParam("token_id", "uuid4"),
+			deleteTokenByIDHandler)
+	}
 
-	// Delete token by ID
-	group.DELETE("/:token_id", requireHeaders(umtypes.UserIDHeader),
-		validateHeaders,
-		validateURLParam("token_id", "uuid4"),
-		deleteTokenByIDHandler)
-
-	// Delete user tokens
-	group.DELETE("/user", deleteUserTokensHandler)
+	user := engine.Group("/user")
+	{
+		// Delete user tokens
+		user.DELETE("/:user_id/tokens",
+			validateURLParam("user_id", "uuid4"),
+			deleteUserTokensHandler)
+	}
 }
 
 func createTokenHandler(ctx *gin.Context) {
@@ -138,17 +150,8 @@ func deleteTokenByIDHandler(ctx *gin.Context) {
 }
 
 func deleteUserTokensHandler(ctx *gin.Context) {
-	query := struct {
-		UserID string `form:"user_id" binding:"uuid4"`
-	}{}
-
-	if err := ctx.ShouldBindQuery(&query); err != nil {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, errors.New(err.Error()))
-		return
-	}
-
 	req := &auth.DeleteUserTokensRequest{
-		UserId: utils.UUIDFromString(query.UserID),
+		UserId: utils.UUIDFromString(ctx.Param("user_id")),
 	}
 
 	_, err := srv.DeleteUserTokens(ctx.Request.Context(), req)
