@@ -5,7 +5,6 @@ import (
 
 	"git.containerum.net/ch/auth/utils"
 	"git.containerum.net/ch/grpc-proto-files/auth"
-	"git.containerum.net/ch/json-types/errors"
 	umtypes "git.containerum.net/ch/json-types/user-manager"
 	"github.com/gin-gonic/gin"
 )
@@ -151,17 +150,8 @@ func deleteTokenByIDHandler(ctx *gin.Context) {
 }
 
 func deleteUserTokensHandler(ctx *gin.Context) {
-	query := struct {
-		UserID string `form:"user_id" binding:"uuid4"`
-	}{}
-
-	if err := ctx.ShouldBindQuery(&query); err != nil {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, errors.New(err.Error()))
-		return
-	}
-
 	req := &auth.DeleteUserTokensRequest{
-		UserId: utils.UUIDFromString(query.UserID),
+		UserId: utils.UUIDFromString(ctx.Param("user_id")),
 	}
 
 	_, err := srv.DeleteUserTokens(ctx.Request.Context(), req)
