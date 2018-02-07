@@ -33,6 +33,9 @@ type jwtIssuerValidator struct {
 // NewJWTIssuerValidator sets up validator for self-contained JSON Web Tokens
 func NewJWTIssuerValidator(config JWTIssuerValidatorConfig) IssuerValidator {
 	logrus.WithField("config", config).Info("Initialized jwtIssuerValidator")
+	jwt.TimeFunc = func() time.Time {
+		return time.Now().UTC()
+	}
 	return &jwtIssuerValidator{
 		config: config,
 		logger: logrus.WithField("component", "jwtIssuerValidator"),
@@ -40,12 +43,13 @@ func NewJWTIssuerValidator(config JWTIssuerValidatorConfig) IssuerValidator {
 }
 
 func (j *jwtIssuerValidator) issueToken(id *common.UUID, kind Kind, lifeTime time.Duration, extendedFields ExtensionFields) (token *IssuedToken, err error) {
+	now := jwt.TimeFunc()
 	claims := extendedClaims{
 		StandardClaims: jwt.StandardClaims{
 			Id:        id.Value,
 			Issuer:    j.config.Issuer,
-			IssuedAt:  time.Now().Unix(),
-			ExpiresAt: time.Now().Add(lifeTime).Unix(),
+			IssuedAt:  now.Unix(),
+			ExpiresAt: now.Add(lifeTime).Unix(),
 		},
 		ExtensionFields: extendedFields,
 		Kind:            kind,

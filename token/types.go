@@ -74,6 +74,13 @@ func EncodeAccessObjects(req []*auth.AccessObject) string {
 
 // DecodeAccessObjects decodes resource access object from database record
 func DecodeAccessObjects(value string) (ret []*auth.AccessObject) {
+	if len(value) >= 2 {
+		if value[0] == '\x00' {
+			value = string(value[1:])
+		}
+	} else {
+		return make([]*auth.AccessObject, 0)
+	}
 	decoded, err := base64.StdEncoding.DecodeString(value)
 	if err != nil {
 		logrus.WithError(err).Error("decode access objects failed")
