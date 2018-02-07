@@ -60,7 +60,13 @@ func NewHTTPServer(listenAddr string, tracer opentracing.Tracer, storage auth.Au
 
 func (s *httpServer) Run() error {
 	logrus.WithField("listenAddr", s.listenAddr).Info("Starting HTTP server")
-	return s.server.ListenAndServe()
+	err := s.server.ListenAndServe()
+	switch err {
+	case nil, http.ErrServerClosed:
+		return nil
+	default:
+		return err
+	}
 }
 
 func (s *httpServer) Stop() error {
