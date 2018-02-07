@@ -5,6 +5,7 @@ import (
 
 	"git.containerum.net/ch/auth/utils"
 	"git.containerum.net/ch/grpc-proto-files/auth"
+	"git.containerum.net/ch/json-types/errors"
 	umtypes "git.containerum.net/ch/json-types/user-manager"
 	"github.com/gin-gonic/gin"
 )
@@ -71,6 +72,17 @@ func createTokenHandler(ctx *gin.Context) {
 		UserRole:    ctx.GetHeader(umtypes.UserRoleHeader),
 		PartTokenId: utils.UUIDFromString(ctx.GetHeader(umtypes.PartTokenIDHeader)),
 	}
+
+	var access struct {
+		Access *auth.ResourcesAccess `json:"access" binding:"required"`
+	}
+
+	if err := ctx.ShouldBindJSON(&access); err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, errors.New(err.Error()))
+		return
+	}
+
+	req.Access = access.Access
 
 	resp, err := srv.CreateToken(ctx.Request.Context(), req)
 	if err != nil {
