@@ -107,13 +107,13 @@ func checkTokenHandler(ctx *gin.Context) {
 		return
 	}
 
-	ctx.Set(umtypes.UserIDHeader, resp.UserId.Value)
-	ctx.Set(umtypes.UserRoleHeader, resp.UserRole)
-	ctx.Set(umtypes.TokenIDHeader, resp.TokenId.Value)
-	ctx.Set(umtypes.PartTokenIDHeader, resp.PartTokenId.Value)
+	ctx.Set(umtypes.UserIDHeader, resp.GetUserId().GetValue())
+	ctx.Set(umtypes.UserRoleHeader, resp.GetUserRole())
+	ctx.Set(umtypes.TokenIDHeader, resp.GetTokenId().GetValue())
+	ctx.Set(umtypes.PartTokenIDHeader, resp.GetPartTokenId().GetValue())
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"access": resp.Access,
+		"access": resp.GetAccess(),
 	})
 }
 
