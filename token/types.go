@@ -109,12 +109,13 @@ func RequestToRecord(req *auth.CreateTokenRequest, token *IssuedToken) *auth.Sto
 		RwAccess:      req.GetRwAccess(),
 		UserIp:        req.GetUserIp(),
 		PartTokenId:   req.GetPartTokenId(),
+		LifeTime:      ptypes.DurationProto(token.LifeTime),
 	}
 	if token != nil {
 		ret.TokenId = token.ID
 	}
 	if ts, err := ptypes.TimestampProto(token.IssuedAt); err != nil {
-		logrus.WithError(err).Error("time.Time to ptypes.Timestamp failed")
+		logrus.WithError(err).Error("ptypes.TimestampProto() failed")
 	} else {
 		ret.CreatedAt = ts
 	}
