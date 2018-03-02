@@ -32,7 +32,7 @@ import proto "github.com/golang/protobuf/proto"
 import fmt "fmt"
 import math "math"
 import uuid "git.containerum.net/ch/grpc-proto-files/common"
-import google_protobuf1 "github.com/golang/protobuf/ptypes/empty"
+import google_protobuf2 "github.com/golang/protobuf/ptypes/empty"
 
 import (
 	context "golang.org/x/net/context"
@@ -423,10 +423,10 @@ type AuthClient interface {
 	CreateToken(ctx context.Context, in *CreateTokenRequest, opts ...grpc.CallOption) (*CreateTokenResponse, error)
 	CheckToken(ctx context.Context, in *CheckTokenRequest, opts ...grpc.CallOption) (*CheckTokenResponse, error)
 	ExtendToken(ctx context.Context, in *ExtendTokenRequest, opts ...grpc.CallOption) (*ExtendTokenResponse, error)
-	UpdateAccess(ctx context.Context, in *UpdateAccessRequest, opts ...grpc.CallOption) (*google_protobuf1.Empty, error)
+	UpdateAccess(ctx context.Context, in *UpdateAccessRequest, opts ...grpc.CallOption) (*google_protobuf2.Empty, error)
 	GetUserTokens(ctx context.Context, in *GetUserTokensRequest, opts ...grpc.CallOption) (*GetUserTokensResponse, error)
-	DeleteToken(ctx context.Context, in *DeleteTokenRequest, opts ...grpc.CallOption) (*google_protobuf1.Empty, error)
-	DeleteUserTokens(ctx context.Context, in *DeleteUserTokensRequest, opts ...grpc.CallOption) (*google_protobuf1.Empty, error)
+	DeleteToken(ctx context.Context, in *DeleteTokenRequest, opts ...grpc.CallOption) (*google_protobuf2.Empty, error)
+	DeleteUserTokens(ctx context.Context, in *DeleteUserTokensRequest, opts ...grpc.CallOption) (*google_protobuf2.Empty, error)
 }
 
 type authClient struct {
@@ -464,8 +464,8 @@ func (c *authClient) ExtendToken(ctx context.Context, in *ExtendTokenRequest, op
 	return out, nil
 }
 
-func (c *authClient) UpdateAccess(ctx context.Context, in *UpdateAccessRequest, opts ...grpc.CallOption) (*google_protobuf1.Empty, error) {
-	out := new(google_protobuf1.Empty)
+func (c *authClient) UpdateAccess(ctx context.Context, in *UpdateAccessRequest, opts ...grpc.CallOption) (*google_protobuf2.Empty, error) {
+	out := new(google_protobuf2.Empty)
 	err := grpc.Invoke(ctx, "/Auth/UpdateAccess", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
@@ -482,8 +482,8 @@ func (c *authClient) GetUserTokens(ctx context.Context, in *GetUserTokensRequest
 	return out, nil
 }
 
-func (c *authClient) DeleteToken(ctx context.Context, in *DeleteTokenRequest, opts ...grpc.CallOption) (*google_protobuf1.Empty, error) {
-	out := new(google_protobuf1.Empty)
+func (c *authClient) DeleteToken(ctx context.Context, in *DeleteTokenRequest, opts ...grpc.CallOption) (*google_protobuf2.Empty, error) {
+	out := new(google_protobuf2.Empty)
 	err := grpc.Invoke(ctx, "/Auth/DeleteToken", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
@@ -491,8 +491,8 @@ func (c *authClient) DeleteToken(ctx context.Context, in *DeleteTokenRequest, op
 	return out, nil
 }
 
-func (c *authClient) DeleteUserTokens(ctx context.Context, in *DeleteUserTokensRequest, opts ...grpc.CallOption) (*google_protobuf1.Empty, error) {
-	out := new(google_protobuf1.Empty)
+func (c *authClient) DeleteUserTokens(ctx context.Context, in *DeleteUserTokensRequest, opts ...grpc.CallOption) (*google_protobuf2.Empty, error) {
+	out := new(google_protobuf2.Empty)
 	err := grpc.Invoke(ctx, "/Auth/DeleteUserTokens", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
@@ -506,10 +506,10 @@ type AuthServer interface {
 	CreateToken(context.Context, *CreateTokenRequest) (*CreateTokenResponse, error)
 	CheckToken(context.Context, *CheckTokenRequest) (*CheckTokenResponse, error)
 	ExtendToken(context.Context, *ExtendTokenRequest) (*ExtendTokenResponse, error)
-	UpdateAccess(context.Context, *UpdateAccessRequest) (*google_protobuf1.Empty, error)
+	UpdateAccess(context.Context, *UpdateAccessRequest) (*google_protobuf2.Empty, error)
 	GetUserTokens(context.Context, *GetUserTokensRequest) (*GetUserTokensResponse, error)
-	DeleteToken(context.Context, *DeleteTokenRequest) (*google_protobuf1.Empty, error)
-	DeleteUserTokens(context.Context, *DeleteUserTokensRequest) (*google_protobuf1.Empty, error)
+	DeleteToken(context.Context, *DeleteTokenRequest) (*google_protobuf2.Empty, error)
+	DeleteUserTokens(context.Context, *DeleteUserTokensRequest) (*google_protobuf2.Empty, error)
 }
 
 func RegisterAuthServer(s *grpc.Server, srv AuthServer) {
