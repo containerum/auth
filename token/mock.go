@@ -63,3 +63,7 @@ func (m *mockIssuerValidator) ValidateToken(token string) (result *ValidationRes
 		ID:    &common.UUID{Value: token[1:]},
 	}, nil
 }
+
+func (m *mockIssuerValidator) Now() time.Time {
+	return time.Now().UTC()
+}

@@ -101,3 +101,7 @@ func (j *jwtIssuerValidator) ValidateToken(token string) (result *ValidationResu
 	j.logger.WithField("result", validationResult).Debugf("Validated token: %s", token)
 	return validationResult, nil
 }
+
+func (j *jwtIssuerValidator) Now() time.Time {
+	return jwt.TimeFunc()
+}

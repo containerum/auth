@@ -60,6 +60,7 @@ type Validator interface {
 type IssuerValidator interface {
 	Issuer
 	Validator
+	Now() time.Time
 }
 
 // EncodeAccessObjects encodes resource access objects to store in database
