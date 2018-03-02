@@ -66,6 +66,7 @@ func (j *jwtIssuerValidator) issueToken(id *common.UUID, kind Kind, lifeTime tim
 	return &IssuedToken{
 		Value:    value,
 		ID:       id,
+		IssuedAt: now,
 		LifeTime: lifeTime,
 	}, err
 }

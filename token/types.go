@@ -9,6 +9,7 @@ import (
 	"git.containerum.net/ch/auth/utils"
 	"git.containerum.net/ch/grpc-proto-files/auth"
 	"git.containerum.net/ch/grpc-proto-files/common"
+	"github.com/golang/protobuf/ptypes"
 	"github.com/sirupsen/logrus"
 )
 
@@ -34,6 +35,7 @@ type ExtensionFields struct {
 type IssuedToken struct {
 	Value    string
 	ID       *common.UUID
+	IssuedAt time.Time
 	LifeTime time.Duration
 }
 
@@ -110,6 +112,11 @@ func RequestToRecord(req *auth.CreateTokenRequest, token *IssuedToken) *auth.Sto
 	}
 	if token != nil {
 		ret.TokenId = token.ID
+	}
+	if ts, err := ptypes.TimestampProto(token.IssuedAt); err != nil {
+		logrus.WithError(err).Error("time.Time to ptypes.Timestamp failed")
+	} else {
+		ret.CreatedAt = ts
 	}
 	return ret
 }
