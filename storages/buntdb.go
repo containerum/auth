@@ -5,10 +5,13 @@ import (
 
 	"crypto/sha256"
 
+	"time"
+
 	"git.containerum.net/ch/auth/token"
 	"git.containerum.net/ch/auth/utils"
 	"git.containerum.net/ch/grpc-proto-files/auth"
 	"git.containerum.net/ch/grpc-proto-files/common"
+	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/json-iterator/go"
 	"github.com/sirupsen/logrus"
@@ -186,7 +189,7 @@ func (s *BuntDBStorage) CreateToken(ctx context.Context, req *auth.CreateTokenRe
 
 		// issue tokens
 		var err error
-		userIDHash := sha256.Sum256([]byte(req.GetUserId().Value))
+		userIDHash := sha256.Sum256([]byte(req.GetUserId().GetValue()))
 		logger.WithField("userIDHash", userIDHash).Debug("Issue tokens")
 		accessToken, refreshToken, err = s.TokenFactory.IssueTokens(token.ExtensionFields{
 			UserIDHash: hex.EncodeToString(userIDHash[:]),
@@ -201,7 +204,7 @@ func (s *BuntDBStorage) CreateToken(ctx context.Context, req *auth.CreateTokenRe
 		logger.WithField("accessToken", accessToken).
 			WithField("refreshToken", refreshToken).
 			Debug("Store tokens")
-		_, _, err = tx.Set(refreshToken.ID.Value,
+		_, _, err = tx.Set(refreshToken.ID.GetValue(),
 			s.marshalRecord(token.RequestToRecord(req, refreshToken)),
 			&buntdb.SetOptions{
 				Expires: true,
@@ -209,11 +212,14 @@ func (s *BuntDBStorage) CreateToken(ctx context.Context, req *auth.CreateTokenRe
 			})
 		return err
 	})
+	if err != nil {
+		return nil, s.wrapTXError(err)
+	}
 
 	return &auth.CreateTokenResponse{
 		AccessToken:  accessToken.Value,
 		RefreshToken: refreshToken.Value,
-	}, s.wrapTXError(err)
+	}, nil
 }
 
 // CheckToken checks user token. Only access token may be checked.
@@ -230,7 +236,7 @@ func (s *BuntDBStorage) CheckToken(ctx context.Context, req *auth.CheckTokenRequ
 	var rec *auth.StoredToken
 	logger.Debugf("Find record in storage")
 	err = s.db.View(func(tx *buntdb.Tx) error {
-		rawRec, getErr := tx.Get(valid.ID.Value)
+		rawRec, getErr := tx.Get(valid.ID.GetValue())
 		if getErr != nil {
 			return s.handleGetError(getErr)
 		}
@@ -277,27 +283,27 @@ func (s *BuntDBStorage) ExtendToken(ctx context.Context, req *auth.ExtendTokenRe
 	err = s.db.Update(func(tx *buntdb.Tx) error {
 		// identify token owner
 		logger.Debugf("Identify token owner")
-		rawRec, txErr := tx.Get(valid.ID.Value)
+		rawRec, txErr := tx.Get(valid.ID.GetValue())
 		if txErr != nil {
 			return s.handleGetError(txErr)
 		}
 		rec := s.unmarshalRecord(rawRec)
-		if rec.Fingerprint != req.GetFingerprint() {
+		if rec.GetFingerprint() != req.GetFingerprint() {
 			return errTokenNotOwnedBySender
 		}
 
 		// remove old tokens
 		logger.WithField("record", rec).Debugf("Delete old token")
 		if delErr := s.deleteTokenByIdentity(tx, &tokenOwnerIdentity{
-			UserAgent:   rec.UserAgent,
-			UserIP:      rec.UserIp,
-			Fingerprint: rec.Fingerprint,
+			UserAgent:   rec.GetUserAgent(),
+			UserIP:      rec.GetUserIp(),
+			Fingerprint: rec.GetFingerprint(),
 		}); delErr != nil {
 			return delErr
 		}
 
 		// issue new tokens
-		userIDHash := sha256.Sum256([]byte(rec.UserId.Value))
+		userIDHash := sha256.Sum256([]byte(rec.UserId.GetValue()))
 		logger.WithField("userIDHash", userIDHash).Debug("Issue new tokens")
 		accessToken, refreshToken, txErr = s.TokenFactory.IssueTokens(token.ExtensionFields{
 			UserIDHash: hex.EncodeToString(userIDHash[:]),
@@ -312,7 +318,7 @@ func (s *BuntDBStorage) ExtendToken(ctx context.Context, req *auth.ExtendTokenRe
 
 		// store new tokens
 		logger.WithField("record", refreshTokenRecord).Debug("Store new tokens")
-		_, _, txErr = tx.Set(refreshToken.ID.Value,
+		_, _, txErr = tx.Set(refreshToken.ID.GetValue(),
 			s.marshalRecord(&refreshTokenRecord),
 			&buntdb.SetOptions{
 				Expires: true,
@@ -332,8 +338,54 @@ func (s *BuntDBStorage) ExtendToken(ctx context.Context, req *auth.ExtendTokenRe
 }
 
 // UpdateAccess currently not designed
-func (*BuntDBStorage) UpdateAccess(context.Context, *auth.UpdateAccessRequest) (*empty.Empty, error) {
-	panic("implement me")
+func (s *BuntDBStorage) UpdateAccess(ctx context.Context, req *auth.UpdateAccessRequest) (*empty.Empty, error) {
+	logger := s.logger.WithField("request", req)
+
+	logger.Infof("Update auth")
+	now := s.TokenFactory.Now()
+	err := s.db.Update(func(tx *buntdb.Tx) error {
+		for _, entry := range req.GetUsers() {
+			if entry == nil {
+				continue
+			}
+			kvToUpdate := make(map[string]*auth.StoredToken)
+			var setErr error
+			iterErr := s.forTokensByUsers(tx, entry.GetUserId(), func(key, value string) bool {
+				rec := s.unmarshalRecord(value)
+				rec.UserVolume = token.EncodeAccessObjects(entry.GetAccess().GetVolume())
+				rec.UserNamespace = token.EncodeAccessObjects(entry.GetAccess().GetNamespace())
+				kvToUpdate[key] = rec
+				return true
+			})
+			if iterErr != nil {
+				return iterErr
+			}
+			for key, rec := range kvToUpdate {
+				value := s.marshalRecord(rec)
+				var createdAt time.Time
+				if createdAt, setErr = ptypes.Timestamp(rec.CreatedAt); setErr != nil {
+					return setErr
+				}
+				var lifeTime time.Duration
+				if lifeTime, setErr = ptypes.Duration(rec.LifeTime); setErr != nil {
+					return setErr
+				}
+				_, _, setErr = tx.Set(key, value, &buntdb.SetOptions{
+					Expires: true,
+					TTL:     createdAt.Add(lifeTime).Sub(now), // set TTL to difference between end-of-life time and now
+				})
+				if setErr != nil {
+					return setErr
+				}
+			}
+			return nil
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, s.wrapTXError(err)
+	}
+	return &empty.Empty{}, nil
 }
 
 // GetUserTokens returns meta information (token id, user agent, user IP) for user
@@ -349,7 +401,7 @@ func (s *BuntDBStorage) GetUserTokens(ctx context.Context, req *auth.GetUserToke
 				TokenId:   rec.TokenId,
 				UserAgent: rec.UserAgent,
 				Ip:        rec.UserIp,
-				// CreatedAt is not stored in db
+				CreatedAt: rec.CreatedAt.String(),
 			})
 			return true
 		})

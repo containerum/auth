@@ -33,13 +33,15 @@ func (m *mockIssuerValidator) IssueTokens(extensionFields ExtensionFields) (acce
 		LifeTime: m.returnedLifeTime,
 		ID:       tokenID,
 	}
+	now := time.Now().UTC()
 	m.issuedTokens[tokenID.Value] = mockTokenRecord{
-		IssuedAt: time.Now(),
+		IssuedAt: now,
 	}
 	refreshToken = &IssuedToken{
 		Value:    "r" + tokenID.Value,
 		LifeTime: m.returnedLifeTime,
 		ID:       tokenID,
+		IssuedAt: now,
 	}
 	return
 }
@@ -60,4 +62,8 @@ func (m *mockIssuerValidator) ValidateToken(token string) (result *ValidationRes
 		Kind:  kind,
 		ID:    &common.UUID{Value: token[1:]},
 	}, nil
+}
+
+func (m *mockIssuerValidator) Now() time.Time {
+	return time.Now().UTC()
 }

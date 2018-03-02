@@ -22,6 +22,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/status"
 )
 
@@ -95,6 +96,10 @@ func NewGRPCServer(listenAddr string, tracer opentracing.Tracer, storage auth.Au
 			grpc_recovery.UnaryServerInterceptor(grpc_recovery.WithRecoveryHandler(panicHandler)),
 			grpc_logrus.UnaryServerInterceptor(logrus.WithField("component", "grpc_server")),
 		)),
+		grpc.KeepaliveEnforcementPolicy(keepalive.EnforcementPolicy{
+			MinTime:             5 * time.Second,
+			PermitWithoutStream: true,
+		}),
 	)
 	auth.RegisterAuthServer(server, storage)
 	return &grpcServer{

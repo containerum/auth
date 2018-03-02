@@ -66,6 +66,7 @@ func (j *jwtIssuerValidator) issueToken(id *common.UUID, kind Kind, lifeTime tim
 	return &IssuedToken{
 		Value:    value,
 		ID:       id,
+		IssuedAt: now,
 		LifeTime: lifeTime,
 	}, err
 }
@@ -99,4 +100,8 @@ func (j *jwtIssuerValidator) ValidateToken(token string) (result *ValidationResu
 	}
 	j.logger.WithField("result", validationResult).Debugf("Validated token: %s", token)
 	return validationResult, nil
+}
+
+func (j *jwtIssuerValidator) Now() time.Time {
+	return jwt.TimeFunc()
 }
