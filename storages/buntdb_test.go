@@ -206,6 +206,43 @@ func TestBuntDBNormal(t *testing.T) {
 			So(getErr, ShouldBeNil)
 			So(gtr.Tokens, ShouldHaveLength, 0)
 		})
+
+		Convey("Update resources access in token", func() {
+			issuedTokens, createErr := storage.CreateToken(context.Background(), testCreateTokenRequest)
+			So(createErr, ShouldBeNil)
+			tvr, checkErr := storage.CheckToken(context.Background(), &auth.CheckTokenRequest{
+				AccessToken: issuedTokens.AccessToken,
+				UserAgent:   testCreateTokenRequest.UserAgent,
+				FingerPrint: testCreateTokenRequest.Fingerprint,
+				UserIp:      testCreateTokenRequest.UserIp,
+			})
+			So(checkErr, ShouldBeNil)
+			So(tvr.Access, ShouldResemble, testCreateTokenRequest.Access)
+
+			newAccesses := &auth.ResourcesAccess{
+				Namespace: []*auth.AccessObject{
+					{Label: "a", Id: utils.NewUUID().GetValue(), Access: "owner"},
+				},
+				Volume: []*auth.AccessObject{
+					{Label: "b", Id: utils.NewUUID().GetValue(), Access: "owner"},
+				},
+			}
+
+			_, updErr := storage.UpdateAccess(context.Background(), &auth.UpdateAccessRequest{
+				Users: []*auth.UpdateAccessRequestElement{
+					{UserId: testCreateTokenRequest.UserId, Access: newAccesses},
+				},
+			})
+			So(updErr, ShouldBeNil)
+			tvr, checkErr = storage.CheckToken(context.Background(), &auth.CheckTokenRequest{
+				AccessToken: issuedTokens.AccessToken,
+				UserAgent:   testCreateTokenRequest.UserAgent,
+				FingerPrint: testCreateTokenRequest.Fingerprint,
+				UserIp:      testCreateTokenRequest.UserIp,
+			})
+			So(checkErr, ShouldBeNil)
+			So(tvr.Access, ShouldResemble, newAccesses)
+		})
 	})
 
 	Convey("Close storage", t, func() {
