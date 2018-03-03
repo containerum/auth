@@ -11,6 +11,8 @@ import (
 	"git.containerum.net/ch/auth/token"
 	"git.containerum.net/ch/auth/utils"
 	"git.containerum.net/ch/grpc-proto-files/auth"
+	"git.containerum.net/ch/kube-client/pkg/cherry"
+	"git.containerum.net/ch/kube-client/pkg/cherry/auth"
 	"github.com/sirupsen/logrus"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -119,7 +121,7 @@ func TestBuntDBNormal(t *testing.T) {
 					RefreshToken: issuedTokens.RefreshToken,
 					Fingerprint:  testCreateTokenRequest.Fingerprint,
 				})
-				So(err, ShouldEqual, errTokenNotFound)
+				So(err.(*cherry.Err).ID, ShouldResemble, autherr.ErrTokenNotFound().ID)
 			})
 
 			Convey("Old tokens now should be invalid", func() {
@@ -261,7 +263,7 @@ func TestBuntDBExtra(t *testing.T) {
 				FingerPrint: "kek",
 				UserIp:      "127.0.0.1",
 			})
-			So(err, ShouldBeError, errInvalidToken)
+			So(err.(*cherry.Err).ID.Kind, ShouldEqual, autherr.ErrInvalidToken().ID.Kind)
 		})
 
 		Convey("Extend non-extendable token", func() {
@@ -279,7 +281,7 @@ func TestBuntDBExtra(t *testing.T) {
 				RefreshToken: "not-token",
 				Fingerprint:  testCreateTokenRequest.Fingerprint,
 			})
-			So(err, ShouldBeError, errInvalidToken)
+			So(err.(*cherry.Err).ID.Kind, ShouldEqual, autherr.ErrInvalidToken().ID.Kind)
 		})
 
 		Convey("Delete non-existing and not owned token", func() {

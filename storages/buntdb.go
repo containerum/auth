@@ -11,13 +11,15 @@ import (
 	"git.containerum.net/ch/auth/utils"
 	"git.containerum.net/ch/grpc-proto-files/auth"
 	"git.containerum.net/ch/grpc-proto-files/common"
+	"git.containerum.net/ch/kube-client/pkg/cherry"
+	"git.containerum.net/ch/kube-client/pkg/cherry/adaptors/cherrylog"
+	"git.containerum.net/ch/kube-client/pkg/cherry/auth"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/json-iterator/go"
 	"github.com/sirupsen/logrus"
 	"github.com/tidwall/buntdb"
 	"golang.org/x/net/context"
-	"google.golang.org/grpc/status"
 )
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
@@ -39,7 +41,7 @@ type BuntDBStorageConfig struct {
 // Methods implementing it should retreive only grpc errors
 type BuntDBStorage struct {
 	db     *buntdb.DB
-	logger *logrus.Entry
+	logger *cherrylog.LogrusAdapter
 	BuntDBStorageConfig
 }
 
@@ -74,7 +76,7 @@ func NewBuntDBStorage(config BuntDBStorageConfig) (storage *BuntDBStorage, err e
 	return &BuntDBStorage{
 		db:                  db,
 		BuntDBStorageConfig: config,
-		logger:              logger,
+		logger:              cherrylog.NewLogrusAdapter(logger),
 	}, err
 }
 
@@ -90,7 +92,7 @@ func (s *BuntDBStorage) forTokensByIdentity(tx *buntdb.Tx,
 		UserIp:      identity.UserIP,
 		Fingerprint: identity.Fingerprint,
 	})
-	s.logger.WithError(err).WithField("pivot", pivot).Debugf("Iterating by identity")
+	s.logger.WithError(err).WithField("pivot", string(pivot)).Debugf("Iterating by identity")
 	return tx.AscendEqual(indexTokens, string(pivot), iterator)
 }
 
@@ -98,7 +100,7 @@ func (s *BuntDBStorage) forTokensByUsers(tx *buntdb.Tx, userID *common.UUID, ite
 	pivot, err := json.Marshal(auth.StoredToken{
 		UserId: userID,
 	})
-	s.logger.WithError(err).WithField("pivot", pivot).Debugf("Iterating by user")
+	s.logger.WithError(err).WithField("pivot", string(pivot)).Debugf("Iterating by user")
 	return tx.AscendEqual(indexUsers, string(pivot), iterator)
 }
 
@@ -154,23 +156,27 @@ func (s *BuntDBStorage) deleteTokenByUser(tx *buntdb.Tx, userID *common.UUID) er
 }
 
 func (s *BuntDBStorage) wrapTXError(err error) error {
-	if _, ok := status.FromError(err); ok { // forward grpc errors
-		return err
+	if err == nil {
+		return nil
 	}
-	s.logger.WithError(err).Error("transaction error")
-	return errStorage
+	switch err.(type) {
+	case *cherry.Err:
+		return err
+	default:
+		return autherr.ErrInternal().AddDetailsErr(err).Log(err, s.logger)
+	}
 }
 
 func (s *BuntDBStorage) handleGetError(err error) error {
 	switch err {
 	case buntdb.ErrNotFound:
-		return errTokenNotFound
+		return autherr.ErrTokenNotFound().Log(err, s.logger)
 	default:
-		return err
+		return autherr.ErrInternal().AddDetailsErr(err).Log(err, s.logger)
 	}
 }
 
-// CreateToken creates token with parameters given in req. This operation is transactional.
+// CreateToken creates token with parameters given in req.
 func (s *BuntDBStorage) CreateToken(ctx context.Context, req *auth.CreateTokenRequest) (*auth.CreateTokenResponse, error) {
 	logger := s.logger.WithField("request", req)
 
@@ -192,18 +198,19 @@ func (s *BuntDBStorage) CreateToken(ctx context.Context, req *auth.CreateTokenRe
 		userIDHash := sha256.Sum256([]byte(req.GetUserId().GetValue()))
 		logger.WithField("userIDHash", userIDHash).Debug("Issue tokens")
 		accessToken, refreshToken, err = s.TokenFactory.IssueTokens(token.ExtensionFields{
-			UserIDHash: hex.EncodeToString(userIDHash[:]),
-			Role:       req.GetUserRole(),
+			UserIDHash:  hex.EncodeToString(userIDHash[:]),
+			Role:        req.GetUserRole(),
+			PartTokenID: req.GetPartTokenId().GetValue(),
 		})
 		if err != nil {
 			s.logger.WithError(err).Error("token issue failed")
-			return errTokenFactory
+			return autherr.ErrInternal().AddDetailsErr(err).Log(err, s.logger)
 		}
 
 		// store tokens
 		logger.WithField("accessToken", accessToken).
 			WithField("refreshToken", refreshToken).
-			Debug("Store tokens")
+			Debugf("Store tokens")
 		_, _, err = tx.Set(refreshToken.ID.GetValue(),
 			s.marshalRecord(token.RequestToRecord(req, refreshToken)),
 			&buntdb.SetOptions{
@@ -231,7 +238,7 @@ func (s *BuntDBStorage) CheckToken(ctx context.Context, req *auth.CheckTokenRequ
 	logger.Infof("Validating token")
 	valid, err := s.TokenFactory.ValidateToken(req.GetAccessToken())
 	if err != nil || !valid.Valid || valid.Kind != token.KindAccess {
-		return nil, errInvalidToken
+		return nil, autherr.ErrInvalidToken()
 	}
 	var rec *auth.StoredToken
 	logger.Debugf("Find record in storage")
@@ -240,14 +247,15 @@ func (s *BuntDBStorage) CheckToken(ctx context.Context, req *auth.CheckTokenRequ
 		if getErr != nil {
 			return s.handleGetError(getErr)
 		}
+		println(rawRec)
 		rec = s.unmarshalRecord(rawRec)
 		return nil
 	})
 	if txErr := s.wrapTXError(err); txErr != nil {
 		return nil, err
 	}
-	if rec.UserIp != req.GetUserIp() || rec.Fingerprint != req.GetFingerPrint() {
-		return nil, errTokenNotOwnedBySender
+	if rec.GetUserIp() != req.GetUserIp() || rec.GetFingerprint() != req.GetFingerPrint() {
+		return nil, autherr.ErrTokenNotOwnedBySender()
 	}
 
 	return &auth.CheckTokenResponse{
@@ -273,10 +281,10 @@ func (s *BuntDBStorage) ExtendToken(ctx context.Context, req *auth.ExtendTokenRe
 	valid, err := s.TokenFactory.ValidateToken(req.GetRefreshToken())
 	if err != nil {
 		s.logger.WithError(err).Info("malformed token received")
-		return nil, errInvalidToken
+		return nil, autherr.ErrInvalidToken().Log(err, s.logger)
 	}
 	if !valid.Valid || valid.Kind != token.KindRefresh {
-		return nil, errInvalidToken
+		return nil, autherr.ErrInvalidToken()
 	}
 
 	var accessToken, refreshToken *token.IssuedToken
@@ -289,7 +297,7 @@ func (s *BuntDBStorage) ExtendToken(ctx context.Context, req *auth.ExtendTokenRe
 		}
 		rec := s.unmarshalRecord(rawRec)
 		if rec.GetFingerprint() != req.GetFingerprint() {
-			return errTokenNotOwnedBySender
+			return autherr.ErrTokenNotOwnedBySender()
 		}
 
 		// remove old tokens
@@ -311,7 +319,7 @@ func (s *BuntDBStorage) ExtendToken(ctx context.Context, req *auth.ExtendTokenRe
 		})
 		if txErr != nil {
 			s.logger.WithError(txErr).Error("token issue failed")
-			return errTokenFactory
+			return autherr.ErrInternal().Log(txErr, s.logger)
 		}
 		refreshTokenRecord := *rec
 		refreshTokenRecord.TokenId = refreshToken.ID
@@ -337,7 +345,7 @@ func (s *BuntDBStorage) ExtendToken(ctx context.Context, req *auth.ExtendTokenRe
 	}, nil
 }
 
-// UpdateAccess currently not designed
+// UpdateAccess updates resources accesses for user.
 func (s *BuntDBStorage) UpdateAccess(ctx context.Context, req *auth.UpdateAccessRequest) (*empty.Empty, error) {
 	logger := s.logger.WithField("request", req)
 
@@ -422,7 +430,7 @@ func (s *BuntDBStorage) DeleteToken(ctx context.Context, req *auth.DeleteTokenRe
 		}
 		rec := s.unmarshalRecord(value)
 		if !utils.UUIDEquals(rec.UserId, req.GetUserId()) {
-			err = errTokenNotOwnedBySender
+			err = autherr.ErrTokenNotOwnedBySender()
 		}
 		return err
 	}))
