@@ -12,18 +12,19 @@ import (
 
 	"git.containerum.net/ch/auth/routes"
 	"git.containerum.net/ch/grpc-proto-files/auth"
+	"git.containerum.net/ch/kube-client/pkg/cherry/adaptors/cherrygrpc"
+	"git.containerum.net/ch/kube-client/pkg/cherry/auth"
 	"github.com/gin-gonic/contrib/ginrus"
 	"github.com/gin-gonic/gin"
 	"github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
 	"github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	"github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
+	"github.com/json-iterator/go"
 	"github.com/opentracing/opentracing-go"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/keepalive"
-	"google.golang.org/grpc/status"
 )
 
 type httpServer struct {
@@ -85,17 +86,20 @@ type grpcServer struct {
 func panicHandler(p interface{}) (err error) {
 	logrus.Errorf("panic: %v", p)
 	debug.PrintStack()
-	return status.Errorf(codes.Internal, "panic: %v", p)
+	return autherr.ErrInternal()
 }
 
 // NewGRPCServer reteurns server which servers request using grpc protocol
 func NewGRPCServer(listenAddr string, tracer opentracing.Tracer, storage auth.AuthServer) Server {
+	cherrygrpc.JSONMarshal = jsoniter.ConfigFastest.Marshal
+	cherrygrpc.JSONUnmarshal = jsoniter.ConfigFastest.Unmarshal
 	server := grpc.NewServer(
-		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
+		grpc_middleware.WithUnaryServerChain(
+			cherrygrpc.UnaryServerInterceptor(autherr.ErrInternal()),
 			otgrpc.OpenTracingServerInterceptor(tracer, otgrpc.LogPayloads()),
 			grpc_recovery.UnaryServerInterceptor(grpc_recovery.WithRecoveryHandler(panicHandler)),
 			grpc_logrus.UnaryServerInterceptor(logrus.WithField("component", "grpc_server")),
-		)),
+		),
 		grpc.KeepaliveEnforcementPolicy(keepalive.EnforcementPolicy{
 			MinTime:             5 * time.Second,
 			PermitWithoutStream: true,

@@ -6,8 +6,7 @@
   name = "git.containerum.net/ch/grpc-proto-files"
   packages = [
     "auth",
-    "common",
-    "utils"
+    "common"
   ]
   revision = "3650097fee157162fc079fb87570279cbed50989"
 
@@ -19,6 +18,17 @@
     "user-manager"
   ]
   revision = "0427e400408db6e486f87f06596433fb84df0659"
+
+[[projects]]
+  branch = "develop"
+  name = "git.containerum.net/ch/kube-client"
+  packages = [
+    "pkg/cherry",
+    "pkg/cherry/adaptors/cherrygrpc",
+    "pkg/cherry/adaptors/cherrylog",
+    "pkg/cherry/auth"
+  ]
+  revision = "98d03e4a690b3c5ddbc207020000a3c77cfc73bc"
 
 [[projects]]
   name = "github.com/Shopify/sarama"
@@ -460,6 +470,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "50bfda16ef9494e3403313f432aef8d70a76de486714c1f86f65957e8bd5c85d"
+  inputs-digest = "c3681cd8b95b5fa8e03095f606697ddb00ab4d1cb80c29472fc13be0f244b5f4"
   solver-name = "gps-cdcl"
   solver-version = 1

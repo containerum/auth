@@ -1,22 +1,19 @@
 package routes
 
 import (
-	"net/http"
-
-	"git.containerum.net/ch/grpc-proto-files/utils"
-	"git.containerum.net/ch/json-types/errors"
-	"google.golang.org/grpc/status"
+	"git.containerum.net/ch/kube-client/pkg/cherry"
+	"git.containerum.net/ch/kube-client/pkg/cherry/auth"
 )
 
-func handleServerError(err error) (statusCode int, msg *errors.Error) {
-	if grpcErr, ok := status.FromError(err); ok {
-		if code, hasCode := grpcutils.GRPCToHTTPCode[grpcErr.Code()]; hasCode {
-			statusCode = code
-			msg = errors.New(grpcErr.Message())
-			return
-		}
+func handleServerError(err error) (statusCode int, ret *cherry.Err) {
+	switch err.(type) {
+	case *cherry.Err:
+		ret = err.(*cherry.Err)
+		statusCode = ret.StatusHTTP
+		return
+	default:
+		ret = autherr.ErrInternal()
+		statusCode = ret.StatusHTTP
+		return
 	}
-	statusCode = http.StatusInternalServerError
-	msg = errors.New(err.Error())
-	return
 }
