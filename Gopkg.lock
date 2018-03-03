@@ -28,7 +28,7 @@
     "pkg/cherry/adaptors/cherrylog",
     "pkg/cherry/auth"
   ]
-  revision = "98d03e4a690b3c5ddbc207020000a3c77cfc73bc"
+  revision = "1818f1cf51a719c661a6df9cb68233da2a98999a"
 
 [[projects]]
   name = "github.com/Shopify/sarama"

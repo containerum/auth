@@ -95,7 +95,7 @@ func NewGRPCServer(listenAddr string, tracer opentracing.Tracer, storage auth.Au
 	cherrygrpc.JSONUnmarshal = jsoniter.ConfigFastest.Unmarshal
 	server := grpc.NewServer(
 		grpc_middleware.WithUnaryServerChain(
-			cherrygrpc.UnaryServerInterceptor(autherr.ErrInternal()),
+			cherrygrpc.UnaryServerInterceptor(autherr.ErrInternal),
 			otgrpc.OpenTracingServerInterceptor(tracer, otgrpc.LogPayloads()),
 			grpc_recovery.UnaryServerInterceptor(grpc_recovery.WithRecoveryHandler(panicHandler)),
 			grpc_logrus.UnaryServerInterceptor(logrus.WithField("component", "grpc_server")),
