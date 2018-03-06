@@ -8,7 +8,7 @@
     "auth",
     "common"
   ]
-  revision = "3650097fee157162fc079fb87570279cbed50989"
+  revision = "d42e01553667e97a503636e968f23c51faa6393d"
 
 [[projects]]
   branch = "master"
@@ -117,7 +117,8 @@
   name = "github.com/go-playground/locales"
   packages = [
     ".",
-    "currency"
+    "currency",
+    "en"
   ]
   revision = "e4cbcb5d0652150d40ad0646651076b6bd2be4f6"
   version = "v0.11.2"
@@ -493,7 +494,10 @@
 
 [[projects]]
   name = "gopkg.in/go-playground/validator.v9"
-  packages = ["."]
+  packages = [
+    ".",
+    "translations/en"
+  ]
   revision = "1b8c8e19cd250435025214492d9a08411d760fdd"
   version = "v9.12.0"
 
@@ -506,6 +510,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "d7e8a56d7ef8816f8a302badadeac61c3a3f89fb2785f97c1055017e3bd7c3b6"
+  inputs-digest = "dafd973f5a1aea11f33299645dba7fec5e407b1a2024cfcd7320a18ccfcd466e"
   solver-name = "gps-cdcl"
   solver-version = 1
