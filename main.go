@@ -7,6 +7,8 @@ import (
 
 	"os/signal"
 
+	"git.containerum.net/ch/auth/validation"
+	"git.containerum.net/ch/kube-client/pkg/cherry/auth"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
@@ -42,6 +44,9 @@ func main() {
 
 	storage, err := getStorage()
 	logExit(err)
+
+	// wrap with validation proxy
+	storage = validation.NewValidationProxy(storage, validation.StandardAuthValidator(), autherr.ErrInternal /* TODO: use appropriate error */)
 
 	servers := []Server{
 		NewHTTPServer(viper.GetString("http_listenaddr"), httpTracer, storage),
