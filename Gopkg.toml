@@ -4,10 +4,6 @@
     unused-packages = true
 
 [[constraint]]
-  name = "github.com/dgrijalva/jwt-go"
-  version = "3.1.0"
-
-[[constraint]]
   branch = "master"
   name = "github.com/grpc-ecosystem/go-grpc-middleware"
 
@@ -50,3 +46,7 @@
 [[constraint]]
   branch = "master"
   name = "git.containerum.net/ch/utils"
+
+[[constraint]]
+  name = "gopkg.in/go-playground/validator.v9"
+  version = "9.12.0"

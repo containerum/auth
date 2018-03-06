@@ -29,7 +29,7 @@
     "pkg/cherry/adaptors/gonic",
     "pkg/cherry/auth"
   ]
-  revision = "1818f1cf51a719c661a6df9cb68233da2a98999a"
+  revision = "e50abb04837ee084f6fea580bb52bd0823dc848b"
 
 [[projects]]
   branch = "master"
@@ -112,6 +112,21 @@
   packages = ["."]
   revision = "390ab7935ee28ec6b286364bba9b4dd6410cb3d5"
   version = "v0.3.0"
+
+[[projects]]
+  name = "github.com/go-playground/locales"
+  packages = [
+    ".",
+    "currency"
+  ]
+  revision = "e4cbcb5d0652150d40ad0646651076b6bd2be4f6"
+  version = "v0.11.2"
+
+[[projects]]
+  name = "github.com/go-playground/universal-translator"
+  packages = ["."]
+  revision = "b32fa301c9fe55953584134cb6853a13c87ec0a1"
+  version = "v0.16.0"
 
 [[projects]]
   name = "github.com/gogo/protobuf"
@@ -477,6 +492,12 @@
   version = "v8.18.2"
 
 [[projects]]
+  name = "gopkg.in/go-playground/validator.v9"
+  packages = ["."]
+  revision = "1b8c8e19cd250435025214492d9a08411d760fdd"
+  version = "v9.12.0"
+
+[[projects]]
   branch = "v2"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
@@ -485,6 +506,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "c5dc5f7fd754531575a86d4e8e132fb99ade32e0fb71b733787eeac4b72d5a5f"
+  inputs-digest = "d7e8a56d7ef8816f8a302badadeac61c3a3f89fb2785f97c1055017e3bd7c3b6"
   solver-name = "gps-cdcl"
   solver-version = 1
