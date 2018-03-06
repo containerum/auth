@@ -14,10 +14,10 @@
   branch = "master"
   name = "git.containerum.net/ch/json-types"
   packages = [
-    "errors",
+    "misc",
     "user-manager"
   ]
-  revision = "0427e400408db6e486f87f06596433fb84df0659"
+  revision = "2b91a176625129c8b8d97820c4016459a89530d5"
 
 [[projects]]
   branch = "develop"
@@ -26,9 +26,16 @@
     "pkg/cherry",
     "pkg/cherry/adaptors/cherrygrpc",
     "pkg/cherry/adaptors/cherrylog",
+    "pkg/cherry/adaptors/gonic",
     "pkg/cherry/auth"
   ]
   revision = "1818f1cf51a719c661a6df9cb68233da2a98999a"
+
+[[projects]]
+  branch = "master"
+  name = "git.containerum.net/ch/utils"
+  packages = ["."]
+  revision = "302bb5f5a352450f2103891bd1d505019e70d7c0"
 
 [[projects]]
   name = "github.com/Shopify/sarama"
@@ -91,15 +98,14 @@
   revision = "dccbb4a462e965297e21372a9ad3ea05e0df3e5f"
 
 [[projects]]
-  branch = "master"
   name = "github.com/gin-gonic/gin"
   packages = [
     ".",
     "binding",
-    "json",
     "render"
   ]
-  revision = "2fbb97117cda046278ad34bd7bac35cbc38c68d5"
+  revision = "d459835d2b077e44f7c9b453505ee29881d5d12d"
+  version = "v1.2"
 
 [[projects]]
   name = "github.com/go-logfmt/logfmt"
@@ -174,6 +180,15 @@
     "json/token"
   ]
   revision = "23c074d0eceb2b8a5bfdbb271ab780cde70f05a8"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/jmoiron/sqlx"
+  packages = [
+    ".",
+    "reflectx"
+  ]
+  revision = "cf35089a197953c69420c8d0cecda90809764b1d"
 
 [[projects]]
   name = "github.com/json-iterator/go"
@@ -470,6 +485,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "c3681cd8b95b5fa8e03095f606697ddb00ab4d1cb80c29472fc13be0f244b5f4"
+  inputs-digest = "c5dc5f7fd754531575a86d4e8e132fb99ade32e0fb71b733787eeac4b72d5a5f"
   solver-name = "gps-cdcl"
   solver-version = 1

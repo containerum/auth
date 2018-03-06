@@ -42,3 +42,11 @@
 [[constraint]]
   branch = "develop"
   name = "git.containerum.net/ch/kube-client"
+
+[[constraint]]
+  branch = "master"
+  name = "git.containerum.net/ch/json-types"
+
+[[constraint]]
+  branch = "master"
+  name = "git.containerum.net/ch/utils"
