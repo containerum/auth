@@ -11,6 +11,8 @@ import (
 	"git.containerum.net/ch/auth/token"
 	"git.containerum.net/ch/grpc-proto-files/auth"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/go-playground/locales/en"
+	"github.com/go-playground/universal-translator"
 	"github.com/opentracing/opentracing-go"
 	"github.com/openzipkin/zipkin-go-opentracing"
 	"github.com/sirupsen/logrus"
@@ -206,4 +208,9 @@ func logLevelSetup() error {
 	}
 	logrus.SetLevel(level)
 	return nil
+}
+
+func setupTranslator() *ut.UniversalTranslator {
+	enLocale := en.New()
+	return ut.New(enLocale, enLocale)
 }

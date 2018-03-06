@@ -9,6 +9,7 @@ import (
 
 	"git.containerum.net/ch/auth/validation"
 	"git.containerum.net/ch/kube-client/pkg/cherry/auth"
+	"github.com/gin-gonic/gin/binding"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
@@ -45,8 +46,11 @@ func main() {
 	storage, err := getStorage()
 	logExit(err)
 
+	validator := validation.StandardAuthValidator(setupTranslator())
+	binding.Validator = &validation.GinValidatorV9{Validate: validator}
+
 	// wrap with validation proxy
-	storage = validation.NewValidationProxy(storage, validation.StandardAuthValidator(), autherr.ErrInternal /* TODO: use appropriate error */)
+	storage = validation.NewServerWrapper(storage, validator, autherr.ErrInternal /* TODO: use appropriate error */)
 
 	servers := []Server{
 		NewHTTPServer(viper.GetString("http_listenaddr"), httpTracer, storage),

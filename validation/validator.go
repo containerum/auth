@@ -1,12 +1,19 @@
 package validation
 
-import "gopkg.in/go-playground/validator.v8"
+import (
+	enLocale "github.com/go-playground/locales/en"
+	"github.com/go-playground/universal-translator"
+	"gopkg.in/go-playground/validator.v9"
+	enTranslations "gopkg.in/go-playground/validator.v9/translations/en"
+)
 
-// StandardAuthValidator sets up validator to validate requests
-func StandardAuthValidator() (ret *validator.Validate) {
-	ret = validator.New(&validator.Config{TagName: "validate"})
+// StandardAuthValidator sets up validator to Validate requests
+func StandardAuthValidator(uni *ut.UniversalTranslator) (ret *validator.Validate) {
+	ret = validator.New()
+	ret.SetTagName("binding")
 
-	// TODO: setup per-struct validation here
+	enTranslator, _ := uni.GetTranslator(enLocale.New().Locale())
+	enTranslations.RegisterDefaultTranslations(ret, enTranslator)
 
 	return
 }
