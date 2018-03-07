@@ -29,7 +29,7 @@
     "pkg/cherry/adaptors/gonic",
     "pkg/cherry/auth"
   ]
-  revision = "e50abb04837ee084f6fea580bb52bd0823dc848b"
+  revision = "45396fc40aa21d5e082a31cfbb27cbccab51dd05"
 
 [[projects]]
   branch = "master"
