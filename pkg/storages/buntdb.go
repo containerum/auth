@@ -148,7 +148,7 @@ func (s *BuntDBStorage) deleteTokenByUser(tx *buntdb.Tx, userID *authProto.UUID)
 	}
 	for _, v := range keysToDelete {
 		if _, err := tx.Delete(v); err != nil {
-			return err
+			return s.handleDeleteError(err)
 		}
 	}
 	return nil
@@ -167,6 +167,15 @@ func (s *BuntDBStorage) wrapTXError(err error) error {
 }
 
 func (s *BuntDBStorage) handleGetError(err error) error {
+	switch err {
+	case buntdb.ErrNotFound:
+		return autherr.ErrTokenNotFound().Log(err, s.logger)
+	default:
+		return autherr.ErrInternal().AddDetailsErr(err).Log(err, s.logger)
+	}
+}
+
+func (s *BuntDBStorage) handleDeleteError(err error) error {
 	switch err {
 	case buntdb.ErrNotFound:
 		return autherr.ErrTokenNotFound().Log(err, s.logger)
@@ -425,7 +434,7 @@ func (s *BuntDBStorage) DeleteToken(ctx context.Context, req *authProto.DeleteTo
 	return new(empty.Empty), s.wrapTXError(s.db.Update(func(tx *buntdb.Tx) error {
 		value, err := tx.Delete(req.GetTokenId().Value)
 		if err != nil {
-			return err
+			return s.handleDeleteError(err)
 		}
 		rec := s.unmarshalRecord(value)
 		if !utils.UUIDEquals(rec.UserId, req.GetUserId()) {
