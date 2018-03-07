@@ -25,15 +25,18 @@ func ShortUserAgent(userAgent string) string {
 
 // NewUUID generates a new UUID
 func NewUUID() *authProto.UUID {
-	b := make([]byte, 16)
-	_, err := rand.Read(b)
+	uuid := make([]byte, 16)
+	_, err := rand.Read(uuid)
 	if err != nil {
 		fmt.Println("Error: ", err)
 		return nil
 	}
 
+	uuid[6] = (uuid[6] & 0x0f) | 0x40 // Version 4
+	uuid[8] = (uuid[8] & 0x3f) | 0x80 // Variant is 10
+
 	return &authProto.UUID{
-		Value: fmt.Sprintf("%X-%X-%X-%X-%X", b[0:4], b[4:6], b[6:8], b[8:10], b[10:]),
+		Value: fmt.Sprintf("%X-%X-%X-%X-%X", uuid[0:4], uuid[4:6], uuid[6:8], uuid[8:10], uuid[10:]),
 	}
 }
 
