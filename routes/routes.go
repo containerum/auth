@@ -23,7 +23,7 @@ func SetupRoutes(engine *gin.Engine, server auth.AuthServer) {
 	{
 		// Create token
 		token.POST("", chutils.RequireHeaders(
-			autherr.ErrInternal, /* TODO: use appropriate error */
+			autherr.ErrValidation,
 			umtypes.UserAgentHeader,
 			umtypes.FingerprintHeader,
 			umtypes.UserIDHeader,
@@ -33,7 +33,7 @@ func SetupRoutes(engine *gin.Engine, server auth.AuthServer) {
 
 		// Check token
 		token.GET("/:access_token", chutils.RequireHeaders(
-			autherr.ErrInternal, /* TODO: use appropriate error */
+			autherr.ErrValidation,
 			umtypes.UserAgentHeader,
 			umtypes.FingerprintHeader,
 			umtypes.ClientIPHeader,
@@ -41,17 +41,17 @@ func SetupRoutes(engine *gin.Engine, server auth.AuthServer) {
 
 		// Get user tokens
 		token.GET("",
-			chutils.RequireHeaders(autherr.ErrInternal /* TODO: use appropriate error */, umtypes.UserIDHeader),
+			chutils.RequireHeaders(autherr.ErrValidation, umtypes.UserIDHeader),
 			getUserTokensHandler)
 
 		// Extend token (refresh only)
 		token.PUT("/:refresh_token",
-			chutils.RequireHeaders(autherr.ErrInternal /* TODO: use appropriate error */, umtypes.FingerprintHeader),
+			chutils.RequireHeaders(autherr.ErrValidation, umtypes.FingerprintHeader),
 			extendTokenHandler)
 
 		// Delete token by ID
 		token.DELETE("/:token_id",
-			chutils.RequireHeaders(autherr.ErrInternal /* TODO: use appropriate error */, umtypes.UserIDHeader),
+			chutils.RequireHeaders(autherr.ErrValidation, umtypes.UserIDHeader),
 			deleteTokenByIDHandler)
 	}
 
@@ -77,7 +77,7 @@ func createTokenHandler(ctx *gin.Context) {
 	}
 
 	if err := ctx.ShouldBindWith(&access, binding.JSON); err != nil {
-		gonic.Gonic(autherr.ErrInternal() /* TODO: use appropriate error */, ctx)
+		gonic.Gonic(autherr.ErrValidation().AddDetailsErr(err), ctx)
 		return
 	}
 

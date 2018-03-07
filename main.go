@@ -50,7 +50,7 @@ func main() {
 	binding.Validator = &validation.GinValidatorV9{Validate: validator}
 
 	// wrap with validation proxy
-	storage = validation.NewServerWrapper(storage, validator, autherr.ErrInternal /* TODO: use appropriate error */)
+	storage = validation.NewServerWrapper(storage, validator, autherr.ErrValidation)
 
 	servers := []Server{
 		NewHTTPServer(viper.GetString("http_listenaddr"), httpTracer, storage),
