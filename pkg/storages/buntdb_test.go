@@ -223,10 +223,10 @@ func TestBuntDBNormal(t *testing.T) {
 
 			newAccesses := &authProto.ResourcesAccess{
 				Namespace: []*authProto.AccessObject{
-					{Label: "a", Id: utils.NewUUID().GetValue(), Access: "owner"},
+					{Label: "a", Id: utils.NewUUID(), Access: "owner"},
 				},
 				Volume: []*authProto.AccessObject{
-					{Label: "b", Id: utils.NewUUID().GetValue(), Access: "owner"},
+					{Label: "b", Id: utils.NewUUID(), Access: "owner"},
 				},
 			}
 
