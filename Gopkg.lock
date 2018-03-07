@@ -26,7 +26,7 @@
   branch = "master"
   name = "git.containerum.net/ch/utils"
   packages = ["."]
-  revision = "8c7a6fb8694cb1e4a61ad36a9afea35e9bf9b124"
+  revision = "8f285de51d8b4801a4b94b7312cb60965aeb4efb"
 
 [[projects]]
   name = "github.com/Shopify/sarama"
