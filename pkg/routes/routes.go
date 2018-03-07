@@ -72,8 +72,10 @@ func createTokenHandler(ctx *gin.Context) {
 		UserIp:      chutils.MustGetClientIP(ctx.Request.Context()),
 		UserRole:    chutils.MustGetUserRole(ctx.Request.Context()),
 	}
-	ptID, _ := chutils.GetPartTokenID(ctx.Request.Context())
-	req.PartTokenId = utils.UUIDFromString(ptID)
+	ptID, ptIDExist := chutils.GetPartTokenID(ctx.Request.Context())
+	if ptIDExist {
+		req.PartTokenId = utils.UUIDFromString(ptID)
+	}
 
 	var access struct {
 		Access *authProto.ResourcesAccess `json:"access" binding:"required"`
