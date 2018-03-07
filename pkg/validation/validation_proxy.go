@@ -6,6 +6,8 @@ import (
 	"git.containerum.net/ch/auth/proto"
 	"git.containerum.net/ch/kube-client/pkg/cherry"
 	"git.containerum.net/ch/kube-client/pkg/cherry/adaptors/cherrylog"
+	chutils "git.containerum.net/ch/utils"
+	"github.com/go-playground/universal-translator"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/go-playground/validator.v9"
@@ -17,15 +19,18 @@ type ServerWrapper struct {
 	log           *cherrylog.LogrusAdapter
 	validator     *validator.Validate
 	validationErr func() *cherry.Err
+	translator    *ut.UniversalTranslator
 }
 
 // NewServerWrapper constructs ServerWrapper
-func NewServerWrapper(upstream authProto.AuthServer, validator *validator.Validate, validationErr func() *cherry.Err) authProto.AuthServer {
+func NewServerWrapper(upstream authProto.AuthServer, validator *validator.Validate,
+	translator *ut.UniversalTranslator, validationErr func() *cherry.Err) authProto.AuthServer {
 	return &ServerWrapper{
 		upstream:      upstream,
 		log:           cherrylog.NewLogrusAdapter(logrus.WithField("component", "validation_proxy")),
 		validator:     validator,
 		validationErr: validationErr,
+		translator:    translator,
 	}
 }
 
@@ -35,12 +40,13 @@ func (v *ServerWrapper) validateStruct(ctx context.Context, req interface{}) err
 	if err != nil {
 		if validatorErrs, ok := err.(validator.ValidationErrors); ok {
 			ret := v.validationErr()
-			// TODO: maybe return "json" field name
-			for fieldName, fieldErr := range validatorErrs {
+			for _, fieldErr := range validatorErrs {
 				if fieldErr == nil {
 					continue
 				}
-				ret.AddDetailF("field %s: validation failed for %s tag", fieldName, fieldErr.Tag)
+				acceptedLangs := chutils.GetAcceptedLanguages(ctx)
+				translator, _ := v.translator.FindTranslator(acceptedLangs...)
+				ret.AddDetailF("Field %s: %s", fieldErr.Namespace(), fieldErr.Translate(translator))
 			}
 			err = ret
 		} else {

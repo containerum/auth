@@ -19,6 +19,8 @@ var srv authProto.AuthServer
 func SetupRoutes(engine *gin.Engine, server authProto.AuthServer) {
 	srv = server
 
+	engine.Use(chutils.PrepareContext)
+
 	token := engine.Group("/token")
 	{
 		// Create token

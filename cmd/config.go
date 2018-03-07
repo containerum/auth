@@ -1,4 +1,4 @@
-package cmd
+package main
 
 import (
 	"encoding/base64"
@@ -12,6 +12,7 @@ import (
 	"git.containerum.net/ch/auth/proto"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/go-playground/locales/en"
+	"github.com/go-playground/locales/en_US"
 	"github.com/go-playground/universal-translator"
 	"github.com/opentracing/opentracing-go"
 	"github.com/openzipkin/zipkin-go-opentracing"
@@ -211,6 +212,5 @@ func logLevelSetup() error {
 }
 
 func setupTranslator() *ut.UniversalTranslator {
-	enLocale := en.New()
-	return ut.New(enLocale, enLocale)
+	return ut.New(en.New(), en.New(), en_US.New())
 }

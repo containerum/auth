@@ -1,4 +1,4 @@
-package cmd
+package main
 
 import (
 	"fmt"
@@ -51,11 +51,13 @@ func main() {
 	storage, err := getStorage()
 	logExit(err)
 
-	validator := validation.StandardAuthValidator(setupTranslator())
+	translator := setupTranslator()
+
+	validator := validation.StandardAuthValidator(translator)
 	binding.Validator = &validation.GinValidatorV9{Validate: validator}
 
 	// wrap with validation proxy
-	storage = validation.NewServerWrapper(storage, validator, autherr.ErrValidation)
+	storage = validation.NewServerWrapper(storage, validator, translator, autherr.ErrValidation)
 
 	servers := []Server{
 		NewHTTPServer(viper.GetString("http_listenaddr"), httpTracer, storage),
