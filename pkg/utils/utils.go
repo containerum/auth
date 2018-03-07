@@ -8,7 +8,7 @@ import (
 
 	"strings"
 
-	"git.containerum.net/ch/grpc-proto-files/common"
+	"git.containerum.net/ch/auth/proto"
 	"github.com/mssola/user_agent"
 )
 
@@ -24,7 +24,7 @@ func ShortUserAgent(userAgent string) string {
 }
 
 // NewUUID generates a new UUID
-func NewUUID() *common.UUID {
+func NewUUID() *authProto.UUID {
 	b := make([]byte, 16)
 	_, err := rand.Read(b)
 	if err != nil {
@@ -32,19 +32,19 @@ func NewUUID() *common.UUID {
 		return nil
 	}
 
-	return &common.UUID{
+	return &authProto.UUID{
 		Value: fmt.Sprintf("%X-%X-%X-%X-%X", b[0:4], b[4:6], b[6:8], b[8:10], b[10:]),
 	}
 }
 
 // UUIDEquals checks if provided UUIDs are equal
-func UUIDEquals(a, b *common.UUID) bool {
+func UUIDEquals(a, b *authProto.UUID) bool {
 	return a == b || a != nil && b != nil && a.Value == b.Value
 }
 
 // UUIDFromString returns UUID object parsed from string
-func UUIDFromString(value string) *common.UUID {
-	return &common.UUID{
+func UUIDFromString(value string) *authProto.UUID {
+	return &authProto.UUID{
 		Value: value,
 	}
 }

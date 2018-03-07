@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"git.containerum.net/ch/auth/pkg/routes"
-	"git.containerum.net/ch/grpc-proto-files/auth"
+	"git.containerum.net/ch/auth/proto"
 	"git.containerum.net/ch/kube-client/pkg/cherry/adaptors/cherrygrpc"
 	"git.containerum.net/ch/kube-client/pkg/cherry/auth"
 	"github.com/gin-gonic/contrib/ginrus"
@@ -42,7 +42,7 @@ type Server interface {
 }
 
 // NewHTTPServer returns server which servers REST requests
-func NewHTTPServer(listenAddr string, tracer opentracing.Tracer, storage auth.AuthServer) Server {
+func NewHTTPServer(listenAddr string, tracer opentracing.Tracer, storage authProto.AuthServer) Server {
 	engine := gin.New()
 
 	engine.Use(gin.RecoveryWithWriter(logrus.WithField("component", "gin_recovery").WriterLevel(logrus.ErrorLevel)))
@@ -90,7 +90,7 @@ func panicHandler(p interface{}) (err error) {
 }
 
 // NewGRPCServer reteurns server which servers request using grpc protocol
-func NewGRPCServer(listenAddr string, tracer opentracing.Tracer, storage auth.AuthServer) Server {
+func NewGRPCServer(listenAddr string, tracer opentracing.Tracer, storage authProto.AuthServer) Server {
 	cherrygrpc.JSONMarshal = jsoniter.ConfigFastest.Marshal
 	cherrygrpc.JSONUnmarshal = jsoniter.ConfigFastest.Unmarshal
 	server := grpc.NewServer(
@@ -105,7 +105,7 @@ func NewGRPCServer(listenAddr string, tracer opentracing.Tracer, storage auth.Au
 			PermitWithoutStream: true,
 		}),
 	)
-	auth.RegisterAuthServer(server, storage)
+	authProto.RegisterAuthServer(server, storage)
 	return &grpcServer{
 		listenAddr: listenAddr,
 		server:     server,

@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"git.containerum.net/ch/auth/pkg/utils"
-	"git.containerum.net/ch/grpc-proto-files/common"
+	"git.containerum.net/ch/auth/proto"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/sirupsen/logrus"
 )
@@ -42,7 +42,7 @@ func NewJWTIssuerValidator(config JWTIssuerValidatorConfig) IssuerValidator {
 	}
 }
 
-func (j *jwtIssuerValidator) issueToken(id *common.UUID, kind Kind, lifeTime time.Duration, extendedFields ExtensionFields) (token *IssuedToken, err error) {
+func (j *jwtIssuerValidator) issueToken(id *authProto.UUID, kind Kind, lifeTime time.Duration, extendedFields ExtensionFields) (token *IssuedToken, err error) {
 	now := jwt.TimeFunc()
 	claims := extendedClaims{
 		StandardClaims: jwt.StandardClaims{
@@ -93,7 +93,7 @@ func (j *jwtIssuerValidator) ValidateToken(token string) (result *ValidationResu
 
 	validationResult := &ValidationResult{
 		Valid: tokenObj.Valid,
-		ID: &common.UUID{
+		ID: &authProto.UUID{
 			Value: tokenObj.Claims.(*extendedClaims).Id,
 		},
 		Kind: tokenObj.Claims.(*extendedClaims).Kind,

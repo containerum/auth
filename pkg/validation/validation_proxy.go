@@ -3,7 +3,7 @@ package validation
 import (
 	"context"
 
-	"git.containerum.net/ch/grpc-proto-files/auth"
+	"git.containerum.net/ch/auth/proto"
 	"git.containerum.net/ch/kube-client/pkg/cherry"
 	"git.containerum.net/ch/kube-client/pkg/cherry/adaptors/cherrylog"
 	"github.com/golang/protobuf/ptypes/empty"
@@ -13,14 +13,14 @@ import (
 
 // ServerWrapper is a special wrapper to Validate incoming requests and then call "upstream"
 type ServerWrapper struct {
-	upstream      auth.AuthServer
+	upstream      authProto.AuthServer
 	log           *cherrylog.LogrusAdapter
 	validator     *validator.Validate
 	validationErr func() *cherry.Err
 }
 
 // NewServerWrapper constructs ServerWrapper
-func NewServerWrapper(upstream auth.AuthServer, validator *validator.Validate, validationErr func() *cherry.Err) auth.AuthServer {
+func NewServerWrapper(upstream authProto.AuthServer, validator *validator.Validate, validationErr func() *cherry.Err) authProto.AuthServer {
 	return &ServerWrapper{
 		upstream:      upstream,
 		log:           cherrylog.NewLogrusAdapter(logrus.WithField("component", "validation_proxy")),
@@ -51,7 +51,7 @@ func (v *ServerWrapper) validateStruct(ctx context.Context, req interface{}) err
 }
 
 // CreateToken performs request validation and calls underlying method
-func (v *ServerWrapper) CreateToken(ctx context.Context, req *auth.CreateTokenRequest) (*auth.CreateTokenResponse, error) {
+func (v *ServerWrapper) CreateToken(ctx context.Context, req *authProto.CreateTokenRequest) (*authProto.CreateTokenResponse, error) {
 	if err := v.validateStruct(ctx, req); err != nil {
 		return nil, err
 	}
@@ -59,7 +59,7 @@ func (v *ServerWrapper) CreateToken(ctx context.Context, req *auth.CreateTokenRe
 }
 
 // CheckToken performs request validation and calls underlying method
-func (v *ServerWrapper) CheckToken(ctx context.Context, req *auth.CheckTokenRequest) (*auth.CheckTokenResponse, error) {
+func (v *ServerWrapper) CheckToken(ctx context.Context, req *authProto.CheckTokenRequest) (*authProto.CheckTokenResponse, error) {
 	if err := v.validateStruct(ctx, req); err != nil {
 		return nil, err
 	}
@@ -67,7 +67,7 @@ func (v *ServerWrapper) CheckToken(ctx context.Context, req *auth.CheckTokenRequ
 }
 
 // ExtendToken performs request validation and calls underlying method
-func (v *ServerWrapper) ExtendToken(ctx context.Context, req *auth.ExtendTokenRequest) (*auth.ExtendTokenResponse, error) {
+func (v *ServerWrapper) ExtendToken(ctx context.Context, req *authProto.ExtendTokenRequest) (*authProto.ExtendTokenResponse, error) {
 	if err := v.validateStruct(ctx, req); err != nil {
 		return nil, err
 	}
@@ -75,7 +75,7 @@ func (v *ServerWrapper) ExtendToken(ctx context.Context, req *auth.ExtendTokenRe
 }
 
 // UpdateAccess performs request validation and calls underlying method
-func (v *ServerWrapper) UpdateAccess(ctx context.Context, req *auth.UpdateAccessRequest) (*empty.Empty, error) {
+func (v *ServerWrapper) UpdateAccess(ctx context.Context, req *authProto.UpdateAccessRequest) (*empty.Empty, error) {
 	if err := v.validateStruct(ctx, req); err != nil {
 		return nil, err
 	}
@@ -83,7 +83,7 @@ func (v *ServerWrapper) UpdateAccess(ctx context.Context, req *auth.UpdateAccess
 }
 
 // GetUserTokens performs request validation and calls underlying method
-func (v *ServerWrapper) GetUserTokens(ctx context.Context, req *auth.GetUserTokensRequest) (*auth.GetUserTokensResponse, error) {
+func (v *ServerWrapper) GetUserTokens(ctx context.Context, req *authProto.GetUserTokensRequest) (*authProto.GetUserTokensResponse, error) {
 	if err := v.validateStruct(ctx, req); err != nil {
 		return nil, err
 	}
@@ -91,7 +91,7 @@ func (v *ServerWrapper) GetUserTokens(ctx context.Context, req *auth.GetUserToke
 }
 
 // DeleteToken performs request validation and calls underlying method
-func (v *ServerWrapper) DeleteToken(ctx context.Context, req *auth.DeleteTokenRequest) (*empty.Empty, error) {
+func (v *ServerWrapper) DeleteToken(ctx context.Context, req *authProto.DeleteTokenRequest) (*empty.Empty, error) {
 	if err := v.validateStruct(ctx, req); err != nil {
 		return nil, err
 	}
@@ -99,7 +99,7 @@ func (v *ServerWrapper) DeleteToken(ctx context.Context, req *auth.DeleteTokenRe
 }
 
 // DeleteUserTokens performs request validation and calls underlying method
-func (v *ServerWrapper) DeleteUserTokens(ctx context.Context, req *auth.DeleteUserTokensRequest) (*empty.Empty, error) {
+func (v *ServerWrapper) DeleteUserTokens(ctx context.Context, req *authProto.DeleteUserTokensRequest) (*empty.Empty, error) {
 	if err := v.validateStruct(ctx, req); err != nil {
 		return nil, err
 	}

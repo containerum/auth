@@ -10,7 +10,7 @@ import (
 
 	"git.containerum.net/ch/auth/pkg/token"
 	"git.containerum.net/ch/auth/pkg/utils"
-	"git.containerum.net/ch/grpc-proto-files/auth"
+	"git.containerum.net/ch/auth/proto"
 	"git.containerum.net/ch/kube-client/pkg/cherry"
 	"git.containerum.net/ch/kube-client/pkg/cherry/auth"
 	"github.com/sirupsen/logrus"
@@ -37,22 +37,22 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-var testCreateTokenRequest = &auth.CreateTokenRequest{
+var testCreateTokenRequest = &authProto.CreateTokenRequest{
 	UserAgent:   "Mozilla/5.0 (X11; Linux x86_64; rv:55.0) Gecko/20100101 Firefox/55.0",
 	Fingerprint: "myfingerprint",
 	UserId:      utils.NewUUID(),
 	UserIp:      "127.0.0.1",
 	UserRole:    "user",
 	RwAccess:    true,
-	Access: &auth.ResourcesAccess{
-		Namespace: []*auth.AccessObject{
+	Access: &authProto.ResourcesAccess{
+		Namespace: []*authProto.AccessObject{
 			{
 				Label:  "ns1",
 				Id:     "ns1",
 				Access: "owner",
 			},
 		},
-		Volume: []*auth.AccessObject{
+		Volume: []*authProto.AccessObject{
 			{
 				Label:  "vol1",
 				Id:     "vol1",
@@ -73,7 +73,7 @@ func TestBuntDBNormal(t *testing.T) {
 			So(issuedTokens, ShouldNotBeNil)
 			logrus.Debugf("\nGenerated issuedTokens: %v\n", issuedTokens)
 
-			tvr, err := storage.CheckToken(context.Background(), &auth.CheckTokenRequest{
+			tvr, err := storage.CheckToken(context.Background(), &authProto.CheckTokenRequest{
 				AccessToken: issuedTokens.AccessToken,
 				UserAgent:   testCreateTokenRequest.UserAgent,
 				FingerPrint: testCreateTokenRequest.Fingerprint,
@@ -86,7 +86,7 @@ func TestBuntDBNormal(t *testing.T) {
 			So(tvr.UserId, ShouldResemble, testCreateTokenRequest.UserId)
 			So(tvr.TokenId, ShouldNotBeNil)
 
-			_, err = storage.CheckToken(context.Background(), &auth.CheckTokenRequest{
+			_, err = storage.CheckToken(context.Background(), &authProto.CheckTokenRequest{
 				AccessToken: issuedTokens.RefreshToken,
 				UserAgent:   testCreateTokenRequest.UserAgent,
 				FingerPrint: testCreateTokenRequest.Fingerprint,
@@ -95,7 +95,7 @@ func TestBuntDBNormal(t *testing.T) {
 			So(err, ShouldNotBeNil)
 
 			Convey("Get user issuedTokens", func() {
-				gtr, err := storage.GetUserTokens(context.Background(), &auth.GetUserTokensRequest{
+				gtr, err := storage.GetUserTokens(context.Background(), &authProto.GetUserTokensRequest{
 					UserId: testCreateTokenRequest.UserId,
 				})
 				So(err, ShouldBeNil)
@@ -108,7 +108,7 @@ func TestBuntDBNormal(t *testing.T) {
 		Convey("Check token extension", func() {
 			issuedTokens, createErr := storage.CreateToken(context.Background(), testCreateTokenRequest)
 			So(createErr, ShouldBeNil)
-			ter, storageErr := storage.ExtendToken(context.Background(), &auth.ExtendTokenRequest{
+			ter, storageErr := storage.ExtendToken(context.Background(), &authProto.ExtendTokenRequest{
 				RefreshToken: issuedTokens.RefreshToken,
 				Fingerprint:  testCreateTokenRequest.Fingerprint,
 			})
@@ -117,7 +117,7 @@ func TestBuntDBNormal(t *testing.T) {
 			So(ter.RefreshToken, ShouldNotEqual, issuedTokens.RefreshToken)
 
 			Convey("Old tokens should not be valid for refreshing", func() {
-				_, err := storage.ExtendToken(context.Background(), &auth.ExtendTokenRequest{
+				_, err := storage.ExtendToken(context.Background(), &authProto.ExtendTokenRequest{
 					RefreshToken: issuedTokens.RefreshToken,
 					Fingerprint:  testCreateTokenRequest.Fingerprint,
 				})
@@ -125,7 +125,7 @@ func TestBuntDBNormal(t *testing.T) {
 			})
 
 			Convey("Old tokens now should be invalid", func() {
-				_, err := storage.CheckToken(context.Background(), &auth.CheckTokenRequest{
+				_, err := storage.CheckToken(context.Background(), &authProto.CheckTokenRequest{
 					AccessToken: issuedTokens.AccessToken,
 					UserAgent:   testCreateTokenRequest.UserAgent,
 					FingerPrint: testCreateTokenRequest.Fingerprint,
@@ -135,7 +135,7 @@ func TestBuntDBNormal(t *testing.T) {
 			})
 
 			Convey("New tokens should ve valid", func() {
-				tvr, err := storage.CheckToken(context.Background(), &auth.CheckTokenRequest{
+				tvr, err := storage.CheckToken(context.Background(), &authProto.CheckTokenRequest{
 					AccessToken: ter.AccessToken,
 					UserAgent:   testCreateTokenRequest.UserAgent,
 					FingerPrint: testCreateTokenRequest.Fingerprint,
@@ -152,7 +152,7 @@ func TestBuntDBNormal(t *testing.T) {
 			})
 
 			Convey("Get user tokens", func() {
-				gtr, err := storage.GetUserTokens(context.Background(), &auth.GetUserTokensRequest{
+				gtr, err := storage.GetUserTokens(context.Background(), &authProto.GetUserTokensRequest{
 					UserId: testCreateTokenRequest.UserId,
 				})
 				So(err, ShouldBeNil)
@@ -165,7 +165,7 @@ func TestBuntDBNormal(t *testing.T) {
 		Convey("Delete token by id", func() {
 			issuedTokens, createErr := storage.CreateToken(context.Background(), testCreateTokenRequest)
 			So(createErr, ShouldBeNil)
-			tvr, checkErr := storage.CheckToken(context.Background(), &auth.CheckTokenRequest{
+			tvr, checkErr := storage.CheckToken(context.Background(), &authProto.CheckTokenRequest{
 				AccessToken: issuedTokens.AccessToken,
 				UserAgent:   testCreateTokenRequest.UserAgent,
 				FingerPrint: testCreateTokenRequest.Fingerprint,
@@ -173,13 +173,13 @@ func TestBuntDBNormal(t *testing.T) {
 			})
 			So(checkErr, ShouldBeNil)
 
-			_, deleteErr := storage.DeleteToken(context.Background(), &auth.DeleteTokenRequest{
+			_, deleteErr := storage.DeleteToken(context.Background(), &authProto.DeleteTokenRequest{
 				TokenId: tvr.TokenId,
 				UserId:  tvr.UserId,
 			})
 			So(deleteErr, ShouldBeNil)
 
-			gtr, getErr := storage.GetUserTokens(context.Background(), &auth.GetUserTokensRequest{
+			gtr, getErr := storage.GetUserTokens(context.Background(), &authProto.GetUserTokensRequest{
 				UserId: tvr.UserId,
 			})
 			So(getErr, ShouldBeNil)
@@ -189,7 +189,7 @@ func TestBuntDBNormal(t *testing.T) {
 		Convey("Delete token by user id", func() {
 			issuedTokens, createErr := storage.CreateToken(context.Background(), testCreateTokenRequest)
 			So(createErr, ShouldBeNil)
-			tvr, checkErr := storage.CheckToken(context.Background(), &auth.CheckTokenRequest{
+			tvr, checkErr := storage.CheckToken(context.Background(), &authProto.CheckTokenRequest{
 				AccessToken: issuedTokens.AccessToken,
 				UserAgent:   testCreateTokenRequest.UserAgent,
 				FingerPrint: testCreateTokenRequest.Fingerprint,
@@ -197,12 +197,12 @@ func TestBuntDBNormal(t *testing.T) {
 			})
 			So(checkErr, ShouldBeNil)
 
-			_, deleteErr := storage.DeleteUserTokens(context.Background(), &auth.DeleteUserTokensRequest{
+			_, deleteErr := storage.DeleteUserTokens(context.Background(), &authProto.DeleteUserTokensRequest{
 				UserId: tvr.UserId,
 			})
 			So(deleteErr, ShouldBeNil)
 
-			gtr, getErr := storage.GetUserTokens(context.Background(), &auth.GetUserTokensRequest{
+			gtr, getErr := storage.GetUserTokens(context.Background(), &authProto.GetUserTokensRequest{
 				UserId: tvr.UserId,
 			})
 			So(getErr, ShouldBeNil)
@@ -212,7 +212,7 @@ func TestBuntDBNormal(t *testing.T) {
 		Convey("Update resources access in token", func() {
 			issuedTokens, createErr := storage.CreateToken(context.Background(), testCreateTokenRequest)
 			So(createErr, ShouldBeNil)
-			tvr, checkErr := storage.CheckToken(context.Background(), &auth.CheckTokenRequest{
+			tvr, checkErr := storage.CheckToken(context.Background(), &authProto.CheckTokenRequest{
 				AccessToken: issuedTokens.AccessToken,
 				UserAgent:   testCreateTokenRequest.UserAgent,
 				FingerPrint: testCreateTokenRequest.Fingerprint,
@@ -221,22 +221,22 @@ func TestBuntDBNormal(t *testing.T) {
 			So(checkErr, ShouldBeNil)
 			So(tvr.Access, ShouldResemble, testCreateTokenRequest.Access)
 
-			newAccesses := &auth.ResourcesAccess{
-				Namespace: []*auth.AccessObject{
+			newAccesses := &authProto.ResourcesAccess{
+				Namespace: []*authProto.AccessObject{
 					{Label: "a", Id: utils.NewUUID().GetValue(), Access: "owner"},
 				},
-				Volume: []*auth.AccessObject{
+				Volume: []*authProto.AccessObject{
 					{Label: "b", Id: utils.NewUUID().GetValue(), Access: "owner"},
 				},
 			}
 
-			_, updErr := storage.UpdateAccess(context.Background(), &auth.UpdateAccessRequest{
-				Users: []*auth.UpdateAccessRequestElement{
+			_, updErr := storage.UpdateAccess(context.Background(), &authProto.UpdateAccessRequest{
+				Users: []*authProto.UpdateAccessRequestElement{
 					{UserId: testCreateTokenRequest.UserId, Access: newAccesses},
 				},
 			})
 			So(updErr, ShouldBeNil)
-			tvr, checkErr = storage.CheckToken(context.Background(), &auth.CheckTokenRequest{
+			tvr, checkErr = storage.CheckToken(context.Background(), &authProto.CheckTokenRequest{
 				AccessToken: issuedTokens.AccessToken,
 				UserAgent:   testCreateTokenRequest.UserAgent,
 				FingerPrint: testCreateTokenRequest.Fingerprint,
@@ -257,7 +257,7 @@ func TestBuntDBExtra(t *testing.T) {
 
 	Convey("Test storage functions in bad-data mode", t, func() {
 		Convey("Check non-existing and invalid token", func() {
-			_, err := storage.CheckToken(context.Background(), &auth.CheckTokenRequest{
+			_, err := storage.CheckToken(context.Background(), &authProto.CheckTokenRequest{
 				AccessToken: "not-token",
 				UserAgent:   "lol",
 				FingerPrint: "kek",
@@ -271,13 +271,13 @@ func TestBuntDBExtra(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(issuedTokens, ShouldNotBeNil)
 
-			_, err = storage.ExtendToken(context.Background(), &auth.ExtendTokenRequest{
+			_, err = storage.ExtendToken(context.Background(), &authProto.ExtendTokenRequest{
 				RefreshToken: issuedTokens.AccessToken,
 				Fingerprint:  testCreateTokenRequest.Fingerprint,
 			})
 			So(err, ShouldNotBeNil)
 
-			_, err = storage.ExtendToken(context.Background(), &auth.ExtendTokenRequest{
+			_, err = storage.ExtendToken(context.Background(), &authProto.ExtendTokenRequest{
 				RefreshToken: "not-token",
 				Fingerprint:  testCreateTokenRequest.Fingerprint,
 			})
@@ -289,14 +289,14 @@ func TestBuntDBExtra(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(issuedTokens, ShouldNotBeNil)
 
-			_, err = storage.DeleteToken(context.Background(), &auth.DeleteTokenRequest{
+			_, err = storage.DeleteToken(context.Background(), &authProto.DeleteTokenRequest{
 				TokenId: utils.NewUUID(),
 				UserId:  testCreateTokenRequest.UserId,
 			})
 			So(err, ShouldNotBeNil)
 
 			// acquire token id
-			tvr, err := storage.CheckToken(context.Background(), &auth.CheckTokenRequest{
+			tvr, err := storage.CheckToken(context.Background(), &authProto.CheckTokenRequest{
 				AccessToken: issuedTokens.AccessToken,
 				UserAgent:   testCreateTokenRequest.UserAgent,
 				FingerPrint: testCreateTokenRequest.Fingerprint,
@@ -304,7 +304,7 @@ func TestBuntDBExtra(t *testing.T) {
 			})
 			So(err, ShouldBeNil)
 
-			_, err = storage.DeleteToken(context.Background(), &auth.DeleteTokenRequest{
+			_, err = storage.DeleteToken(context.Background(), &authProto.DeleteTokenRequest{
 				TokenId: tvr.TokenId,
 				UserId:  utils.NewUUID(),
 			})

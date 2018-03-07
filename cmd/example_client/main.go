@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"git.containerum.net/ch/auth/pkg/utils"
-	"git.containerum.net/ch/grpc-proto-files/auth"
+	"git.containerum.net/ch/auth/proto"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -60,17 +60,17 @@ func main() {
 	log.Infof("Setup connection to %v", serverAddress)
 	conn, err := grpc.Dial(serverAddress, opts...)
 	chkErr(err)
-	client := auth.NewAuthClient(conn)
+	client := authProto.NewAuthClient(conn)
 	switch flag.Arg(0) {
 	case "issue":
 		log.Infoln("Issuing token")
-		resp, err := client.CreateToken(context.Background(), &auth.CreateTokenRequest{
+		resp, err := client.CreateToken(context.Background(), &authProto.CreateTokenRequest{
 			UserAgent:   userAgent,
 			Fingerprint: fingerprint,
 			UserId:      utils.NewUUID(),
 			UserRole:    "user",
 			RwAccess:    true,
-			Access:      &auth.ResourcesAccess{},
+			Access:      &authProto.ResourcesAccess{},
 			PartTokenId: nil,
 		})
 		chkErr(err)
@@ -78,7 +78,7 @@ func main() {
 	case "check":
 		accessToken := flag.Arg(1)
 		log.Infoln("Checking access token %v", accessToken)
-		resp, err := client.CheckToken(context.Background(), &auth.CheckTokenRequest{
+		resp, err := client.CheckToken(context.Background(), &authProto.CheckTokenRequest{
 			AccessToken: accessToken,
 			UserAgent:   userAgent,
 			FingerPrint: fingerprint,

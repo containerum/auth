@@ -14,8 +14,8 @@ import (
 	"github.com/spf13/viper"
 )
 
-//go:generate protoc --go_out=plugins=grpc:../proto -I../proto auth.proto auth_types.proto uuid.proto
-//go:generate protoc-go-inject-tag -input=../proto/auth.pb.go
+//go:generate protoc --go_out=plugins=grpc:../proto -I../proto authProto.proto auth_types.proto uuid.proto
+//go:generate protoc-go-inject-tag -input=../proto/authProto.pb.go
 //go:generate protoc-go-inject-tag -input=../proto/auth_types.pb.go
 //go:generate protoc-go-inject-tag -input=../proto/uuid.pb.go
 

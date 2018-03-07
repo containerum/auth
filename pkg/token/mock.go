@@ -6,7 +6,7 @@ import (
 	"errors"
 
 	"git.containerum.net/ch/auth/pkg/utils"
-	"git.containerum.net/ch/grpc-proto-files/common"
+	"git.containerum.net/ch/auth/proto"
 )
 
 type mockTokenRecord struct {
@@ -60,7 +60,7 @@ func (m *mockIssuerValidator) ValidateToken(token string) (result *ValidationRes
 	return &ValidationResult{
 		Valid: present && time.Now().Before(rec.IssuedAt.Add(m.returnedLifeTime)),
 		Kind:  kind,
-		ID:    &common.UUID{Value: token[1:]},
+		ID:    &authProto.UUID{Value: token[1:]},
 	}, nil
 }
 

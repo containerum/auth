@@ -7,8 +7,7 @@ import (
 	"github.com/json-iterator/go"
 
 	"git.containerum.net/ch/auth/pkg/utils"
-	"git.containerum.net/ch/grpc-proto-files/auth"
-	"git.containerum.net/ch/grpc-proto-files/common"
+	"git.containerum.net/ch/auth/proto"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/sirupsen/logrus"
 )
@@ -34,7 +33,7 @@ type ExtensionFields struct {
 // IssuedToken describes a token
 type IssuedToken struct {
 	Value    string
-	ID       *common.UUID
+	ID       *authProto.UUID
 	IssuedAt time.Time
 	LifeTime time.Duration
 }
@@ -47,7 +46,7 @@ type Issuer interface {
 // ValidationResult describes token validation result.
 type ValidationResult struct {
 	Valid bool
-	ID    *common.UUID
+	ID    *authProto.UUID
 	Kind  Kind
 }
 
@@ -64,7 +63,7 @@ type IssuerValidator interface {
 }
 
 // EncodeAccessObjects encodes resource access objects to store in database
-func EncodeAccessObjects(req []*auth.AccessObject) string {
+func EncodeAccessObjects(req []*authProto.AccessObject) string {
 	if req == nil {
 		return ""
 	}
@@ -76,30 +75,30 @@ func EncodeAccessObjects(req []*auth.AccessObject) string {
 }
 
 // DecodeAccessObjects decodes resource access object from database record
-func DecodeAccessObjects(value string) (ret []*auth.AccessObject) {
+func DecodeAccessObjects(value string) (ret []*authProto.AccessObject) {
 	if len(value) >= 2 {
 		if value[0] == '\x00' {
 			value = string(value[1:])
 		}
 	} else {
-		return make([]*auth.AccessObject, 0)
+		return make([]*authProto.AccessObject, 0)
 	}
 	decoded, err := base64.StdEncoding.DecodeString(value)
 	if err != nil {
 		logrus.WithError(err).Error("decode access objects failed")
-		return make([]*auth.AccessObject, 0)
+		return make([]*authProto.AccessObject, 0)
 	}
 	err = jsoniter.Unmarshal(decoded, &ret)
 	if err != nil {
 		logrus.WithError(err).Error("decode access objects failed")
-		return make([]*auth.AccessObject, 0)
+		return make([]*authProto.AccessObject, 0)
 	}
 	return
 }
 
 // RequestToRecord prepares a value to store in database
-func RequestToRecord(req *auth.CreateTokenRequest, token *IssuedToken) *auth.StoredToken {
-	ret := &auth.StoredToken{
+func RequestToRecord(req *authProto.CreateTokenRequest, token *IssuedToken) *authProto.StoredToken {
+	ret := &authProto.StoredToken{
 		UserAgent:     req.GetUserAgent(),
 		Platform:      utils.ShortUserAgent(req.GetUserAgent()),
 		Fingerprint:   req.GetFingerprint(),

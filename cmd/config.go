@@ -9,7 +9,7 @@ import (
 
 	"git.containerum.net/ch/auth/pkg/storages"
 	"git.containerum.net/ch/auth/pkg/token"
-	"git.containerum.net/ch/grpc-proto-files/auth"
+	"git.containerum.net/ch/auth/proto"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/go-playground/locales/en"
 	"github.com/go-playground/universal-translator"
@@ -132,7 +132,7 @@ func getBuntDBStorageConfig(tokenFactory token.IssuerValidator) (cfg storages.Bu
 	return cfg, setError(errs)
 }
 
-func getStorage() (storage auth.AuthServer, err error) {
+func getStorage() (storage authProto.AuthServer, err error) {
 	tokenFactory, err := getTokenIssuerValidator()
 	if err != nil {
 		return nil, err

@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"git.containerum.net/ch/auth/pkg/utils"
-	"git.containerum.net/ch/grpc-proto-files/auth"
+	"git.containerum.net/ch/auth/proto"
 	umtypes "git.containerum.net/ch/json-types/user-manager"
 	"git.containerum.net/ch/kube-client/pkg/cherry/adaptors/gonic"
 	"git.containerum.net/ch/kube-client/pkg/cherry/auth"
@@ -13,10 +13,10 @@ import (
 	"github.com/gin-gonic/gin/binding"
 )
 
-var srv auth.AuthServer
+var srv authProto.AuthServer
 
 // SetupRoutes sets up router and services needed for server operation
-func SetupRoutes(engine *gin.Engine, server auth.AuthServer) {
+func SetupRoutes(engine *gin.Engine, server authProto.AuthServer) {
 	srv = server
 
 	token := engine.Group("/token")
@@ -63,7 +63,7 @@ func SetupRoutes(engine *gin.Engine, server auth.AuthServer) {
 }
 
 func createTokenHandler(ctx *gin.Context) {
-	req := &auth.CreateTokenRequest{
+	req := &authProto.CreateTokenRequest{
 		UserAgent:   chutils.MustGetUserAgent(ctx.Request.Context()),
 		Fingerprint: chutils.MustGetFingerprint(ctx.Request.Context()),
 		UserId:      utils.UUIDFromString(chutils.MustGetUserID(ctx.Request.Context())),
@@ -73,7 +73,7 @@ func createTokenHandler(ctx *gin.Context) {
 	}
 
 	var access struct {
-		Access *auth.ResourcesAccess `json:"access" binding:"required"`
+		Access *authProto.ResourcesAccess `json:"access" binding:"required"`
 	}
 
 	if err := ctx.ShouldBindWith(&access, binding.JSON); err != nil {
@@ -93,7 +93,7 @@ func createTokenHandler(ctx *gin.Context) {
 }
 
 func checkTokenHandler(ctx *gin.Context) {
-	req := &auth.CheckTokenRequest{
+	req := &authProto.CheckTokenRequest{
 		AccessToken: ctx.Param("access_token"),
 		UserAgent:   chutils.MustGetUserAgent(ctx.Request.Context()),
 		FingerPrint: chutils.MustGetFingerprint(ctx.Request.Context()),
@@ -119,7 +119,7 @@ func checkTokenHandler(ctx *gin.Context) {
 }
 
 func extendTokenHandler(ctx *gin.Context) {
-	req := &auth.ExtendTokenRequest{
+	req := &authProto.ExtendTokenRequest{
 		RefreshToken: ctx.Param("refresh_token"),
 		Fingerprint:  chutils.MustGetFingerprint(ctx.Request.Context()),
 	}
@@ -134,7 +134,7 @@ func extendTokenHandler(ctx *gin.Context) {
 }
 
 func getUserTokensHandler(ctx *gin.Context) {
-	req := &auth.GetUserTokensRequest{
+	req := &authProto.GetUserTokensRequest{
 		UserId: utils.UUIDFromString(chutils.MustGetUserID(ctx.Request.Context())),
 	}
 
@@ -148,7 +148,7 @@ func getUserTokensHandler(ctx *gin.Context) {
 }
 
 func deleteTokenByIDHandler(ctx *gin.Context) {
-	req := &auth.DeleteTokenRequest{
+	req := &authProto.DeleteTokenRequest{
 		TokenId: utils.UUIDFromString(ctx.Param("token_id")),
 		UserId:  utils.UUIDFromString(chutils.MustGetUserID(ctx.Request.Context())),
 	}
@@ -163,7 +163,7 @@ func deleteTokenByIDHandler(ctx *gin.Context) {
 }
 
 func deleteUserTokensHandler(ctx *gin.Context) {
-	req := &auth.DeleteUserTokensRequest{
+	req := &authProto.DeleteUserTokensRequest{
 		UserId: utils.UUIDFromString(ctx.Param("user_id")),
 	}
 

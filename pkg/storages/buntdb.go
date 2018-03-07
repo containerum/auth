@@ -9,8 +9,7 @@ import (
 
 	"git.containerum.net/ch/auth/pkg/token"
 	"git.containerum.net/ch/auth/pkg/utils"
-	"git.containerum.net/ch/grpc-proto-files/auth"
-	"git.containerum.net/ch/grpc-proto-files/common"
+	"git.containerum.net/ch/auth/proto"
 	"git.containerum.net/ch/kube-client/pkg/cherry"
 	"git.containerum.net/ch/kube-client/pkg/cherry/adaptors/cherrylog"
 	"git.containerum.net/ch/kube-client/pkg/cherry/auth"
@@ -87,7 +86,7 @@ type tokenOwnerIdentity struct {
 func (s *BuntDBStorage) forTokensByIdentity(tx *buntdb.Tx,
 	identity *tokenOwnerIdentity,
 	iterator func(key, value string) bool) error {
-	pivot, err := json.Marshal(auth.StoredToken{
+	pivot, err := json.Marshal(authProto.StoredToken{
 		Platform:    utils.ShortUserAgent(identity.UserAgent),
 		UserIp:      identity.UserIP,
 		Fingerprint: identity.Fingerprint,
@@ -96,22 +95,22 @@ func (s *BuntDBStorage) forTokensByIdentity(tx *buntdb.Tx,
 	return tx.AscendEqual(indexTokens, string(pivot), iterator)
 }
 
-func (s *BuntDBStorage) forTokensByUsers(tx *buntdb.Tx, userID *common.UUID, iterator func(key, value string) bool) error {
-	pivot, err := json.Marshal(auth.StoredToken{
+func (s *BuntDBStorage) forTokensByUsers(tx *buntdb.Tx, userID *authProto.UUID, iterator func(key, value string) bool) error {
+	pivot, err := json.Marshal(authProto.StoredToken{
 		UserId: userID,
 	})
 	s.logger.WithError(err).WithField("pivot", string(pivot)).Debugf("Iterating by user")
 	return tx.AscendEqual(indexUsers, string(pivot), iterator)
 }
 
-func (s *BuntDBStorage) marshalRecord(st *auth.StoredToken) string {
+func (s *BuntDBStorage) marshalRecord(st *authProto.StoredToken) string {
 	ret, err := json.Marshal(st)
 	s.logger.WithError(err).WithField("record", st).Debugf("Marshal record")
 	return string(ret)
 }
 
-func (s *BuntDBStorage) unmarshalRecord(rawRecord string) *auth.StoredToken {
-	ret := new(auth.StoredToken)
+func (s *BuntDBStorage) unmarshalRecord(rawRecord string) *authProto.StoredToken {
+	ret := new(authProto.StoredToken)
 	err := json.Unmarshal([]byte(rawRecord), ret)
 	s.logger.WithError(err).WithField("rawRecord", rawRecord).Debugf("Unmarshal record")
 	return ret
@@ -136,7 +135,7 @@ func (s *BuntDBStorage) deleteTokenByIdentity(tx *buntdb.Tx, identity *tokenOwne
 	return nil
 }
 
-func (s *BuntDBStorage) deleteTokenByUser(tx *buntdb.Tx, userID *common.UUID) error {
+func (s *BuntDBStorage) deleteTokenByUser(tx *buntdb.Tx, userID *authProto.UUID) error {
 	s.logger.WithField("userId", userID).Debugf("Delete token by user")
 
 	var keysToDelete []string
@@ -177,7 +176,7 @@ func (s *BuntDBStorage) handleGetError(err error) error {
 }
 
 // CreateToken creates token with parameters given in req.
-func (s *BuntDBStorage) CreateToken(ctx context.Context, req *auth.CreateTokenRequest) (*auth.CreateTokenResponse, error) {
+func (s *BuntDBStorage) CreateToken(ctx context.Context, req *authProto.CreateTokenRequest) (*authProto.CreateTokenResponse, error) {
 	logger := s.logger.WithField("request", req)
 
 	logger.Info("Creating token")
@@ -223,7 +222,7 @@ func (s *BuntDBStorage) CreateToken(ctx context.Context, req *auth.CreateTokenRe
 		return nil, s.wrapTXError(err)
 	}
 
-	return &auth.CreateTokenResponse{
+	return &authProto.CreateTokenResponse{
 		AccessToken:  accessToken.Value,
 		RefreshToken: refreshToken.Value,
 	}, nil
@@ -232,7 +231,7 @@ func (s *BuntDBStorage) CreateToken(ctx context.Context, req *auth.CreateTokenRe
 // CheckToken checks user token. Only access token may be checked.
 // errInvalidToken will be returned if token expired, cannot be parsed or it is not access token
 // errTokenNotOwnedBySender returned if user IP or fingerprint not matches with recorded at token creation.
-func (s *BuntDBStorage) CheckToken(ctx context.Context, req *auth.CheckTokenRequest) (*auth.CheckTokenResponse, error) {
+func (s *BuntDBStorage) CheckToken(ctx context.Context, req *authProto.CheckTokenRequest) (*authProto.CheckTokenResponse, error) {
 	logger := s.logger.WithField("request", req)
 
 	logger.Infof("Validating token")
@@ -240,7 +239,7 @@ func (s *BuntDBStorage) CheckToken(ctx context.Context, req *auth.CheckTokenRequ
 	if err != nil || !valid.Valid || valid.Kind != token.KindAccess {
 		return nil, autherr.ErrInvalidToken()
 	}
-	var rec *auth.StoredToken
+	var rec *authProto.StoredToken
 	logger.Debugf("Find record in storage")
 	err = s.db.View(func(tx *buntdb.Tx) error {
 		rawRec, getErr := tx.Get(valid.ID.GetValue())
@@ -258,8 +257,8 @@ func (s *BuntDBStorage) CheckToken(ctx context.Context, req *auth.CheckTokenRequ
 		return nil, autherr.ErrTokenNotOwnedBySender()
 	}
 
-	return &auth.CheckTokenResponse{
-		Access: &auth.ResourcesAccess{
+	return &authProto.CheckTokenResponse{
+		Access: &authProto.ResourcesAccess{
 			Namespace: token.DecodeAccessObjects(rec.UserNamespace),
 			Volume:    token.DecodeAccessObjects(rec.UserVolume),
 		},
@@ -271,7 +270,7 @@ func (s *BuntDBStorage) CheckToken(ctx context.Context, req *auth.CheckTokenRequ
 }
 
 // ExtendToken exchanges valid refresh token to new access and refresh tokens.
-func (s *BuntDBStorage) ExtendToken(ctx context.Context, req *auth.ExtendTokenRequest) (*auth.ExtendTokenResponse, error) {
+func (s *BuntDBStorage) ExtendToken(ctx context.Context, req *authProto.ExtendTokenRequest) (*authProto.ExtendTokenResponse, error) {
 	logger := s.logger.WithField("request", req)
 
 	logger.Info("Extend token")
@@ -339,14 +338,14 @@ func (s *BuntDBStorage) ExtendToken(ctx context.Context, req *auth.ExtendTokenRe
 		return nil, err
 	}
 
-	return &auth.ExtendTokenResponse{
+	return &authProto.ExtendTokenResponse{
 		AccessToken:  accessToken.Value,
 		RefreshToken: refreshToken.Value,
 	}, nil
 }
 
 // UpdateAccess updates resources accesses for user.
-func (s *BuntDBStorage) UpdateAccess(ctx context.Context, req *auth.UpdateAccessRequest) (*empty.Empty, error) {
+func (s *BuntDBStorage) UpdateAccess(ctx context.Context, req *authProto.UpdateAccessRequest) (*empty.Empty, error) {
 	logger := s.logger.WithField("request", req)
 
 	logger.Infof("Update auth")
@@ -356,7 +355,7 @@ func (s *BuntDBStorage) UpdateAccess(ctx context.Context, req *auth.UpdateAccess
 			if entry == nil {
 				continue
 			}
-			kvToUpdate := make(map[string]*auth.StoredToken)
+			kvToUpdate := make(map[string]*authProto.StoredToken)
 			var setErr error
 			iterErr := s.forTokensByUsers(tx, entry.GetUserId(), func(key, value string) bool {
 				rec := s.unmarshalRecord(value)
@@ -397,15 +396,15 @@ func (s *BuntDBStorage) UpdateAccess(ctx context.Context, req *auth.UpdateAccess
 }
 
 // GetUserTokens returns meta information (token id, user agent, user IP) for user
-func (s *BuntDBStorage) GetUserTokens(ctx context.Context, req *auth.GetUserTokensRequest) (*auth.GetUserTokensResponse, error) {
+func (s *BuntDBStorage) GetUserTokens(ctx context.Context, req *authProto.GetUserTokensRequest) (*authProto.GetUserTokensResponse, error) {
 	logger := s.logger.WithField("request", req)
 
 	logger.Infof("Get user tokens")
-	resp := new(auth.GetUserTokensResponse)
+	resp := new(authProto.GetUserTokensResponse)
 	err := s.db.View(func(tx *buntdb.Tx) error {
 		return s.forTokensByUsers(tx, req.GetUserId(), func(key, value string) bool {
 			rec := s.unmarshalRecord(value)
-			resp.Tokens = append(resp.Tokens, &auth.StoredTokenForUser{
+			resp.Tokens = append(resp.Tokens, &authProto.StoredTokenForUser{
 				TokenId:   rec.TokenId,
 				UserAgent: rec.UserAgent,
 				Ip:        rec.UserIp,
@@ -419,7 +418,7 @@ func (s *BuntDBStorage) GetUserTokens(ctx context.Context, req *auth.GetUserToke
 
 // DeleteToken deletes token for user.
 // ErrTokenNotOwnerBySender returned if token owner id not matches id in request
-func (s *BuntDBStorage) DeleteToken(ctx context.Context, req *auth.DeleteTokenRequest) (*empty.Empty, error) {
+func (s *BuntDBStorage) DeleteToken(ctx context.Context, req *authProto.DeleteTokenRequest) (*empty.Empty, error) {
 	logger := s.logger.WithField("request", req)
 
 	logger.Infof("Delete token")
@@ -437,7 +436,7 @@ func (s *BuntDBStorage) DeleteToken(ctx context.Context, req *auth.DeleteTokenRe
 }
 
 // DeleteUserTokens deletes all user tokens
-func (s *BuntDBStorage) DeleteUserTokens(ctx context.Context, req *auth.DeleteUserTokensRequest) (*empty.Empty, error) {
+func (s *BuntDBStorage) DeleteUserTokens(ctx context.Context, req *authProto.DeleteUserTokensRequest) (*empty.Empty, error) {
 	logger := s.logger.WithField("request", req)
 
 	logger.Infof("Delete user tokens")
