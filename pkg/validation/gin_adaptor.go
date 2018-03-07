@@ -19,19 +19,11 @@ var _ binding.StructValidator = &GinValidatorV9{}
 // ValidateStruct implements binding.StructValidator interface
 func (v *GinValidatorV9) ValidateStruct(obj interface{}) error {
 	if kindOfData(obj) == reflect.Struct {
-		v.lazyinit()
 		if err := v.Validate.Struct(obj); err != nil {
 			return error(err)
 		}
 	}
 	return nil
-}
-
-func (v *GinValidatorV9) lazyinit() {
-	v.once.Do(func() {
-		v.Validate = validator.New()
-		v.Validate.SetTagName("binding")
-	})
 }
 
 func kindOfData(data interface{}) reflect.Kind {
