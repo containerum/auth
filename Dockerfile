@@ -1,7 +1,7 @@
 FROM golang:1.9-alpine as builder
 WORKDIR src/git.containerum.net/ch/auth
 COPY . .
-RUN CGO_ENABLED=0 go build -v -ldflags="-w -s -extldflags '-static'" -tags="jsoniter" -o /bin/auth
+RUN CGO_ENABLED=0 go build -v -ldflags="-w -s -extldflags '-static'" -tags="jsoniter" -o /bin/auth ./cmd
 
 FROM alpine:latest as alpine
 RUN apk --no-cache add tzdata zip ca-certificates

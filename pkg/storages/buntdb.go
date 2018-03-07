@@ -7,8 +7,8 @@ import (
 
 	"time"
 
-	"git.containerum.net/ch/auth/token"
-	"git.containerum.net/ch/auth/utils"
+	"git.containerum.net/ch/auth/pkg/token"
+	"git.containerum.net/ch/auth/pkg/utils"
 	"git.containerum.net/ch/grpc-proto-files/auth"
 	"git.containerum.net/ch/grpc-proto-files/common"
 	"git.containerum.net/ch/kube-client/pkg/cherry"

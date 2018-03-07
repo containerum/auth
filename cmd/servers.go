@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"net"
@@ -10,7 +10,7 @@ import (
 	"context"
 	"time"
 
-	"git.containerum.net/ch/auth/routes"
+	"git.containerum.net/ch/auth/pkg/routes"
 	"git.containerum.net/ch/grpc-proto-files/auth"
 	"git.containerum.net/ch/kube-client/pkg/cherry/adaptors/cherrygrpc"
 	"git.containerum.net/ch/kube-client/pkg/cherry/auth"

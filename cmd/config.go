@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"encoding/base64"
@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"git.containerum.net/ch/auth/storages"
-	"git.containerum.net/ch/auth/token"
+	"git.containerum.net/ch/auth/pkg/storages"
+	"git.containerum.net/ch/auth/pkg/token"
 	"git.containerum.net/ch/grpc-proto-files/auth"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/go-playground/locales/en"

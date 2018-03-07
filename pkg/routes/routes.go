@@ -3,7 +3,7 @@ package routes
 import (
 	"net/http"
 
-	"git.containerum.net/ch/auth/utils"
+	"git.containerum.net/ch/auth/pkg/utils"
 	"git.containerum.net/ch/grpc-proto-files/auth"
 	umtypes "git.containerum.net/ch/json-types/user-manager"
 	"git.containerum.net/ch/kube-client/pkg/cherry/adaptors/gonic"

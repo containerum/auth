@@ -3,7 +3,7 @@ package token
 import (
 	"time"
 
-	"git.containerum.net/ch/auth/utils"
+	"git.containerum.net/ch/auth/pkg/utils"
 	"git.containerum.net/ch/grpc-proto-files/common"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/sirupsen/logrus"

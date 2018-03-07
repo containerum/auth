@@ -1,94 +1,66 @@
-package main
+package cmd
 
 import (
-	"flag"
 	"fmt"
+
 	"os"
 
-	"git.containerum.net/ch/auth/utils"
-	"git.containerum.net/ch/grpc-proto-files/auth"
-	log "github.com/sirupsen/logrus"
-	"golang.org/x/net/context"
-	"google.golang.org/grpc"
+	"os/signal"
+
+	"git.containerum.net/ch/auth/pkg/validation"
+	"git.containerum.net/ch/kube-client/pkg/cherry/auth"
+	"github.com/gin-gonic/gin/binding"
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
-var serverAddress string
-
-var (
-	userAgent   string
-	fingerprint string
-	userIP      string
-)
-
-func init() {
-	flag.StringVar(&serverAddress, "s", "127.0.0.1:8888", "Auth server address")
-	flag.StringVar(&userAgent, "ua", "Mozilla/5.0 (X11; Linux x86_64; rv:56.0) Gecko/20100101 Firefox/56.0",
-		"User agent")
-	flag.StringVar(&fingerprint, "ufp", "101924019824", "User fingerprint")
-	flag.StringVar(&userIP, "uip", "127.0.0.1", "User IP")
-	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, `Usage: %s [options] <cmd> [cmdparams]
-cmd:
-	issue
-		Issues access and refresh tokens
-	check
-		Cshecks access token. Requires access token as parameter (cmdparams)
-options:
-`, os.Args[0])
-		flag.PrintDefaults()
-	}
-}
-
-func chkErr(err error) {
+func logExit(err error) {
 	if err != nil {
-		log.Errorf("Error: %v", err)
+		logrus.WithError(err).Fatalf("Setup error")
 		os.Exit(1)
 	}
 }
 
 func main() {
-	flag.Parse()
-	if flag.NArg() < 1 {
-		flag.Usage()
+	viper.SetEnvPrefix("ch_auth")
+	viper.AutomaticEnv()
+
+	if err := logLevelSetup(); err != nil {
+		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	opts := []grpc.DialOption{
-		grpc.WithInsecure(), // disable transport security
-	}
-
-	log.Infof("Setup connection to %v", serverAddress)
-	conn, err := grpc.Dial(serverAddress, opts...)
-	chkErr(err)
-	client := auth.NewAuthClient(conn)
-	switch flag.Arg(0) {
-	case "issue":
-		log.Infoln("Issuing token")
-		resp, err := client.CreateToken(context.Background(), &auth.CreateTokenRequest{
-			UserAgent:   userAgent,
-			Fingerprint: fingerprint,
-			UserId:      utils.NewUUID(),
-			UserRole:    "user",
-			RwAccess:    true,
-			Access:      &auth.ResourcesAccess{},
-			PartTokenId: nil,
-		})
-		chkErr(err)
-		log.Printf("Got response %+v", resp)
-	case "check":
-		accessToken := flag.Arg(1)
-		log.Infoln("Checking access token %v", accessToken)
-		resp, err := client.CheckToken(context.Background(), &auth.CheckTokenRequest{
-			AccessToken: accessToken,
-			UserAgent:   userAgent,
-			FingerPrint: fingerprint,
-			UserIp:      userIP,
-		})
-		chkErr(err)
-		log.Printf("Got response %+v", resp)
-	default:
-		log.Errorln("Invalid command specified")
-		flag.Usage()
+	if err := logModeSetup(); err != nil {
+		fmt.Println(err)
 		os.Exit(1)
 	}
+
+	viper.SetDefault("http_listenaddr", ":8080")
+	httpTracer, err := getTracer(viper.GetString("http_listenaddr"), "ch-auth-rest")
+	logExit(err)
+
+	viper.SetDefault("grpc_listenaddr", ":8888")
+	grpcTracer, err := getTracer(viper.GetString("grpc_listenaddr"), "ch-auth-grpc")
+	logExit(err)
+
+	storage, err := getStorage()
+	logExit(err)
+
+	validator := validation.StandardAuthValidator(setupTranslator())
+	binding.Validator = &validation.GinValidatorV9{Validate: validator}
+
+	// wrap with validation proxy
+	storage = validation.NewServerWrapper(storage, validator, autherr.ErrValidation)
+
+	servers := []Server{
+		NewHTTPServer(viper.GetString("http_listenaddr"), httpTracer, storage),
+		NewGRPCServer(viper.GetString("grpc_listenaddr"), grpcTracer, storage),
+	}
+
+	RunServers(servers...)
+
+	quit := make(chan os.Signal)
+	signal.Notify(quit, os.Interrupt)
+	<-quit
+	StopServers(servers...)
 }

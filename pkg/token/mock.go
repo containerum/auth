@@ -5,7 +5,7 @@ import (
 
 	"errors"
 
-	"git.containerum.net/ch/auth/utils"
+	"git.containerum.net/ch/auth/pkg/utils"
 	"git.containerum.net/ch/grpc-proto-files/common"
 )
 

@@ -6,7 +6,7 @@ import (
 
 	"github.com/json-iterator/go"
 
-	"git.containerum.net/ch/auth/utils"
+	"git.containerum.net/ch/auth/pkg/utils"
 	"git.containerum.net/ch/grpc-proto-files/auth"
 	"git.containerum.net/ch/grpc-proto-files/common"
 	"github.com/golang/protobuf/ptypes"
