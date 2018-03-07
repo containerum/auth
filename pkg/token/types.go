@@ -33,7 +33,7 @@ type ExtensionFields struct {
 // IssuedToken describes a token
 type IssuedToken struct {
 	Value    string
-	ID       *authProto.UUID
+	ID       string
 	IssuedAt time.Time
 	LifeTime time.Duration
 }
@@ -46,7 +46,7 @@ type Issuer interface {
 // ValidationResult describes token validation result.
 type ValidationResult struct {
 	Valid bool
-	ID    *authProto.UUID
+	ID    string
 	Kind  Kind
 }
 

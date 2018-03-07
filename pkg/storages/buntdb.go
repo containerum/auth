@@ -95,7 +95,7 @@ func (s *BuntDBStorage) forTokensByIdentity(tx *buntdb.Tx,
 	return tx.AscendEqual(indexTokens, string(pivot), iterator)
 }
 
-func (s *BuntDBStorage) forTokensByUsers(tx *buntdb.Tx, userID *authProto.UUID, iterator func(key, value string) bool) error {
+func (s *BuntDBStorage) forTokensByUsers(tx *buntdb.Tx, userID string, iterator func(key, value string) bool) error {
 	pivot, err := json.Marshal(authProto.StoredToken{
 		UserId: userID,
 	})
@@ -135,7 +135,7 @@ func (s *BuntDBStorage) deleteTokenByIdentity(tx *buntdb.Tx, identity *tokenOwne
 	return nil
 }
 
-func (s *BuntDBStorage) deleteTokenByUser(tx *buntdb.Tx, userID *authProto.UUID) error {
+func (s *BuntDBStorage) deleteTokenByUser(tx *buntdb.Tx, userID string) error {
 	s.logger.WithField("userId", userID).Debugf("Delete token by user")
 
 	var keysToDelete []string
@@ -203,12 +203,12 @@ func (s *BuntDBStorage) CreateToken(ctx context.Context, req *authProto.CreateTo
 
 		// issue tokens
 		var err error
-		userIDHash := sha256.Sum256([]byte(req.GetUserId().GetValue()))
+		userIDHash := sha256.Sum256([]byte(req.GetUserId()))
 		logger.WithField("userIDHash", userIDHash).Debug("Issue tokens")
 		accessToken, refreshToken, err = s.TokenFactory.IssueTokens(token.ExtensionFields{
 			UserIDHash:  hex.EncodeToString(userIDHash[:]),
 			Role:        req.GetUserRole(),
-			PartTokenID: req.GetPartTokenId().GetValue(),
+			PartTokenID: req.GetPartTokenId(),
 		})
 		if err != nil {
 			s.logger.WithError(err).Error("token issue failed")
@@ -219,7 +219,7 @@ func (s *BuntDBStorage) CreateToken(ctx context.Context, req *authProto.CreateTo
 		logger.WithField("accessToken", accessToken).
 			WithField("refreshToken", refreshToken).
 			Debugf("Store tokens")
-		_, _, err = tx.Set(refreshToken.ID.GetValue(),
+		_, _, err = tx.Set(refreshToken.ID,
 			s.marshalRecord(token.RequestToRecord(req, refreshToken)),
 			&buntdb.SetOptions{
 				Expires: true,
@@ -251,7 +251,7 @@ func (s *BuntDBStorage) CheckToken(ctx context.Context, req *authProto.CheckToke
 	var rec *authProto.StoredToken
 	logger.Debugf("Find record in storage")
 	err = s.db.View(func(tx *buntdb.Tx) error {
-		rawRec, getErr := tx.Get(valid.ID.GetValue())
+		rawRec, getErr := tx.Get(valid.ID)
 		if getErr != nil {
 			return s.handleGetError(getErr)
 		}
@@ -299,7 +299,7 @@ func (s *BuntDBStorage) ExtendToken(ctx context.Context, req *authProto.ExtendTo
 	err = s.db.Update(func(tx *buntdb.Tx) error {
 		// identify token owner
 		logger.Debugf("Identify token owner")
-		rawRec, txErr := tx.Get(valid.ID.GetValue())
+		rawRec, txErr := tx.Get(valid.ID)
 		if txErr != nil {
 			return s.handleGetError(txErr)
 		}
@@ -319,7 +319,7 @@ func (s *BuntDBStorage) ExtendToken(ctx context.Context, req *authProto.ExtendTo
 		}
 
 		// issue new tokens
-		userIDHash := sha256.Sum256([]byte(rec.UserId.GetValue()))
+		userIDHash := sha256.Sum256([]byte(rec.GetUserId()))
 		logger.WithField("userIDHash", userIDHash).Debug("Issue new tokens")
 		accessToken, refreshToken, txErr = s.TokenFactory.IssueTokens(token.ExtensionFields{
 			UserIDHash: hex.EncodeToString(userIDHash[:]),
@@ -334,7 +334,7 @@ func (s *BuntDBStorage) ExtendToken(ctx context.Context, req *authProto.ExtendTo
 
 		// store new tokens
 		logger.WithField("record", refreshTokenRecord).Debug("Store new tokens")
-		_, _, txErr = tx.Set(refreshToken.ID.GetValue(),
+		_, _, txErr = tx.Set(refreshToken.ID,
 			s.marshalRecord(&refreshTokenRecord),
 			&buntdb.SetOptions{
 				Expires: true,
@@ -432,12 +432,12 @@ func (s *BuntDBStorage) DeleteToken(ctx context.Context, req *authProto.DeleteTo
 
 	logger.Infof("Delete token")
 	return new(empty.Empty), s.wrapTXError(s.db.Update(func(tx *buntdb.Tx) error {
-		value, err := tx.Delete(req.GetTokenId().Value)
+		value, err := tx.Delete(req.GetTokenId())
 		if err != nil {
 			return s.handleDeleteError(err)
 		}
 		rec := s.unmarshalRecord(value)
-		if !utils.UUIDEquals(rec.UserId, req.GetUserId()) {
+		if rec.GetUserId() != req.GetUserId() {
 			err = autherr.ErrTokenNotOwnedBySender()
 		}
 		return err

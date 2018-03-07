@@ -6,7 +6,6 @@ import (
 	"errors"
 
 	"git.containerum.net/ch/auth/pkg/utils"
-	"git.containerum.net/ch/auth/proto"
 )
 
 type mockTokenRecord struct {
@@ -29,16 +28,16 @@ func NewMockIssuerValidator(returnedLifeTime time.Duration) IssuerValidator {
 func (m *mockIssuerValidator) IssueTokens(extensionFields ExtensionFields) (accessToken, refreshToken *IssuedToken, err error) {
 	tokenID := utils.NewUUID()
 	accessToken = &IssuedToken{
-		Value:    "a" + tokenID.Value,
+		Value:    "a" + tokenID,
 		LifeTime: m.returnedLifeTime,
 		ID:       tokenID,
 	}
 	now := time.Now().UTC()
-	m.issuedTokens[tokenID.Value] = mockTokenRecord{
+	m.issuedTokens[tokenID] = mockTokenRecord{
 		IssuedAt: now,
 	}
 	refreshToken = &IssuedToken{
-		Value:    "r" + tokenID.Value,
+		Value:    "r" + tokenID,
 		LifeTime: m.returnedLifeTime,
 		ID:       tokenID,
 		IssuedAt: now,
@@ -60,7 +59,7 @@ func (m *mockIssuerValidator) ValidateToken(token string) (result *ValidationRes
 	return &ValidationResult{
 		Valid: present && time.Now().Before(rec.IssuedAt.Add(m.returnedLifeTime)),
 		Kind:  kind,
-		ID:    &authProto.UUID{Value: token[1:]},
+		ID:    token[1:],
 	}, nil
 }
 

@@ -1,6 +1,5 @@
 syntax = "proto3";
 
-import "uuid.proto";
 import "auth_types.proto";
 import "google/protobuf/empty.proto";
 
@@ -20,13 +19,15 @@ service Auth {
 message CreateTokenRequest {
     string user_agent = 1;
     string fingerprint = 2;
-    UUID user_id = 3;
+    // @inject_tag: binding:"uuid"
+    string user_id = 3;
     // @inject_tag: binding:"ip"
     string user_ip = 4;
     string user_role = 5;
     bool rw_access = 6;
     ResourcesAccess access = 7;
-    UUID part_token_id = 8;
+    // @inject_tag: binding:"uuid"
+    string part_token_id = 8;
 }
 
 message CreateTokenResponse {
@@ -44,10 +45,13 @@ message CheckTokenRequest {
 
 message CheckTokenResponse {
     ResourcesAccess access = 1;
-    UUID user_id = 2;
+    // @inject_tag: binding:"uuid"
+    string user_id = 2;
     string user_role = 3;
-    UUID token_id = 4;
-    UUID part_token_id = 5;
+    // @inject_tag: binding:"uuid"
+    string token_id = 4;
+    // @inject_tag: binding:"uuid"
+    string part_token_id = 5;
 }
 
 message ExtendTokenRequest {
@@ -61,7 +65,8 @@ message ExtendTokenResponse {
 }
 
 message UpdateAccessRequestElement {
-    UUID user_id = 1;
+    // @inject_tag: binding:"uuid"
+    string user_id = 1;
     ResourcesAccess access = 2;
 }
 
@@ -70,7 +75,8 @@ message UpdateAccessRequest {
 }
 
 message GetUserTokensRequest {
-    UUID user_id = 1;
+    // @inject_tag: binding:"uuid"
+    string user_id = 1;
 }
 
 message GetUserTokensResponse {
@@ -78,10 +84,13 @@ message GetUserTokensResponse {
 }
 
 message DeleteTokenRequest {
-    UUID token_id = 1;
-    UUID user_id = 2;
+    // @inject_tag: binding:"uuid"
+    string token_id = 1;
+    // @inject_tag: binding:"uuid"
+    string user_id = 2;
 }
 
 message DeleteUserTokensRequest {
-    UUID user_id = 1;
+    // @inject_tag: binding:"uuid"
+    string user_id = 1;
 }

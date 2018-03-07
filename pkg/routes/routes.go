@@ -3,7 +3,6 @@ package routes
 import (
 	"net/http"
 
-	"git.containerum.net/ch/auth/pkg/utils"
 	"git.containerum.net/ch/auth/proto"
 	umtypes "git.containerum.net/ch/json-types/user-manager"
 	"git.containerum.net/ch/kube-client/pkg/cherry/adaptors/gonic"
@@ -68,13 +67,13 @@ func createTokenHandler(ctx *gin.Context) {
 	req := &authProto.CreateTokenRequest{
 		UserAgent:   chutils.MustGetUserAgent(ctx.Request.Context()),
 		Fingerprint: chutils.MustGetFingerprint(ctx.Request.Context()),
-		UserId:      utils.UUIDFromString(chutils.MustGetUserID(ctx.Request.Context())),
+		UserId:      chutils.MustGetUserID(ctx.Request.Context()),
 		UserIp:      chutils.MustGetClientIP(ctx.Request.Context()),
 		UserRole:    chutils.MustGetUserRole(ctx.Request.Context()),
 	}
 	ptID, ptIDExist := chutils.GetPartTokenID(ctx.Request.Context())
 	if ptIDExist {
-		req.PartTokenId = utils.UUIDFromString(ptID)
+		req.PartTokenId = ptID
 	}
 
 	var access struct {
@@ -111,11 +110,11 @@ func checkTokenHandler(ctx *gin.Context) {
 		return
 	}
 
-	ctx.Set(umtypes.UserIDHeader, resp.GetUserId().GetValue())
+	ctx.Set(umtypes.UserIDHeader, resp.GetUserId())
 	ctx.Set(umtypes.UserRoleHeader, resp.GetUserRole())
-	ctx.Set(umtypes.TokenIDHeader, resp.GetTokenId().GetValue())
-	if resp.PartTokenId != nil {
-		ctx.Set(umtypes.PartTokenIDHeader, resp.GetPartTokenId().GetValue())
+	ctx.Set(umtypes.TokenIDHeader, resp.GetTokenId())
+	if resp.PartTokenId != "" {
+		ctx.Set(umtypes.PartTokenIDHeader, resp.GetPartTokenId())
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
@@ -140,7 +139,7 @@ func extendTokenHandler(ctx *gin.Context) {
 
 func getUserTokensHandler(ctx *gin.Context) {
 	req := &authProto.GetUserTokensRequest{
-		UserId: utils.UUIDFromString(chutils.MustGetUserID(ctx.Request.Context())),
+		UserId: chutils.MustGetUserID(ctx.Request.Context()),
 	}
 
 	resp, err := srv.GetUserTokens(ctx.Request.Context(), req)
@@ -154,8 +153,8 @@ func getUserTokensHandler(ctx *gin.Context) {
 
 func deleteTokenByIDHandler(ctx *gin.Context) {
 	req := &authProto.DeleteTokenRequest{
-		TokenId: utils.UUIDFromString(ctx.Param("token_id")),
-		UserId:  utils.UUIDFromString(chutils.MustGetUserID(ctx.Request.Context())),
+		TokenId: ctx.Param("token_id"),
+		UserId:  chutils.MustGetUserID(ctx.Request.Context()),
 	}
 
 	_, err := srv.DeleteToken(ctx.Request.Context(), req)
@@ -169,7 +168,7 @@ func deleteTokenByIDHandler(ctx *gin.Context) {
 
 func deleteUserTokensHandler(ctx *gin.Context) {
 	req := &authProto.DeleteUserTokensRequest{
-		UserId: utils.UUIDFromString(ctx.Param("user_id")),
+		UserId: ctx.Param("user_id"),
 	}
 
 	_, err := srv.DeleteUserTokens(ctx.Request.Context(), req)

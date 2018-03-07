@@ -3,6 +3,8 @@ package validation
 import (
 	"context"
 
+	"strings"
+
 	"git.containerum.net/ch/auth/proto"
 	"git.containerum.net/ch/kube-client/pkg/cherry"
 	"git.containerum.net/ch/kube-client/pkg/cherry/adaptors/cherrylog"
@@ -58,6 +60,8 @@ func (v *ServerWrapper) validateStruct(ctx context.Context, req interface{}) err
 
 // CreateToken performs request validation and calls underlying method
 func (v *ServerWrapper) CreateToken(ctx context.Context, req *authProto.CreateTokenRequest) (*authProto.CreateTokenResponse, error) {
+	req.PartTokenId = strings.ToLower(req.GetPartTokenId())
+	req.UserId = strings.ToLower(req.GetUserId())
 	if err := v.validateStruct(ctx, req); err != nil {
 		return nil, err
 	}
@@ -66,6 +70,7 @@ func (v *ServerWrapper) CreateToken(ctx context.Context, req *authProto.CreateTo
 
 // CheckToken performs request validation and calls underlying method
 func (v *ServerWrapper) CheckToken(ctx context.Context, req *authProto.CheckTokenRequest) (*authProto.CheckTokenResponse, error) {
+	req.UserIp = strings.ToLower(req.GetUserIp())
 	if err := v.validateStruct(ctx, req); err != nil {
 		return nil, err
 	}
@@ -82,6 +87,9 @@ func (v *ServerWrapper) ExtendToken(ctx context.Context, req *authProto.ExtendTo
 
 // UpdateAccess performs request validation and calls underlying method
 func (v *ServerWrapper) UpdateAccess(ctx context.Context, req *authProto.UpdateAccessRequest) (*empty.Empty, error) {
+	for i := range req.Users {
+		req.Users[i].UserId = strings.ToLower(req.Users[i].GetUserId())
+	}
 	if err := v.validateStruct(ctx, req); err != nil {
 		return nil, err
 	}
@@ -90,6 +98,7 @@ func (v *ServerWrapper) UpdateAccess(ctx context.Context, req *authProto.UpdateA
 
 // GetUserTokens performs request validation and calls underlying method
 func (v *ServerWrapper) GetUserTokens(ctx context.Context, req *authProto.GetUserTokensRequest) (*authProto.GetUserTokensResponse, error) {
+	req.UserId = strings.ToLower(req.GetUserId())
 	if err := v.validateStruct(ctx, req); err != nil {
 		return nil, err
 	}
@@ -98,6 +107,8 @@ func (v *ServerWrapper) GetUserTokens(ctx context.Context, req *authProto.GetUse
 
 // DeleteToken performs request validation and calls underlying method
 func (v *ServerWrapper) DeleteToken(ctx context.Context, req *authProto.DeleteTokenRequest) (*empty.Empty, error) {
+	req.UserId = strings.ToLower(req.GetUserId())
+	req.TokenId = strings.ToLower(req.GetTokenId())
 	if err := v.validateStruct(ctx, req); err != nil {
 		return nil, err
 	}
@@ -106,6 +117,7 @@ func (v *ServerWrapper) DeleteToken(ctx context.Context, req *authProto.DeleteTo
 
 // DeleteUserTokens performs request validation and calls underlying method
 func (v *ServerWrapper) DeleteUserTokens(ctx context.Context, req *authProto.DeleteUserTokensRequest) (*empty.Empty, error) {
+	req.UserId = strings.ToLower(req.GetUserId())
 	if err := v.validateStruct(ctx, req); err != nil {
 		return nil, err
 	}
