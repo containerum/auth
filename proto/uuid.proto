@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+option go_package = "authProto";
+
+// Represents UUID in standart format
+message UUID {
+    // @inject_tag: binding:"uuid"
+    string value = 1;
+}

@@ -3,21 +3,12 @@
 
 [[projects]]
   branch = "master"
-  name = "git.containerum.net/ch/grpc-proto-files"
-  packages = [
-    "auth",
-    "common"
-  ]
-  revision = "3650097fee157162fc079fb87570279cbed50989"
-
-[[projects]]
-  branch = "master"
   name = "git.containerum.net/ch/json-types"
   packages = [
-    "errors",
+    "misc",
     "user-manager"
   ]
-  revision = "0427e400408db6e486f87f06596433fb84df0659"
+  revision = "2b91a176625129c8b8d97820c4016459a89530d5"
 
 [[projects]]
   branch = "develop"
@@ -26,9 +17,16 @@
     "pkg/cherry",
     "pkg/cherry/adaptors/cherrygrpc",
     "pkg/cherry/adaptors/cherrylog",
+    "pkg/cherry/adaptors/gonic",
     "pkg/cherry/auth"
   ]
-  revision = "1818f1cf51a719c661a6df9cb68233da2a98999a"
+  revision = "45396fc40aa21d5e082a31cfbb27cbccab51dd05"
+
+[[projects]]
+  branch = "master"
+  name = "git.containerum.net/ch/utils"
+  packages = ["."]
+  revision = "8c7a6fb8694cb1e4a61ad36a9afea35e9bf9b124"
 
 [[projects]]
   name = "github.com/Shopify/sarama"
@@ -91,21 +89,37 @@
   revision = "dccbb4a462e965297e21372a9ad3ea05e0df3e5f"
 
 [[projects]]
-  branch = "master"
   name = "github.com/gin-gonic/gin"
   packages = [
     ".",
     "binding",
-    "json",
     "render"
   ]
-  revision = "2fbb97117cda046278ad34bd7bac35cbc38c68d5"
+  revision = "d459835d2b077e44f7c9b453505ee29881d5d12d"
+  version = "v1.2"
 
 [[projects]]
   name = "github.com/go-logfmt/logfmt"
   packages = ["."]
   revision = "390ab7935ee28ec6b286364bba9b4dd6410cb3d5"
   version = "v0.3.0"
+
+[[projects]]
+  name = "github.com/go-playground/locales"
+  packages = [
+    ".",
+    "currency",
+    "en",
+    "en_US"
+  ]
+  revision = "e4cbcb5d0652150d40ad0646651076b6bd2be4f6"
+  version = "v0.11.2"
+
+[[projects]]
+  name = "github.com/go-playground/universal-translator"
+  packages = ["."]
+  revision = "b32fa301c9fe55953584134cb6853a13c87ec0a1"
+  version = "v0.16.0"
 
 [[projects]]
   name = "github.com/gogo/protobuf"
@@ -174,6 +188,15 @@
     "json/token"
   ]
   revision = "23c074d0eceb2b8a5bfdbb271ab780cde70f05a8"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/jmoiron/sqlx"
+  packages = [
+    ".",
+    "reflectx"
+  ]
+  revision = "cf35089a197953c69420c8d0cecda90809764b1d"
 
 [[projects]]
   name = "github.com/json-iterator/go"
@@ -462,6 +485,15 @@
   version = "v8.18.2"
 
 [[projects]]
+  name = "gopkg.in/go-playground/validator.v9"
+  packages = [
+    ".",
+    "translations/en"
+  ]
+  revision = "1b8c8e19cd250435025214492d9a08411d760fdd"
+  version = "v9.12.0"
+
+[[projects]]
   branch = "v2"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
@@ -470,6 +502,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "c3681cd8b95b5fa8e03095f606697ddb00ab4d1cb80c29472fc13be0f244b5f4"
+  inputs-digest = "640059d8d73e01c5a6ffc80c51ed113ea8a24ba33a964265e503a6f2da9eef15"
   solver-name = "gps-cdcl"
   solver-version = 1

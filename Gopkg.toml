@@ -4,10 +4,6 @@
     unused-packages = true
 
 [[constraint]]
-  name = "github.com/dgrijalva/jwt-go"
-  version = "3.1.0"
-
-[[constraint]]
   branch = "master"
   name = "github.com/grpc-ecosystem/go-grpc-middleware"
 
@@ -42,3 +38,19 @@
 [[constraint]]
   branch = "develop"
   name = "git.containerum.net/ch/kube-client"
+
+[[constraint]]
+  branch = "master"
+  name = "git.containerum.net/ch/json-types"
+
+[[constraint]]
+  branch = "master"
+  name = "git.containerum.net/ch/utils"
+
+[[constraint]]
+  name = "gopkg.in/go-playground/validator.v9"
+  version = "9.12.0"
+
+[[constraint]]
+  name = "github.com/go-playground/locales"
+  version = "0.11.2"
