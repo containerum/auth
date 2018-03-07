@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"net/textproto"
 
+	"strings"
+
 	umtypes "git.containerum.net/ch/json-types/user-manager"
 	"git.containerum.net/ch/kube-client/pkg/cherry"
 	"git.containerum.net/ch/kube-client/pkg/cherry/adaptors/gonic"
@@ -75,6 +77,14 @@ func PrepareContext(ctx *gin.Context) {
 			ctx.Request = ctx.Request.WithContext(rctx)
 		}
 	}
+
+	acceptLanguages := ctx.GetHeader("Accept-Language")
+	acceptLanguagesToContext := make([]string, 0)
+	for _, language := range strings.Split(acceptLanguages, ",") {
+		language = strings.Split(strings.TrimSpace(language), ";")[0] // drop quality values
+		acceptLanguagesToContext = append(acceptLanguagesToContext, language)
+	}
+	ctx.Request = ctx.Request.WithContext(context.WithValue(ctx.Request.Context(), AcceptLanguageContextKey, acceptLanguagesToContext))
 }
 
 // RequireAdminRole is a gin middleware which requires admin role
