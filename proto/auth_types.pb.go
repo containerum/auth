@@ -129,8 +129,8 @@ func (m *StoredToken) GetLifeTime() *google_protobuf1.Duration {
 
 type AccessObject struct {
 	Label string `protobuf:"bytes,1,opt,name=label" json:"label,omitempty"`
-	// @inject_tag: binding:"uuid4"
-	Id     string `protobuf:"bytes,2,opt,name=id" json:"id,omitempty" binding:"uuid4"`
+	// @inject_tag: binding:"uuid"
+	Id     string `protobuf:"bytes,2,opt,name=id" json:"id,omitempty" binding:"uuid"`
 	Access string `protobuf:"bytes,3,opt,name=access" json:"access,omitempty"`
 }
 

@@ -14,8 +14,8 @@ var _ = math.Inf
 
 // Represents UUID in standart format
 type UUID struct {
-	// @inject_tag: binding:"uuid4"
-	Value string `protobuf:"bytes,1,opt,name=value" json:"value,omitempty" binding:"uuid4"`
+	// @inject_tag: binding:"uuid"
+	Value string `protobuf:"bytes,1,opt,name=value" json:"value,omitempty" binding:"uuid"`
 }
 
 func (m *UUID) Reset()                    { *m = UUID{} }

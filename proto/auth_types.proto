@@ -25,7 +25,7 @@ message StoredToken {
 
 message AccessObject {
     string label = 1;
-    // @inject_tag: binding:"uuid4"
+    // @inject_tag: binding:"uuid"
     string id = 2;
     string access = 3;
 }

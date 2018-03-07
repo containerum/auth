@@ -48,6 +48,6 @@ func UUIDEquals(a, b *authProto.UUID) bool {
 // UUIDFromString returns UUID object parsed from string
 func UUIDFromString(value string) *authProto.UUID {
 	return &authProto.UUID{
-		Value: value,
+		Value: strings.ToLower(value),
 	}
 }
