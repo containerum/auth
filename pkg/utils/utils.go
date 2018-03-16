@@ -36,7 +36,7 @@ func NewUUID() *authProto.UUID {
 	uuid[8] = (uuid[8] & 0x3f) | 0x80 // Variant is 10
 
 	return &authProto.UUID{
-		Value: fmt.Sprintf("%X-%X-%X-%X-%X", uuid[0:4], uuid[4:6], uuid[6:8], uuid[8:10], uuid[10:]),
+		Value: fmt.Sprintf("%x-%x-%x-%x-%x", uuid[0:4], uuid[4:6], uuid[6:8], uuid[8:10], uuid[10:]),
 	}
 }
 
