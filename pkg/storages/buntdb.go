@@ -432,12 +432,12 @@ func (s *BuntDBStorage) DeleteToken(ctx context.Context, req *authProto.DeleteTo
 
 	logger.Infof("Delete token")
 	return new(empty.Empty), s.wrapTXError(s.db.Update(func(tx *buntdb.Tx) error {
-		value, err := tx.Delete(req.GetTokenId().Value)
+		value, err := tx.Delete(req.GetTokenId().GetValue())
 		if err != nil {
 			return s.handleDeleteError(err)
 		}
 		rec := s.unmarshalRecord(value)
-		if !utils.UUIDEquals(rec.UserId, req.GetUserId()) {
+		if !utils.UUIDEquals(rec.GetUserId(), req.GetUserId()) {
 			err = autherr.ErrTokenNotOwnedBySender()
 		}
 		return err
