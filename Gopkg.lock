@@ -11,7 +11,6 @@
   revision = "2b91a176625129c8b8d97820c4016459a89530d5"
 
 [[projects]]
-  branch = "develop"
   name = "git.containerum.net/ch/kube-client"
   packages = [
     "pkg/cherry",
@@ -20,13 +19,14 @@
     "pkg/cherry/adaptors/gonic",
     "pkg/cherry/auth"
   ]
-  revision = "45396fc40aa21d5e082a31cfbb27cbccab51dd05"
+  revision = "ec0ed453031faa1f30e18eb6eed19ed4af6cfe6d"
+  version = "v0.2.1"
 
 [[projects]]
   branch = "master"
   name = "git.containerum.net/ch/utils"
   packages = ["."]
-  revision = "8f285de51d8b4801a4b94b7312cb60965aeb4efb"
+  revision = "9860a084df1aedccb2ff0cd6c15cf11f5ca85b95"
 
 [[projects]]
   name = "github.com/Shopify/sarama"
@@ -502,6 +502,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "640059d8d73e01c5a6ffc80c51ed113ea8a24ba33a964265e503a6f2da9eef15"
+  inputs-digest = "704450768b17409b55c7be8ff64af7130474e66f7d722907c2426dc4a188b02c"
   solver-name = "gps-cdcl"
   solver-version = 1
