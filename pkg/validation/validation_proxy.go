@@ -20,13 +20,13 @@ type ServerWrapper struct {
 	upstream      authProto.AuthServer
 	log           *cherrylog.LogrusAdapter
 	validator     *validator.Validate
-	validationErr func() *cherry.Err
+	validationErr cherry.ErrConstruct
 	translator    *ut.UniversalTranslator
 }
 
 // NewServerWrapper constructs ServerWrapper
 func NewServerWrapper(upstream authProto.AuthServer, validator *validator.Validate,
-	translator *ut.UniversalTranslator, validationErr func() *cherry.Err) authProto.AuthServer {
+	translator *ut.UniversalTranslator, validationErr cherry.ErrConstruct) authProto.AuthServer {
 	return &ServerWrapper{
 		upstream:      upstream,
 		log:           cherrylog.NewLogrusAdapter(logrus.WithField("component", "validation_proxy")),
