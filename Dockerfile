@@ -1,7 +1,7 @@
 FROM golang:1.9-alpine as builder
 WORKDIR src/git.containerum.net/ch/auth
 COPY . .
-RUN go build -v -ldflags="-w -s -extldflags '-static'" -tags="jsoniter" -o /bin/auth ./cmd
+RUN go build -v -ldflags="-w -s -extldflags '-static'" -tags="jsoniter" -o /bin/auth ./cmd/auth
 
 FROM alpine:3.7
 COPY --from=builder /bin/auth /
