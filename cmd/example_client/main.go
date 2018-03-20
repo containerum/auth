@@ -71,7 +71,7 @@ func main() {
 			UserRole:    "user",
 			RwAccess:    true,
 			Access:      &authProto.ResourcesAccess{},
-			PartTokenId: nil,
+			PartTokenId: "",
 		})
 		chkErr(err)
 		log.Printf("Got response %+v", resp)

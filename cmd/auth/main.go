@@ -14,10 +14,9 @@ import (
 	"github.com/spf13/viper"
 )
 
-//go:generate protoc --go_out=plugins=grpc:../proto -I../proto auth.proto auth_types.proto uuid.proto
+//go:generate protoc --go_out=plugins=grpc:../proto -I../proto auth.proto auth_types.proto
 //go:generate protoc-go-inject-tag -input=../proto/auth.pb.go
 //go:generate protoc-go-inject-tag -input=../proto/auth_types.pb.go
-//go:generate protoc-go-inject-tag -input=../proto/uuid.pb.go
 
 func logExit(err error) {
 	if err != nil {

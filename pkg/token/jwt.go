@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"git.containerum.net/ch/auth/pkg/utils"
-	"git.containerum.net/ch/auth/proto"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/sirupsen/logrus"
 )
@@ -42,11 +41,11 @@ func NewJWTIssuerValidator(config JWTIssuerValidatorConfig) IssuerValidator {
 	}
 }
 
-func (j *jwtIssuerValidator) issueToken(id *authProto.UUID, kind Kind, lifeTime time.Duration, extendedFields ExtensionFields) (token *IssuedToken, err error) {
+func (j *jwtIssuerValidator) issueToken(id string, kind Kind, lifeTime time.Duration, extendedFields ExtensionFields) (token *IssuedToken, err error) {
 	now := jwt.TimeFunc()
 	claims := extendedClaims{
 		StandardClaims: jwt.StandardClaims{
-			Id:        id.Value,
+			Id:        id,
 			Issuer:    j.config.Issuer,
 			IssuedAt:  now.Unix(),
 			ExpiresAt: now.Add(lifeTime).Unix(),
@@ -93,10 +92,8 @@ func (j *jwtIssuerValidator) ValidateToken(token string) (result *ValidationResu
 
 	validationResult := &ValidationResult{
 		Valid: tokenObj.Valid,
-		ID: &authProto.UUID{
-			Value: tokenObj.Claims.(*extendedClaims).Id,
-		},
-		Kind: tokenObj.Claims.(*extendedClaims).Kind,
+		ID:    tokenObj.Claims.(*extendedClaims).Id,
+		Kind:  tokenObj.Claims.(*extendedClaims).Kind,
 	}
 	j.logger.WithField("result", validationResult).Debugf("Validated token: %s", token)
 	return validationResult, nil
