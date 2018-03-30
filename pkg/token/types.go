@@ -59,6 +59,7 @@ type Validator interface {
 type IssuerValidator interface {
 	Issuer
 	Validator
+	AccessFromRefresh(refreshToken string) (accessToken *IssuedToken, err error)
 	Now() time.Time
 }
 

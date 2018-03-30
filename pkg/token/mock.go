@@ -3,9 +3,8 @@ package token
 import (
 	"time"
 
-	"errors"
-
 	"git.containerum.net/ch/auth/pkg/utils"
+	"git.containerum.net/ch/kube-client/pkg/cherry/auth"
 )
 
 type mockTokenRecord struct {
@@ -27,12 +26,13 @@ func NewMockIssuerValidator(returnedLifeTime time.Duration) IssuerValidator {
 
 func (m *mockIssuerValidator) IssueTokens(extensionFields ExtensionFields) (accessToken, refreshToken *IssuedToken, err error) {
 	tokenID := utils.NewUUID()
+	now := m.Now()
 	accessToken = &IssuedToken{
 		Value:    "a" + tokenID,
 		LifeTime: m.returnedLifeTime,
 		ID:       tokenID,
+		IssuedAt: now,
 	}
-	now := time.Now().UTC()
 	m.issuedTokens[tokenID] = mockTokenRecord{
 		IssuedAt: now,
 	}
@@ -54,12 +54,30 @@ func (m *mockIssuerValidator) ValidateToken(token string) (result *ValidationRes
 	case 'r':
 		kind = KindRefresh
 	default:
-		return nil, errors.New("invalid token received")
+		return nil, autherr.ErrInvalidToken().AddDetailF("bad token kind %s", token[0])
 	}
 	return &ValidationResult{
-		Valid: present && time.Now().Before(rec.IssuedAt.Add(m.returnedLifeTime)),
+		Valid: present && m.Now().Before(rec.IssuedAt.Add(m.returnedLifeTime)),
 		Kind:  kind,
 		ID:    token[1:],
+	}, nil
+}
+
+func (m *mockIssuerValidator) AccessFromRefresh(refreshToken string) (accessToken *IssuedToken, err error) {
+	if refreshToken[0] != 'r' {
+		return nil, autherr.ErrInvalidToken().AddDetailF("bad token kind '%c'", refreshToken[0])
+	}
+	rec, present := m.issuedTokens[refreshToken[1:]]
+
+	if !present || m.Now().After(rec.IssuedAt.Add(m.returnedLifeTime)) {
+		return nil, autherr.ErrInvalidToken()
+	}
+
+	return &IssuedToken{
+		Value:    "a" + refreshToken[1:],
+		ID:       refreshToken[1:],
+		IssuedAt: rec.IssuedAt.Truncate(time.Second),
+		LifeTime: m.returnedLifeTime,
 	}, nil
 }
 
