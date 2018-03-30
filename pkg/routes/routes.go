@@ -54,13 +54,15 @@ func SetupRoutes(engine *gin.Engine, server authProto.AuthServer) {
 		token.DELETE("/:token_id",
 			chutils.RequireHeaders(autherr.ErrValidation, umtypes.UserIDHeader),
 			deleteTokenByIDHandler)
+	}
 
+	byID := engine.Group("/byid/")
+	{
 		// Get access token by ID
-		token.GET("/access/:token_id",
+		byID.GET("/access/:token_id",
 			chutils.RequireHeaders(autherr.ErrValidation, umtypes.UserRoleHeader),
 			getAccessTokenByIDHandler,
 		)
-
 	}
 
 	user := engine.Group("/user")
