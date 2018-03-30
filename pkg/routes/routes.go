@@ -56,7 +56,7 @@ func SetupRoutes(engine *gin.Engine, server authProto.AuthServer) {
 			deleteTokenByIDHandler)
 
 		// Get access token by ID
-		token.GET("/:token_id",
+		token.GET("/access/:token_id",
 			chutils.RequireHeaders(autherr.ErrValidation, umtypes.UserRoleHeader),
 			getAccessTokenByIDHandler,
 		)
