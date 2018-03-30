@@ -67,7 +67,7 @@ func NewBuntDBStorage(config BuntDBStorageConfig) (storage *BuntDBStorage, err e
 			return txErr
 		}
 		logger.Debugf("Create index for users")
-		if txErr := tx.CreateIndex(indexUsers, "*", buntdb.IndexJSON("user_id.value")); txErr != nil {
+		if txErr := tx.CreateIndex(indexUsers, "*", buntdb.IndexJSON("user_id")); txErr != nil {
 			return txErr
 		}
 		return nil
