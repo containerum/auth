@@ -14,6 +14,7 @@ service Auth {
     rpc GetUserTokens (GetUserTokensRequest) returns (GetUserTokensResponse) {} // Returns all active User-Agent's, IP's and times. Filtered by user active refresh token.
     rpc DeleteToken (DeleteTokenRequest) returns (google.protobuf.Empty) {} // Delete user access and refresh token by token id.
     rpc DeleteUserTokens (DeleteUserTokensRequest) returns (google.protobuf.Empty) {} // Delete all user access and refresh tokens by user id.
+    rpc AccessTokenByID (AccessTokenByIDRequest) returns (AccessTokenByIDResponse) {} // Get access token by id (reconstruct from stored refresh token)
 }
 
 message CreateTokenRequest {
@@ -93,4 +94,14 @@ message DeleteTokenRequest {
 message DeleteUserTokensRequest {
     // @inject_tag: binding:"uuid"
     string user_id = 1;
+}
+
+message AccessTokenByIDRequest {
+    // @inject_tag: binding:"uuid"
+    string token_id = 1;
+    string user_role = 2;
+}
+
+message AccessTokenByIDResponse {
+    string access_token = 1;
 }
