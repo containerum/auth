@@ -100,17 +100,18 @@ func DecodeAccessObjects(value string) (ret []*authProto.AccessObject) {
 // RequestToRecord prepares a value to store in database
 func RequestToRecord(req *authProto.CreateTokenRequest, token *IssuedToken) *authProto.StoredToken {
 	ret := &authProto.StoredToken{
-		UserAgent:     req.GetUserAgent(),
-		Platform:      utils.ShortUserAgent(req.GetUserAgent()),
-		Fingerprint:   req.GetFingerprint(),
-		UserId:        req.GetUserId(),
-		UserRole:      req.GetUserRole(),
-		UserNamespace: EncodeAccessObjects(req.GetAccess().GetNamespace()),
-		UserVolume:    EncodeAccessObjects(req.GetAccess().GetVolume()),
-		RwAccess:      req.GetRwAccess(),
-		UserIp:        req.GetUserIp(),
-		PartTokenId:   req.GetPartTokenId(),
-		LifeTime:      ptypes.DurationProto(token.LifeTime),
+		UserAgent:       req.GetUserAgent(),
+		Platform:        utils.ShortUserAgent(req.GetUserAgent()),
+		Fingerprint:     req.GetFingerprint(),
+		UserId:          req.GetUserId(),
+		UserRole:        req.GetUserRole(),
+		UserNamespace:   EncodeAccessObjects(req.GetAccess().GetNamespace()),
+		UserVolume:      EncodeAccessObjects(req.GetAccess().GetVolume()),
+		RwAccess:        req.GetRwAccess(),
+		UserIp:          req.GetUserIp(),
+		PartTokenId:     req.GetPartTokenId(),
+		LifeTime:        ptypes.DurationProto(token.LifeTime),
+		RawRefreshToken: token.Value,
 	}
 	if token != nil {
 		ret.TokenId = token.ID

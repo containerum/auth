@@ -123,3 +123,12 @@ func (v *ServerWrapper) DeleteUserTokens(ctx context.Context, req *authProto.Del
 	}
 	return v.upstream.DeleteUserTokens(ctx, req)
 }
+
+// AccessTokenByID returns user access token
+func (v *ServerWrapper) AccessTokenByID(ctx context.Context, req *authProto.AccessTokenByIDRequest) (*authProto.AccessTokenByIDResponse, error) {
+	req.TokenId = strings.ToLower(req.GetTokenId())
+	if err := v.validateStruct(ctx, req); err != nil {
+		return nil, err
+	}
+	return v.upstream.AccessTokenByID(ctx, req)
+}

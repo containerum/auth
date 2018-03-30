@@ -109,12 +109,17 @@ func (j *jwtIssuerValidator) AccessFromRefresh(refreshToken string) (accessToken
 		return
 	}
 
-	if !tokenObj.Valid {
+	claims := tokenObj.Claims.(*extendedClaims)
+
+	if !tokenObj.Valid && claims.Kind != KindRefresh {
 		return nil, autherr.ErrInvalidToken().AddDetails("invalid refresh token received")
 	}
 
+	if jwt.TimeFunc().After(time.Unix(claims.IssuedAt, 0).UTC().Add(j.config.AccessTokenLifeTime)) {
+		return nil, autherr.ErrInvalidToken().AddDetails("access token will be invalid because it expired")
+	}
+
 	// access token differs from refresh token only in "ExpiresAt", "Kind" and "ExtensionFields" (it`s empty)
-	claims := tokenObj.Claims.(*extendedClaims)
 	claims.Kind = KindAccess
 	// here we losing nanosecond precision
 	claims.ExpiresAt = time.Unix(claims.IssuedAt, 0).Add(j.config.AccessTokenLifeTime).Unix()
