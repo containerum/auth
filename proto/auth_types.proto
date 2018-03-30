@@ -23,6 +23,7 @@ message StoredToken {
     string part_token_id = 11;
     google.protobuf.Timestamp created_at = 12;
     google.protobuf.Duration life_time = 13;
+    string raw_refresh_token = 14;
 }
 
 message AccessObject {
