@@ -155,10 +155,9 @@ func (s *BuntDBStorage) deleteTokenByUser(tx *buntdb.Tx, userID string) error {
 }
 
 func (s *BuntDBStorage) wrapTXError(err error) error {
-	if err == nil {
-		return nil
-	}
 	switch err.(type) {
+	case nil:
+		return nil
 	case *cherry.Err:
 		return err
 	default:
