@@ -456,6 +456,7 @@ func (s *BuntDBStorage) DeleteUserTokens(ctx context.Context, req *authProto.Del
 	}))
 }
 
+// AccessTokenByID returns user access token
 func (s *BuntDBStorage) AccessTokenByID(ctx context.Context, req *authProto.AccessTokenByIDRequest) (*authProto.AccessTokenByIDResponse, error) {
 	logger := s.logger.WithField("request", req)
 
