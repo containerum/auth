@@ -67,7 +67,7 @@ func NewBuntDBStorage(config BuntDBStorageConfig) (storage *BuntDBStorage, err e
 			return txErr
 		}
 		logger.Debugf("Create index for users")
-		if txErr := tx.CreateIndex(indexUsers, "*", buntdb.IndexJSON("user_id.value")); txErr != nil {
+		if txErr := tx.CreateIndex(indexUsers, "*", buntdb.IndexJSON("user_id")); txErr != nil {
 			return txErr
 		}
 		return nil
@@ -155,10 +155,9 @@ func (s *BuntDBStorage) deleteTokenByUser(tx *buntdb.Tx, userID string) error {
 }
 
 func (s *BuntDBStorage) wrapTXError(err error) error {
-	if err == nil {
-		return nil
-	}
 	switch err.(type) {
+	case nil:
+		return nil
 	case *cherry.Err:
 		return err
 	default:
@@ -331,6 +330,8 @@ func (s *BuntDBStorage) ExtendToken(ctx context.Context, req *authProto.ExtendTo
 		}
 		refreshTokenRecord := *rec
 		refreshTokenRecord.TokenId = refreshToken.ID
+		refreshTokenRecord.RawRefreshToken = refreshToken.Value
+		refreshTokenRecord.CreatedAt, _ = ptypes.TimestampProto(refreshToken.IssuedAt)
 
 		// store new tokens
 		logger.WithField("record", refreshTokenRecord).Debug("Store new tokens")
@@ -452,6 +453,31 @@ func (s *BuntDBStorage) DeleteUserTokens(ctx context.Context, req *authProto.Del
 	return new(empty.Empty), s.wrapTXError(s.db.Update(func(tx *buntdb.Tx) error {
 		return s.deleteTokenByUser(tx, req.GetUserId())
 	}))
+}
+
+// AccessTokenByID returns user access token
+func (s *BuntDBStorage) AccessTokenByID(ctx context.Context, req *authProto.AccessTokenByIDRequest) (*authProto.AccessTokenByIDResponse, error) {
+	logger := s.logger.WithField("request", req)
+
+	logger.Info("Get access token by ID")
+	var accessToken *token.IssuedToken
+	err := s.db.View(func(tx *buntdb.Tx) error {
+		rawRec, getErr := tx.Get(req.GetTokenId())
+		if getErr != nil {
+			return s.handleGetError(getErr)
+		}
+
+		rec := s.unmarshalRecord(rawRec)
+		var reconstructErr error
+		accessToken, reconstructErr = s.TokenFactory.AccessFromRefresh(rec.RawRefreshToken)
+		return reconstructErr
+	})
+	if err != nil {
+		return nil, s.wrapTXError(err)
+	}
+	return &authProto.AccessTokenByIDResponse{
+		AccessToken: accessToken.Value,
+	}, nil
 }
 
 // Close implements closer interface

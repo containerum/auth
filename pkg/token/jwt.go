@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"git.containerum.net/ch/auth/pkg/utils"
+	"git.containerum.net/ch/kube-client/pkg/cherry/auth"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/sirupsen/logrus"
 )
@@ -97,6 +98,40 @@ func (j *jwtIssuerValidator) ValidateToken(token string) (result *ValidationResu
 	}
 	j.logger.WithField("result", validationResult).Debugf("Validated token: %s", token)
 	return validationResult, nil
+}
+
+func (j *jwtIssuerValidator) AccessFromRefresh(refreshToken string) (accessToken *IssuedToken, err error) {
+	j.logger.Debugf("Reconstructing access token from refresh token %s", refreshToken)
+	tokenObj, err := jwt.ParseWithClaims(refreshToken, new(extendedClaims), func(token *jwt.Token) (interface{}, error) {
+		return j.config.ValidationKey, nil
+	})
+	if err != nil {
+		return
+	}
+
+	claims := tokenObj.Claims.(*extendedClaims)
+
+	if !tokenObj.Valid && claims.Kind != KindRefresh {
+		return nil, autherr.ErrInvalidToken().AddDetails("invalid refresh token received")
+	}
+
+	if jwt.TimeFunc().After(time.Unix(claims.IssuedAt, 0).UTC().Add(j.config.AccessTokenLifeTime)) {
+		return nil, autherr.ErrInvalidToken().AddDetails("access token will be invalid because it expired")
+	}
+
+	// access token differs from refresh token only in "ExpiresAt", "Kind" and "ExtensionFields" (it`s empty)
+	claims.Kind = KindAccess
+	// here we losing nanosecond precision
+	claims.ExpiresAt = time.Unix(claims.IssuedAt, 0).Add(j.config.AccessTokenLifeTime).Unix()
+	claims.ExtensionFields = ExtensionFields{}
+
+	value, err := jwt.NewWithClaims(j.config.SigningMethod, claims).SignedString(j.config.SigningKey)
+	return &IssuedToken{
+		Value:    value,
+		ID:       claims.Id,
+		IssuedAt: time.Unix(claims.IssuedAt, 0).UTC(),
+		LifeTime: j.config.AccessTokenLifeTime,
+	}, err
 }
 
 func (j *jwtIssuerValidator) Now() time.Time {

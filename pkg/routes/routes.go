@@ -54,6 +54,13 @@ func SetupRoutes(engine *gin.Engine, server authProto.AuthServer) {
 		token.DELETE("/:token_id",
 			chutils.RequireHeaders(autherr.ErrValidation, umtypes.UserIDHeader),
 			deleteTokenByIDHandler)
+
+		// Get access token by ID
+		token.GET("/:token_id",
+			chutils.RequireHeaders(autherr.ErrValidation, umtypes.UserRoleHeader),
+			getAccessTokenByIDHandler,
+		)
+
 	}
 
 	user := engine.Group("/user")
@@ -178,4 +185,18 @@ func deleteUserTokensHandler(ctx *gin.Context) {
 	}
 
 	ctx.Status(http.StatusOK)
+}
+
+func getAccessTokenByIDHandler(ctx *gin.Context) {
+	req := &authProto.AccessTokenByIDRequest{
+		TokenId: ctx.Param("token_id"),
+	}
+
+	resp, err := srv.AccessTokenByID(ctx.Request.Context(), req)
+	if err != nil {
+		ctx.AbortWithStatusJSON(handleServerError(err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, resp)
 }

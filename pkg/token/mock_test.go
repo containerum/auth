@@ -33,5 +33,21 @@ func TestMockIssuerValidator(t *testing.T) {
 			_, err := mockiv.ValidateToken("invalid")
 			So(err, ShouldNotBeNil)
 		})
+		Convey("reconstruct access token from refresh", func() {
+			accessToken, refreshToken, err := mockiv.IssueTokens(ExtensionFields{})
+			So(err, ShouldBeNil)
+
+			// because we losing nanoseconds
+			accessToken.IssuedAt = accessToken.IssuedAt.Truncate(time.Second)
+
+			reconstructedAccessToken, err := mockiv.AccessFromRefresh(refreshToken.Value)
+			So(err, ShouldBeNil)
+
+			So(reconstructedAccessToken, ShouldResemble, accessToken)
+
+			valid, err := mockiv.ValidateToken(reconstructedAccessToken.Value)
+			So(err, ShouldBeNil)
+			So(valid, ShouldResemble, &ValidationResult{ID: accessToken.ID, Valid: true, Kind: KindAccess})
+		})
 	})
 }

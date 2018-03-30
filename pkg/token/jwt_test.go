@@ -67,3 +67,23 @@ func TestJWTValidation(t *testing.T) {
 		So(valid, ShouldBeNil)
 	})
 }
+
+func TestJWTReconstruction(t *testing.T) {
+	jwtiv := NewJWTIssuerValidator(testValidatorConfig)
+	Convey("Test access token reconstruction from refresh token", t, func() {
+		accessToken, refreshToken, err := jwtiv.IssueTokens(ExtensionFields{})
+		So(err, ShouldBeNil)
+
+		// because we losing nanoseconds
+		accessToken.IssuedAt = accessToken.IssuedAt.Truncate(time.Second)
+
+		reconstructedAccessToken, err := jwtiv.AccessFromRefresh(refreshToken.Value)
+		So(err, ShouldBeNil)
+
+		So(reconstructedAccessToken, ShouldResemble, accessToken)
+
+		valid, err := jwtiv.ValidateToken(reconstructedAccessToken.Value)
+		So(err, ShouldBeNil)
+		So(valid, ShouldResemble, &ValidationResult{ID: accessToken.ID, Valid: true, Kind: KindAccess})
+	})
+}

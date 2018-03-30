@@ -19,8 +19,8 @@
     "pkg/cherry/adaptors/gonic",
     "pkg/cherry/auth"
   ]
-  revision = "ec0ed453031faa1f30e18eb6eed19ed4af6cfe6d"
-  version = "v0.2.1"
+  revision = "ee63238440a7f4051f8c93417603918326bf10dc"
+  version = "v0.7.0"
 
 [[projects]]
   branch = "master"
@@ -502,6 +502,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "704450768b17409b55c7be8ff64af7130474e66f7d722907c2426dc4a188b02c"
+  inputs-digest = "9d39e2368fb63f65a9f0dfa9b12777ac7e8f7e3c53fbe8c1d8fe5dc001f6dab1"
   solver-name = "gps-cdcl"
   solver-version = 1
