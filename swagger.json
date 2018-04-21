@@ -132,6 +132,32 @@
           }
         }
       }
+    },
+    "/token/{token_id}": {
+      "delete": {
+        "summary": "Delete token (record) by id.",
+        "operationId": "DeleteTokenByID",
+        "parameters": [
+          {
+            "$ref": "#/parameters/UserIDHeader"
+          },
+          {
+            "type": "string",
+            "format": "uuid",
+            "name": "token_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "token deleted"
+          },
+          "default": {
+            "description": "error"
+          }
+        }
+      }
     }
   },
   "definitions": {

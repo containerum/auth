@@ -117,7 +117,22 @@ func SetupRoutes(engine gin.IRouter, server authProto.AuthServer) {
 			httputil.RequireHeaders(autherr.ErrValidation, umtypes.FingerprintHeader),
 			extendTokenHandler)
 
-		// Delete token by ID
+		// swagger:operation DELETE /token/{token_id} DeleteTokenByID
+		// Delete token (record) by id.
+		//
+		// ---
+		// parameters:
+		//  - $ref: '#/parameters/UserIDHeader'
+		//  - name: token_id
+		//    in: path
+		//    type: string
+		//    format: uuid
+		//    required: true
+		// responses:
+		//  '200':
+		//    description: token deleted
+		//  default:
+		//    description: error
 		token.DELETE("/:token_id",
 			httputil.RequireHeaders(autherr.ErrValidation, umtypes.UserIDHeader),
 			deleteTokenByIDHandler)
