@@ -32,7 +32,7 @@ func prettyPrintFlags(ctx *cli.Context) {
 	fmt.Printf("Starting %v %v\n", ctx.App.Name, ctx.App.Version)
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', tabwriter.TabIndent|tabwriter.Debug)
-	for _, f := range ctx.App.Flags {
+	for _, f := range ctx.App.VisibleFlags() {
 		fmt.Fprintf(w, "Flag: %s\t Value: %v\n", f.Names()[0], ctx.Generic(f.Names()[0]))
 	}
 	w.Flush()
