@@ -451,7 +451,9 @@ func (m *AccessTokenByIDRequest) GetUserRole() string {
 	return ""
 }
 
-// swagger:ignore
+// AccessTokenByIDResponse contains access token get by ID.
+//
+// swagger:model
 type AccessTokenByIDResponse struct {
 	AccessToken string `protobuf:"bytes,1,opt,name=access_token,json=accessToken" json:"access_token,omitempty"`
 }

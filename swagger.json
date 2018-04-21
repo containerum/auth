@@ -11,6 +11,35 @@
     "title": "Auth API"
   },
   "paths": {
+    "/byid/access/{token_id}": {
+      "get": {
+        "summary": "Get access token by ID.",
+        "operationId": "GetAccessTokenByID",
+        "parameters": [
+          {
+            "$ref": "#/parameters/UserRoleHeader"
+          },
+          {
+            "type": "string",
+            "format": "uuid",
+            "name": "token_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "access token",
+            "schema": {
+              "$ref": "#/definitions/AccessTokenByIDResponse"
+            }
+          },
+          "default": {
+            "description": "error"
+          }
+        }
+      }
+    },
     "/token": {
       "get": {
         "summary": "Get user tokens.",
@@ -177,6 +206,17 @@
         "label": {
           "type": "string",
           "x-go-name": "Label"
+        }
+      },
+      "x-go-package": "git.containerum.net/ch/auth/proto"
+    },
+    "AccessTokenByIDResponse": {
+      "type": "object",
+      "title": "AccessTokenByIDResponse contains access token get by ID.",
+      "properties": {
+        "access_token": {
+          "type": "string",
+          "x-go-name": "AccessToken"
         }
       },
       "x-go-package": "git.containerum.net/ch/auth/proto"

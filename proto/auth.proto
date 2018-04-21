@@ -121,7 +121,9 @@ message AccessTokenByIDRequest {
     string user_role = 2;
 }
 
-//swagger:ignore
+// AccessTokenByIDResponse contains access token get by ID.
+//
+// swagger:model
 message AccessTokenByIDResponse {
     string access_token = 1;
 }

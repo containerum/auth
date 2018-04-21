@@ -140,7 +140,24 @@ func SetupRoutes(engine gin.IRouter, server authProto.AuthServer) {
 
 	byID := engine.Group("/byid/")
 	{
-		// Get access token by ID
+		// swagger:operation GET /byid/access/{token_id} GetAccessTokenByID
+		// Get access token by ID.
+		//
+		// ---
+		// parameters:
+		//  - $ref: '#/parameters/UserRoleHeader'
+		//  - name: token_id
+		//    in: path
+		//    type: string
+		//    format: uuid
+		//    required: true
+		// responses:
+		//  '200':
+		//    description: access token
+		//    schema:
+		//     $ref: '#/definitions/AccessTokenByIDResponse'
+		//  default:
+		//    description: error
 		byID.GET("/access/:token_id",
 			httputil.RequireHeaders(autherr.ErrValidation, umtypes.UserRoleHeader),
 			getAccessTokenByIDHandler,
