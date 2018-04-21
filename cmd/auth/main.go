@@ -1,17 +1,18 @@
 package main
 
 import (
+	"os"
+	"os/signal"
+	"text/tabwriter"
+
 	"fmt"
 
-	"os"
-
-	"os/signal"
-
+	"git.containerum.net/ch/auth/pkg/utils"
 	"git.containerum.net/ch/auth/pkg/validation"
 	"git.containerum.net/ch/kube-client/pkg/cherry/auth"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
+	"gopkg.in/urfave/cli.v2"
 )
 
 //go:generate protoc --go_out=plugins=grpc:../../proto -I../../proto auth.proto auth_types.proto
@@ -25,48 +26,113 @@ func logExit(err error) {
 	}
 }
 
+const serversContextKey = "servers"
+
+func prettyPrintFlags(ctx *cli.Context) {
+	fmt.Printf("Starting %v %v\n", ctx.App.Name, ctx.App.Version)
+
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', tabwriter.TabIndent|tabwriter.Debug)
+	for _, f := range ctx.App.VisibleFlags() {
+		fmt.Fprintf(w, "Flag: %s\t Value: %v\n", f.Names()[0], ctx.Generic(f.Names()[0]))
+	}
+	w.Flush()
+}
+
 func main() {
-	viper.SetEnvPrefix("ch_auth")
-	viper.AutomaticEnv()
+	app := cli.App{
+		Name:        "auth",
+		Description: "Authorization (token management) service for Container hosting",
+		Version:     utils.VERSION,
+		Flags: []cli.Flag{
+			// logging
+			&LogLevelFlag,
+			&LogModeFlag,
+			// tokens factory
+			&TokensFlag,
+			&JWTSigningMethodFlag,
+			&IssuerFlag,
+			&AccessTokenLifeTimeFlag,
+			&RefreshTokenLifeTimeFlag,
+			&JWTSigningKeyFileFlag,
+			&JWTValidationKeyFileFlag,
+			// tokens storage
+			&StorageFlag,
+			&BuntStorageFileFlag,
+			&BuntSyncPolicyFlag,
+			&BuntAutoShrinkDisabledFlag,
+			&BuntAutoShrinkMinSizeFlag,
+			&BuntAutoShrinkPercentageFlag,
+			// opentracing
+			&TracerFlag,
+			&ZipkinCollectorFlag,
+			&ZipkinHTTPCollectorURLFlag,
+			&ZipkinKafkaCollectorAddrsFlag,
+			&ZipkinScribeCollectorAddrFlag,
+			&ZipkinScribeCollectorDurationFlag,
+			&ZipkinRecorderDebugFlag,
+			// listening
+			&HTTPListenAddrFlag,
+			&GRPCListenAddrFlag,
+		},
+		Before: func(ctx *cli.Context) error {
+			prettyPrintFlags(ctx)
 
-	if err := logLevelSetup(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+			if err := logLevelSetup(ctx); err != nil {
+				return err
+			}
+
+			if err := logModeSetup(ctx); err != nil {
+				return err
+			}
+
+			httpListenAddr := ctx.String(HTTPListenAddrFlag.Name)
+			grpcListenAddr := ctx.String(GRPCListenAddrFlag.Name)
+
+			httpTracer, err := getTracer(ctx, httpListenAddr, "ch-auth-rest")
+			if err != nil {
+				return err
+			}
+
+			grpcTracer, err := getTracer(ctx, grpcListenAddr, "ch-auth-grpc")
+			if err != nil {
+				return err
+			}
+
+			storage, err := getStorage(ctx)
+			if err != nil {
+				return err
+			}
+
+			translator := setupTranslator()
+
+			validator := validation.StandardAuthValidator(translator)
+			binding.Validator = &validation.GinValidatorV9{Validate: validator}
+
+			// wrap with validation proxy
+			storage = validation.NewServerWrapper(storage, validator, translator, autherr.ErrValidation)
+
+			servers := []Server{
+				NewHTTPServer(httpListenAddr, httpTracer, storage),
+				NewGRPCServer(grpcListenAddr, grpcTracer, storage),
+			}
+
+			ctx.App.Metadata[serversContextKey] = servers
+
+			return nil
+		},
+		Action: func(ctx *cli.Context) error {
+			servers := ctx.App.Metadata[serversContextKey].([]Server)
+
+			RunServers(servers...)
+
+			quit := make(chan os.Signal)
+			signal.Notify(quit, os.Interrupt)
+			<-quit
+			StopServers(servers...)
+
+			return nil
+		},
 	}
 
-	if err := logModeSetup(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-
-	viper.SetDefault("http_listenaddr", ":8080")
-	httpTracer, err := getTracer(viper.GetString("http_listenaddr"), "ch-auth-rest")
-	logExit(err)
-
-	viper.SetDefault("grpc_listenaddr", ":8888")
-	grpcTracer, err := getTracer(viper.GetString("grpc_listenaddr"), "ch-auth-grpc")
-	logExit(err)
-
-	storage, err := getStorage()
-	logExit(err)
-
-	translator := setupTranslator()
-
-	validator := validation.StandardAuthValidator(translator)
-	binding.Validator = &validation.GinValidatorV9{Validate: validator}
-
-	// wrap with validation proxy
-	storage = validation.NewServerWrapper(storage, validator, translator, autherr.ErrValidation)
-
-	servers := []Server{
-		NewHTTPServer(viper.GetString("http_listenaddr"), httpTracer, storage),
-		NewGRPCServer(viper.GetString("grpc_listenaddr"), grpcTracer, storage),
-	}
-
-	RunServers(servers...)
-
-	quit := make(chan os.Signal)
-	signal.Notify(quit, os.Interrupt)
-	<-quit
-	StopServers(servers...)
+	logExit(app.Run(os.Args))
 }

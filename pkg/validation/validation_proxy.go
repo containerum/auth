@@ -8,7 +8,7 @@ import (
 	"git.containerum.net/ch/auth/proto"
 	"git.containerum.net/ch/kube-client/pkg/cherry"
 	"git.containerum.net/ch/kube-client/pkg/cherry/adaptors/cherrylog"
-	chutils "git.containerum.net/ch/utils"
+	"git.containerum.net/ch/utils/httputil"
 	"github.com/go-playground/universal-translator"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/sirupsen/logrus"
@@ -46,7 +46,7 @@ func (v *ServerWrapper) validateStruct(ctx context.Context, req interface{}) err
 				if fieldErr == nil {
 					continue
 				}
-				acceptedLangs := chutils.GetAcceptedLanguages(ctx)
+				acceptedLangs := httputil.GetAcceptedLanguages(ctx)
 				translator, _ := v.translator.FindTranslator(acceptedLangs...)
 				ret.AddDetailF("Field %s: %s", fieldErr.Namespace(), fieldErr.Translate(translator))
 			}

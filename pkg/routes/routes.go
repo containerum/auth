@@ -7,7 +7,7 @@ import (
 	umtypes "git.containerum.net/ch/json-types/user-manager"
 	"git.containerum.net/ch/kube-client/pkg/cherry/adaptors/gonic"
 	"git.containerum.net/ch/kube-client/pkg/cherry/auth"
-	chutils "git.containerum.net/ch/utils"
+	"git.containerum.net/ch/utils/httputil"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 )
@@ -18,12 +18,12 @@ var srv authProto.AuthServer
 func SetupRoutes(engine *gin.Engine, server authProto.AuthServer) {
 	srv = server
 
-	engine.Use(chutils.PrepareContext)
+	engine.Use(httputil.PrepareContext)
 
 	token := engine.Group("/token")
 	{
 		// Create token
-		token.POST("", chutils.RequireHeaders(
+		token.POST("", httputil.RequireHeaders(
 			autherr.ErrValidation,
 			umtypes.UserAgentHeader,
 			umtypes.FingerprintHeader,
@@ -33,7 +33,7 @@ func SetupRoutes(engine *gin.Engine, server authProto.AuthServer) {
 		), createTokenHandler)
 
 		// Check token
-		token.GET("/:access_token", chutils.RequireHeaders(
+		token.GET("/:access_token", httputil.RequireHeaders(
 			autherr.ErrValidation,
 			umtypes.UserAgentHeader,
 			umtypes.FingerprintHeader,
@@ -42,17 +42,17 @@ func SetupRoutes(engine *gin.Engine, server authProto.AuthServer) {
 
 		// Get user tokens
 		token.GET("",
-			chutils.RequireHeaders(autherr.ErrValidation, umtypes.UserIDHeader),
+			httputil.RequireHeaders(autherr.ErrValidation, umtypes.UserIDHeader),
 			getUserTokensHandler)
 
 		// Extend token (refresh only)
 		token.PUT("/:refresh_token",
-			chutils.RequireHeaders(autherr.ErrValidation, umtypes.FingerprintHeader),
+			httputil.RequireHeaders(autherr.ErrValidation, umtypes.FingerprintHeader),
 			extendTokenHandler)
 
 		// Delete token by ID
 		token.DELETE("/:token_id",
-			chutils.RequireHeaders(autherr.ErrValidation, umtypes.UserIDHeader),
+			httputil.RequireHeaders(autherr.ErrValidation, umtypes.UserIDHeader),
 			deleteTokenByIDHandler)
 	}
 
@@ -60,7 +60,7 @@ func SetupRoutes(engine *gin.Engine, server authProto.AuthServer) {
 	{
 		// Get access token by ID
 		byID.GET("/access/:token_id",
-			chutils.RequireHeaders(autherr.ErrValidation, umtypes.UserRoleHeader),
+			httputil.RequireHeaders(autherr.ErrValidation, umtypes.UserRoleHeader),
 			getAccessTokenByIDHandler,
 		)
 	}
@@ -74,13 +74,13 @@ func SetupRoutes(engine *gin.Engine, server authProto.AuthServer) {
 
 func createTokenHandler(ctx *gin.Context) {
 	req := &authProto.CreateTokenRequest{
-		UserAgent:   chutils.MustGetUserAgent(ctx.Request.Context()),
-		Fingerprint: chutils.MustGetFingerprint(ctx.Request.Context()),
-		UserId:      chutils.MustGetUserID(ctx.Request.Context()),
-		UserIp:      chutils.MustGetClientIP(ctx.Request.Context()),
-		UserRole:    chutils.MustGetUserRole(ctx.Request.Context()),
+		UserAgent:   httputil.MustGetUserAgent(ctx.Request.Context()),
+		Fingerprint: httputil.MustGetFingerprint(ctx.Request.Context()),
+		UserId:      httputil.MustGetUserID(ctx.Request.Context()),
+		UserIp:      httputil.MustGetClientIP(ctx.Request.Context()),
+		UserRole:    httputil.MustGetUserRole(ctx.Request.Context()),
 	}
-	ptID, ptIDExist := chutils.GetPartTokenID(ctx.Request.Context())
+	ptID, ptIDExist := httputil.GetPartTokenID(ctx.Request.Context())
 	if ptIDExist {
 		req.PartTokenId = ptID
 	}
@@ -108,9 +108,9 @@ func createTokenHandler(ctx *gin.Context) {
 func checkTokenHandler(ctx *gin.Context) {
 	req := &authProto.CheckTokenRequest{
 		AccessToken: ctx.Param("access_token"),
-		UserAgent:   chutils.MustGetUserAgent(ctx.Request.Context()),
-		FingerPrint: chutils.MustGetFingerprint(ctx.Request.Context()),
-		UserIp:      chutils.MustGetClientIP(ctx.Request.Context()),
+		UserAgent:   httputil.MustGetUserAgent(ctx.Request.Context()),
+		FingerPrint: httputil.MustGetFingerprint(ctx.Request.Context()),
+		UserIp:      httputil.MustGetClientIP(ctx.Request.Context()),
 	}
 
 	resp, err := srv.CheckToken(ctx.Request.Context(), req)
@@ -134,7 +134,7 @@ func checkTokenHandler(ctx *gin.Context) {
 func extendTokenHandler(ctx *gin.Context) {
 	req := &authProto.ExtendTokenRequest{
 		RefreshToken: ctx.Param("refresh_token"),
-		Fingerprint:  chutils.MustGetFingerprint(ctx.Request.Context()),
+		Fingerprint:  httputil.MustGetFingerprint(ctx.Request.Context()),
 	}
 
 	resp, err := srv.ExtendToken(ctx.Request.Context(), req)
@@ -148,7 +148,7 @@ func extendTokenHandler(ctx *gin.Context) {
 
 func getUserTokensHandler(ctx *gin.Context) {
 	req := &authProto.GetUserTokensRequest{
-		UserId: chutils.MustGetUserID(ctx.Request.Context()),
+		UserId: httputil.MustGetUserID(ctx.Request.Context()),
 	}
 
 	resp, err := srv.GetUserTokens(ctx.Request.Context(), req)
@@ -163,7 +163,7 @@ func getUserTokensHandler(ctx *gin.Context) {
 func deleteTokenByIDHandler(ctx *gin.Context) {
 	req := &authProto.DeleteTokenRequest{
 		TokenId: ctx.Param("token_id"),
-		UserId:  chutils.MustGetUserID(ctx.Request.Context()),
+		UserId:  httputil.MustGetUserID(ctx.Request.Context()),
 	}
 
 	_, err := srv.DeleteToken(ctx.Request.Context(), req)
