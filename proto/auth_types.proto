@@ -54,13 +54,14 @@ message ResourcesAccess {
 
 // StoredTokenForUser is an information about token sent to user
 //
-// swagger:response StoredToken
-// in:body
+// swagger:model
 message StoredTokenForUser {
     // @inject_tag: binding:"uuid"
+    // swagger:strfmt uuid
     string token_id = 1;
     string user_agent = 2;
     // @inject_tag: binding:"ip"
+    // swagger:strfmt ip
     string ip = 3;
     string created_at = 4;
 }

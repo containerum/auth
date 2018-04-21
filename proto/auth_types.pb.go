@@ -211,13 +211,14 @@ func (m *ResourcesAccess) GetVolume() []*AccessObject {
 
 // StoredTokenForUser is an information about token sent to user
 //
-// swagger:response StoredToken
-// in:body
+// swagger:model
 type StoredTokenForUser struct {
 	// @inject_tag: binding:"uuid"
+	// swagger:strfmt uuid
 	TokenId   string `protobuf:"bytes,1,opt,name=token_id,json=tokenId" json:"token_id,omitempty" binding:"uuid"`
 	UserAgent string `protobuf:"bytes,2,opt,name=user_agent,json=userAgent" json:"user_agent,omitempty"`
 	// @inject_tag: binding:"ip"
+	// swagger:strfmt ip
 	Ip        string `protobuf:"bytes,3,opt,name=ip" json:"ip,omitempty" binding:"ip"`
 	CreatedAt string `protobuf:"bytes,4,opt,name=created_at,json=createdAt" json:"created_at,omitempty"`
 }

@@ -49,7 +49,27 @@ func SetupRoutes(engine gin.IRouter, server authProto.AuthServer) {
 			umtypes.UserRoleHeader,
 		), createTokenHandler)
 
-		// Check token
+		// swagger:operation GET /{access_token} CheckToken
+		// Checks token and returns resources accesses.
+		//
+		// ---
+		// parameters:
+		//  - $ref: '#/parameters/UserAgentHeader'
+		//  - $ref: '#/parameters/FingerprintHeader'
+		//  - $ref: '#/parameters/ClientIPHeader'
+		//  - name: access_token
+		//    in: path
+		//    required: true
+		// responses:
+		//  '200':
+		//    description: token valid
+		//    schema:
+		//      type: object
+		//      properties:
+		//        access:
+		//          $ref: '#/definitions/ResourcesAccess'
+		//  default:
+		//    description: error
 		token.GET("/:access_token", httputil.RequireHeaders(
 			autherr.ErrValidation,
 			umtypes.UserAgentHeader,

@@ -44,6 +44,44 @@
           }
         }
       }
+    },
+    "/{access_token}": {
+      "get": {
+        "summary": "Checks token and returns resources accesses.",
+        "operationId": "CheckToken",
+        "parameters": [
+          {
+            "$ref": "#/parameters/UserAgentHeader"
+          },
+          {
+            "$ref": "#/parameters/FingerprintHeader"
+          },
+          {
+            "$ref": "#/parameters/ClientIPHeader"
+          },
+          {
+            "name": "access_token",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "token valid",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "access": {
+                  "$ref": "#/definitions/ResourcesAccess"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "error"
+          }
+        }
+      }
     }
   },
   "definitions": {
@@ -207,11 +245,13 @@
         "ip": {
           "description": "@inject_tag: binding:\"ip\"",
           "type": "string",
+          "format": "ip",
           "x-go-name": "Ip"
         },
         "token_id": {
           "description": "@inject_tag: binding:\"uuid\"",
           "type": "string",
+          "format": "uuid",
           "x-go-name": "TokenId"
         },
         "user_agent": {
@@ -282,27 +322,6 @@
       "name": "X-User-Role",
       "in": "header",
       "required": true
-    }
-  },
-  "responses": {
-    "StoredToken": {
-      "description": "StoredTokenForUser is an information about token sent to user",
-      "headers": {
-        "created_at": {
-          "type": "string"
-        },
-        "ip": {
-          "type": "string",
-          "description": "@inject_tag: binding:\"ip\""
-        },
-        "token_id": {
-          "type": "string",
-          "description": "@inject_tag: binding:\"uuid\""
-        },
-        "user_agent": {
-          "type": "string"
-        }
-      }
     }
   }
 }
