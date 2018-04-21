@@ -359,7 +359,9 @@ func (m *GetUserTokensRequest) GetUserId() string {
 	return ""
 }
 
-// swagger:ignore
+// GetUserTokensResponse contains user tokens
+//
+// swagger:model
 type GetUserTokensResponse struct {
 	Tokens []*StoredTokenForUser `protobuf:"bytes,1,rep,name=tokens" json:"tokens,omitempty"`
 }

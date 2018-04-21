@@ -91,7 +91,9 @@ message GetUserTokensRequest {
     string user_id = 1;
 }
 
-//swagger:ignore
+// GetUserTokensResponse contains user tokens
+//
+// swagger:model
 message GetUserTokensResponse {
     repeated StoredTokenForUser tokens = 1;
 }

@@ -49,7 +49,7 @@ func SetupRoutes(engine gin.IRouter, server authProto.AuthServer) {
 			umtypes.UserRoleHeader,
 		), createTokenHandler)
 
-		// swagger:operation GET /{access_token} CheckToken
+		// swagger:operation GET /token/{access_token} CheckToken
 		// Checks token and returns resources accesses.
 		//
 		// ---
@@ -77,7 +77,19 @@ func SetupRoutes(engine gin.IRouter, server authProto.AuthServer) {
 			umtypes.ClientIPHeader,
 		), checkTokenHandler)
 
-		// Get user tokens
+		// swagger:operation GET /token GetUserTokens
+		// Get user tokens.
+		//
+		// ---
+		// parameters:
+		//  - $ref: '#/parameters/UserIDHeader'
+		// responses:
+		//  '200':
+		//    description: user tokens
+		//    schema:
+		//      $ref: '#/definitions/GetUserTokensResponse'
+		//  default:
+		//    description: error
 		token.GET("",
 			httputil.RequireHeaders(autherr.ErrValidation, umtypes.UserIDHeader),
 			getUserTokensHandler)

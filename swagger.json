@@ -12,6 +12,26 @@
   },
   "paths": {
     "/token": {
+      "get": {
+        "summary": "Get user tokens.",
+        "operationId": "GetUserTokens",
+        "parameters": [
+          {
+            "$ref": "#/parameters/UserIDHeader"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "user tokens",
+            "schema": {
+              "$ref": "#/definitions/GetUserTokensResponse"
+            }
+          },
+          "default": {
+            "description": "error"
+          }
+        }
+      },
       "post": {
         "summary": "Creates token for user.",
         "operationId": "CreateToken",
@@ -45,7 +65,7 @@
         }
       }
     },
-    "/{access_token}": {
+    "/token/{access_token}": {
       "get": {
         "summary": "Checks token and returns resources accesses.",
         "operationId": "CheckToken",
@@ -147,6 +167,20 @@
         }
       },
       "x-go-package": "git.containerum.net/ch/auth/vendor/github.com/golang/protobuf/ptypes/duration"
+    },
+    "GetUserTokensResponse": {
+      "description": "GetUserTokensResponse contains user tokens",
+      "type": "object",
+      "properties": {
+        "tokens": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/StoredTokenForUser"
+          },
+          "x-go-name": "Tokens"
+        }
+      },
+      "x-go-package": "git.containerum.net/ch/auth/proto"
     },
     "ResourcesAccess": {
       "description": "ResourceAccesses contains user accesses to resources",
