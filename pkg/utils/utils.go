@@ -11,6 +11,9 @@ import (
 	"github.com/mssola/user_agent"
 )
 
+// VERSION stores version of app. Set at link time using "-X" ld flag.
+var VERSION = "v0.0.1"
+
 // ShortUserAgent generates short user agent from normal user agent using base64
 func ShortUserAgent(userAgent string) string {
 	ua := user_agent.New(userAgent)

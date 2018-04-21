@@ -14,13 +14,13 @@ VERSION?=$(LATEST_TAG:v%=%)
 # make directory and store path to variable
 BUILDS_DIR:=$(PWD)/build
 EXECUTABLE:=auth
-DEV_LDFLAGS=-X '$(PACKAGE)/$(CMD_DIR).VERSION=v$(VERSION)'
-RELEASE_LDFLAGS=-X '$(PACKAGE)/$(CMD_DIR).VERSION=v$(VERSION)' -w -s
+DEV_LDFLAGS=-X '$(PACKAGE)/pkg/utils.VERSION=v$(VERSION)'
+RELEASE_LDFLAGS=-X '$(PACKAGE)/pkg/utils.VERSION=v$(VERSION)' -w -s
 
 # go has build artifacts caching so soruce tracking not needed
 build:
 	@echo "Building auth for current OS/architecture"
-	@go build -v -ldflags="$(LDFLAGS)" -o $(BUILDS_DIR)/$(EXECUTABLE) ./$(CMD_DIR)
+	@go build -v -ldflags="$(RELEASE_LDFLAGS)" -o $(BUILDS_DIR)/$(EXECUTABLE) ./$(CMD_DIR)
 
 test:
 	@echo "Running tests"
@@ -71,4 +71,4 @@ single_release:
 dev:
 	$(eval VERSION=$(LATEST_TAG:v%=%)+dev)
 	@echo building $(VERSION)
-	go build -v --tags="dev" --ldflags="$(DEV_LDFLAGS)" ./$(CMD_DIR)
+	go build -v -tags="dev" -ldflags="$(DEV_LDFLAGS)" ./$(CMD_DIR)

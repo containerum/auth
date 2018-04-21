@@ -5,7 +5,8 @@ import (
 	"errors"
 	"io/ioutil"
 	"strings"
-	"time"
+
+	"fmt"
 
 	"git.containerum.net/ch/auth/pkg/storages"
 	"git.containerum.net/ch/auth/pkg/token"
@@ -17,8 +18,8 @@ import (
 	"github.com/opentracing/opentracing-go"
 	"github.com/openzipkin/zipkin-go-opentracing"
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"github.com/tidwall/buntdb"
+	"gopkg.in/urfave/cli.v2"
 )
 
 func appendError(errs []string, err error) []string {
@@ -35,34 +36,39 @@ func setError(errs []string) error {
 	return errors.New(strings.Join(errs, ";"))
 }
 
-func getJWTConfig() (cfg token.JWTIssuerValidatorConfig, err error) {
+func getJWTConfig(ctx *cli.Context) (cfg token.JWTIssuerValidatorConfig, err error) {
 	var errs []string
 
-	cfg.SigningMethod = jwt.GetSigningMethod(viper.GetString("jwt_signing_method"))
+	cfg.SigningMethod = jwt.GetSigningMethod(ctx.String(JWTSigningMethodFlag.Name))
 	if cfg.SigningMethod == nil {
 		errs = append(errs, "signing method not found")
 	}
 
-	cfg.Issuer = viper.GetString("issuer")
+	cfg.Issuer = ctx.String(IssuerFlag.Name)
 
-	viper.SetDefault("access_token_lifetime", 15*time.Minute)
-	cfg.AccessTokenLifeTime = viper.GetDuration("access_token_lifetime")
+	cfg.AccessTokenLifeTime = ctx.Duration(AccessTokenLifeTimeFlag.Name)
 	if cfg.AccessTokenLifeTime <= 0 {
 		errs = append(errs, "access token lifetime is invalid or not set")
 	}
 
-	viper.SetDefault("refresh_token_lifetime", 48*time.Hour)
-	cfg.RefreshTokenLifeTime = viper.GetDuration("refresh_token_lifetime")
+	cfg.RefreshTokenLifeTime = ctx.Duration(RefreshTokenLifeTimeFlag.Name)
 	if cfg.RefreshTokenLifeTime <= cfg.AccessTokenLifeTime {
 		errs = append(errs, "refresh token lifetime must be greater than access token lifetime")
 	}
 
-	signingKeyFile := viper.GetString("jwt_signing_key_file")
-	validationKeyFile := viper.GetString("jwt_validation_key_file")
+	signingKeyFile := ctx.String(JWTSigningKeyFileFlag.Name)
+	validationKeyFile := ctx.String(JWTValidationKeyFileFlag.Name)
+
 	signingKeyFileCont, err := ioutil.ReadFile(signingKeyFile)
-	errs = appendError(errs, err)
+	if err != nil {
+		errs = appendError(errs, fmt.Errorf("signing key read failed: %v", err))
+	}
+
 	validationKeyFileCont, err := ioutil.ReadFile(validationKeyFile)
-	errs = appendError(errs, err)
+	if err != nil {
+		errs = appendError(errs, fmt.Errorf("validation key read failed: %v", err))
+	}
+
 	switch cfg.SigningMethod.(type) {
 	case *jwt.SigningMethodRSA, *jwt.SigningMethodRSAPSS:
 		cfg.SigningKey, err = jwt.ParseRSAPrivateKeyFromPEM(signingKeyFileCont)
@@ -88,12 +94,11 @@ func getJWTConfig() (cfg token.JWTIssuerValidatorConfig, err error) {
 	return cfg, setError(errs)
 }
 
-func getTokenIssuerValidator() (iv token.IssuerValidator, err error) {
-	viper.SetDefault("tokens", "jwt")
-	tokens := viper.GetString("tokens")
+func getTokenIssuerValidator(ctx *cli.Context) (iv token.IssuerValidator, err error) {
+	tokens := ctx.String(TokensFlag.Name)
 	switch tokens {
 	case "jwt":
-		cfg, err := getJWTConfig()
+		cfg, err := getJWTConfig(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -104,28 +109,25 @@ func getTokenIssuerValidator() (iv token.IssuerValidator, err error) {
 	}
 }
 
-func getBuntDBStorageConfig(tokenFactory token.IssuerValidator) (cfg storages.BuntDBStorageConfig, err error) {
+func getBuntDBStorageConfig(ctx *cli.Context, tokenFactory token.IssuerValidator) (cfg storages.BuntDBStorageConfig, err error) {
 	var errs []string
-	viper.SetDefault("storage_file", "storage.db")
-	cfg.File = viper.GetString("storage_file")
+	cfg.File = ctx.String(BuntStorageFileFlag.Name)
 
-	viper.SetDefault("bunt_syncpolicy", buntdb.EverySecond)
-	cfg.BuntDBConfig.SyncPolicy = buntdb.SyncPolicy(viper.GetInt("bunt_synpolicy"))
+	cfg.BuntDBConfig.SyncPolicy = buntdb.SyncPolicy(ctx.Int(BuntSyncPolicyFlag.Name))
 	switch cfg.BuntDBConfig.SyncPolicy {
 	case buntdb.EverySecond, buntdb.Never, buntdb.Always:
 	default:
 		errs = append(errs, "invalid bunt_syncpolicy")
 	}
 
-	viper.SetDefault("bunt_autoshrink_disabled", false)
-	cfg.BuntDBConfig.AutoShrinkDisabled = viper.GetBool("bunt_autoshrink_disabled")
+	cfg.BuntDBConfig.AutoShrinkDisabled = ctx.Bool(BuntAutoShrinkDisabledFlag.Name)
 
-	if viper.IsSet("bunt_autoshrink_minsize") {
-		cfg.BuntDBConfig.AutoShrinkMinSize = viper.GetInt("bunt_autoshrink_minsize")
+	if ctx.IsSet(BuntAutoShrinkMinSizeFlag.Name) {
+		cfg.BuntDBConfig.AutoShrinkMinSize = ctx.Int(BuntAutoShrinkMinSizeFlag.Name)
 	}
 
-	if viper.IsSet("bunt_autoshrink_percentage") {
-		cfg.BuntDBConfig.AutoShrinkPercentage = viper.GetInt("bunt_autoshrink_percentage")
+	if ctx.IsSet(BuntAutoShrinkPercentageFlag.Name) {
+		cfg.BuntDBConfig.AutoShrinkPercentage = ctx.Int(BuntAutoShrinkPercentageFlag.Name)
 	}
 
 	cfg.TokenFactory = tokenFactory
@@ -133,17 +135,16 @@ func getBuntDBStorageConfig(tokenFactory token.IssuerValidator) (cfg storages.Bu
 	return cfg, setError(errs)
 }
 
-func getStorage() (storage authProto.AuthServer, err error) {
-	tokenFactory, err := getTokenIssuerValidator()
+func getStorage(ctx *cli.Context) (storage authProto.AuthServer, err error) {
+	tokenFactory, err := getTokenIssuerValidator(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	viper.SetDefault("storage", "buntdb")
-	switch viper.GetString("storage") {
+	switch ctx.String(StorageFlag.Name) {
 	case "buntdb":
 		var cfg storages.BuntDBStorageConfig
-		cfg, err = getBuntDBStorageConfig(tokenFactory)
+		cfg, err = getBuntDBStorageConfig(ctx, tokenFactory)
 		if err != nil {
 			return nil, err
 		}
@@ -154,16 +155,15 @@ func getStorage() (storage authProto.AuthServer, err error) {
 	}
 }
 
-func getZipkinCollector() (collector zipkintracer.Collector, err error) {
-	viper.SetDefault("zipkin_collector", "nop")
-	switch viper.GetString("zipkin_collector") {
+func getZipkinCollector(ctx *cli.Context) (collector zipkintracer.Collector, err error) {
+	switch ctx.String(ZipkinCollectorFlag.Name) {
 	case "http":
-		collector, err = zipkintracer.NewHTTPCollector(viper.GetString("zipkin_http_collector_url"))
+		collector, err = zipkintracer.NewHTTPCollector(ctx.String(ZipkinHTTPCollectorURLFlag.Name))
 	case "kafka":
-		collector, err = zipkintracer.NewKafkaCollector(viper.GetStringSlice("zipkin_kafka_collector_addrs"))
+		collector, err = zipkintracer.NewKafkaCollector(ctx.StringSlice(ZipkinKafkaCollectorAddrsFlag.Name))
 	case "scribe":
-		collector, err = zipkintracer.NewScribeCollector(viper.GetString("zipkin_scribe_collector_addr"),
-			viper.GetDuration("zipkin_scribe_collector_duration"))
+		collector, err = zipkintracer.NewScribeCollector(ctx.String(ZipkinScribeCollectorAddrFlag.Name),
+			ctx.Duration(ZipkinScribeCollectorDurationFlag.Name))
 	case "nop":
 		collector = zipkintracer.NopCollector{}
 	default:
@@ -172,25 +172,23 @@ func getZipkinCollector() (collector zipkintracer.Collector, err error) {
 	return
 }
 
-func getTracer(hostPort, service string) (tracer opentracing.Tracer, err error) {
-	viper.SetDefault("tracer", "zipkin")
-	switch viper.GetString("tracer") {
+func getTracer(ctx *cli.Context, hostPort, service string) (tracer opentracing.Tracer, err error) {
+	switch ctx.String(TracerFlag.Name) {
 	case "zipkin":
-		collector, collErr := getZipkinCollector()
+		collector, collErr := getZipkinCollector(ctx)
 		if collErr != nil {
 			return nil, collErr
 		}
 		tracer, err = zipkintracer.NewTracer(zipkintracer.NewRecorder(collector,
-			viper.GetBool("zipkin_recorder_debug"), hostPort, service))
+			ctx.Bool(ZipkinRecorderDebugFlag.Name), hostPort, service))
 	default:
 		err = errors.New("invalid opentracing tracer found")
 	}
 	return
 }
 
-func logModeSetup() error {
-	viper.SetDefault("log_mode", "text")
-	switch viper.GetString("log_mode") {
+func logModeSetup(ctx *cli.Context) error {
+	switch ctx.String(LogModeFlag.Name) {
 	case "text":
 		logrus.SetFormatter(&logrus.TextFormatter{})
 	case "json":
@@ -201,9 +199,8 @@ func logModeSetup() error {
 	return nil
 }
 
-func logLevelSetup() error {
-	viper.SetDefault("log_level", logrus.InfoLevel)
-	level := logrus.Level(viper.GetInt("log_level"))
+func logLevelSetup(ctx *cli.Context) error {
+	level := logrus.Level(ctx.Int(LogLevelFlag.Name))
 	if level > logrus.DebugLevel || level < logrus.PanicLevel {
 		return errors.New("invalid log level")
 	}
