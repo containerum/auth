@@ -22,7 +22,23 @@ func SetupRoutes(engine *gin.Engine, server authProto.AuthServer) {
 
 	token := engine.Group("/token")
 	{
-		// Create token
+		// swagger:operation POST /token CreateToken
+		// Creates token for user.
+		//
+		// ---
+		// parameters:
+		//  - $ref: '#/parameters/UserAgentHeader'
+		//  - $ref: '#/parameters/FingerprintHeader'
+		//  - $ref: '#/parameters/UserIDHeader'
+		//  - $ref: '#/parameters/UserRoleHeader'
+		//  - $ref: '#/parameters/ClientIPHeader'
+		// responses:
+		//  '200':
+		//    description: token created
+		//    schema:
+		//      $ref: '#/definitions/CreateTokenResponse'
+		//  default:
+		//    description: error
 		token.POST("", httputil.RequireHeaders(
 			autherr.ErrValidation,
 			umtypes.UserAgentHeader,
