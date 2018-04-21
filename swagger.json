@@ -54,7 +54,7 @@
         ],
         "responses": {
           "200": {
-            "description": "token created",
+            "description": "access and refresh tokens created",
             "schema": {
               "$ref": "#/definitions/CreateTokenResponse"
             }
@@ -80,6 +80,7 @@
             "$ref": "#/parameters/ClientIPHeader"
           },
           {
+            "type": "string",
             "name": "access_token",
             "in": "path",
             "required": true
@@ -95,6 +96,35 @@
                   "$ref": "#/definitions/ResourcesAccess"
                 }
               }
+            }
+          },
+          "default": {
+            "description": "error"
+          }
+        }
+      }
+    },
+    "/token/{refresh_token}": {
+      "put": {
+        "summary": "Get new access/refresh token pair using refresh token.",
+        "operationId": "ExtendToken",
+        "parameters": [
+          {
+            "$ref": "#/parameters/FingerprintHeader"
+          },
+          {
+            "type": "string",
+            "description": "valid refresh token",
+            "name": "refresh_token",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "access and refresh tokens extended",
+            "schema": {
+              "$ref": "#/definitions/ExtendTokenResponse"
             }
           },
           "default": {
@@ -167,6 +197,21 @@
         }
       },
       "x-go-package": "git.containerum.net/ch/auth/vendor/github.com/golang/protobuf/ptypes/duration"
+    },
+    "ExtendTokenResponse": {
+      "description": "ExtendTokenResponse contains new access and refresh tokens",
+      "type": "object",
+      "properties": {
+        "access_token": {
+          "type": "string",
+          "x-go-name": "AccessToken"
+        },
+        "refresh_token": {
+          "type": "string",
+          "x-go-name": "RefreshToken"
+        }
+      },
+      "x-go-package": "git.containerum.net/ch/auth/proto"
     },
     "GetUserTokensResponse": {
       "description": "GetUserTokensResponse contains user tokens",

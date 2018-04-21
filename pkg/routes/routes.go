@@ -35,7 +35,7 @@ func SetupRoutes(engine gin.IRouter, server authProto.AuthServer) {
 		//  - $ref: '#/parameters/ClientIPHeader'
 		// responses:
 		//  '200':
-		//    description: token created
+		//    description: access and refresh tokens created
 		//    schema:
 		//      $ref: '#/definitions/CreateTokenResponse'
 		//  default:
@@ -59,6 +59,7 @@ func SetupRoutes(engine gin.IRouter, server authProto.AuthServer) {
 		//  - $ref: '#/parameters/ClientIPHeader'
 		//  - name: access_token
 		//    in: path
+		//    type: string
 		//    required: true
 		// responses:
 		//  '200':
@@ -94,7 +95,24 @@ func SetupRoutes(engine gin.IRouter, server authProto.AuthServer) {
 			httputil.RequireHeaders(autherr.ErrValidation, umtypes.UserIDHeader),
 			getUserTokensHandler)
 
-		// Extend token (refresh only)
+		// swagger:operation PUT /token/{refresh_token} ExtendToken
+		// Get new access/refresh token pair using refresh token.
+		//
+		// ---
+		// parameters:
+		//  - $ref: '#/parameters/FingerprintHeader'
+		//  - name: refresh_token
+		//    description: valid refresh token
+		//    in: path
+		//    type: string
+		//    required: true
+		// responses:
+		//  '200':
+		//    description: access and refresh tokens extended
+		//    schema:
+		//      $ref: '#/definitions/ExtendTokenResponse'
+		//  default:
+		//    description: error
 		token.PUT("/:refresh_token",
 			httputil.RequireHeaders(autherr.ErrValidation, umtypes.FingerprintHeader),
 			extendTokenHandler)

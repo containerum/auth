@@ -273,7 +273,9 @@ func (m *ExtendTokenRequest) GetFingerprint() string {
 	return ""
 }
 
-// swagger:ignore
+// ExtendTokenResponse contains new access and refresh tokens
+//
+// swagger:model
 type ExtendTokenResponse struct {
 	AccessToken  string `protobuf:"bytes,1,opt,name=access_token,json=accessToken" json:"access_token,omitempty"`
 	RefreshToken string `protobuf:"bytes,2,opt,name=refresh_token,json=refreshToken" json:"refresh_token,omitempty"`
