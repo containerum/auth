@@ -15,9 +15,10 @@ import (
 var srv authProto.AuthServer
 
 // SetupRoutes sets up router and services needed for server operation
-func SetupRoutes(engine *gin.Engine, server authProto.AuthServer) {
+func SetupRoutes(engine gin.IRouter, server authProto.AuthServer) {
 	srv = server
 
+	engine = engine.Group("/")
 	engine.Use(httputil.PrepareContext)
 
 	token := engine.Group("/token")
