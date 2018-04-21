@@ -27,12 +27,14 @@ func SetupRoutes(engine gin.IRouter, server authProto.AuthServer) {
 		// Creates token for user.
 		//
 		// ---
+		// x-method-visibility: private
 		// parameters:
 		//  - $ref: '#/parameters/UserAgentHeader'
 		//  - $ref: '#/parameters/FingerprintHeader'
 		//  - $ref: '#/parameters/UserIDHeader'
 		//  - $ref: '#/parameters/UserRoleHeader'
 		//  - $ref: '#/parameters/ClientIPHeader'
+		//  - $ref: '#/parameters/PartTokenIDHeader'
 		// responses:
 		//  '200':
 		//    description: access and refresh tokens created
@@ -53,6 +55,7 @@ func SetupRoutes(engine gin.IRouter, server authProto.AuthServer) {
 		// Checks token and returns resources accesses.
 		//
 		// ---
+		// x-method-visibility: private
 		// parameters:
 		//  - $ref: '#/parameters/UserAgentHeader'
 		//  - $ref: '#/parameters/FingerprintHeader'
@@ -82,6 +85,8 @@ func SetupRoutes(engine gin.IRouter, server authProto.AuthServer) {
 		// Get user tokens.
 		//
 		// ---
+		// x-method-visibility: public
+		// x-authorization-required: true
 		// parameters:
 		//  - $ref: '#/parameters/UserIDHeader'
 		// responses:
@@ -99,6 +104,8 @@ func SetupRoutes(engine gin.IRouter, server authProto.AuthServer) {
 		// Get new access/refresh token pair using refresh token.
 		//
 		// ---
+		// x-method-visibility: public
+		// x-authorization-required: false
 		// parameters:
 		//  - $ref: '#/parameters/FingerprintHeader'
 		//  - name: refresh_token
@@ -121,6 +128,8 @@ func SetupRoutes(engine gin.IRouter, server authProto.AuthServer) {
 		// Delete token (record) by id.
 		//
 		// ---
+		// x-method-visibility: public
+		// x-authorization-required: true
 		// parameters:
 		//  - $ref: '#/parameters/UserIDHeader'
 		//  - name: token_id
@@ -170,6 +179,7 @@ func SetupRoutes(engine gin.IRouter, server authProto.AuthServer) {
 		// Delete user (refresh) tokens. Also makes access tokens invalid.
 		//
 		// ---
+		// x-method-visibility: private
 		// parameters:
 		//  - name: user_id
 		//    in: path

@@ -20,7 +20,7 @@ parameters:
     name: X-Client-IP
     in: header
     type: string
-    format: ipv4
+    format: ip
     required: true
   UserRoleHeader:
     name: X-User-Role
@@ -30,3 +30,9 @@ parameters:
       - user
       - admin
     required: true
+  PartTokenIDHeader:
+    name: X-Part-Token-ID
+    in: header
+    type: string
+    format: uuid
+    required: false

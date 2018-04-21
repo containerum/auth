@@ -59,7 +59,9 @@
           "default": {
             "description": "error"
           }
-        }
+        },
+        "x-authorization-required": true,
+        "x-method-visibility": "public"
       },
       "post": {
         "summary": "Creates token for user.",
@@ -79,6 +81,9 @@
           },
           {
             "$ref": "#/parameters/ClientIPHeader"
+          },
+          {
+            "$ref": "#/parameters/PartTokenIDHeader"
           }
         ],
         "responses": {
@@ -91,7 +96,8 @@
           "default": {
             "description": "error"
           }
-        }
+        },
+        "x-method-visibility": "private"
       }
     },
     "/token/{access_token}": {
@@ -130,7 +136,8 @@
           "default": {
             "description": "error"
           }
-        }
+        },
+        "x-method-visibility": "private"
       }
     },
     "/token/{refresh_token}": {
@@ -159,7 +166,9 @@
           "default": {
             "description": "error"
           }
-        }
+        },
+        "x-authorization-required": false,
+        "x-method-visibility": "public"
       }
     },
     "/token/{token_id}": {
@@ -185,7 +194,9 @@
           "default": {
             "description": "error"
           }
-        }
+        },
+        "x-authorization-required": true,
+        "x-method-visibility": "public"
       }
     },
     "/user/{user_id}/tokens": {
@@ -208,7 +219,8 @@
           "default": {
             "description": "error"
           }
-        }
+        },
+        "x-method-visibility": "private"
       }
     }
   },
@@ -457,7 +469,7 @@
   "parameters": {
     "ClientIPHeader": {
       "type": "string",
-      "format": "ipv4",
+      "format": "ip",
       "name": "X-Client-IP",
       "in": "header",
       "required": true
@@ -467,6 +479,12 @@
       "name": "X-User-Client",
       "in": "header",
       "required": true
+    },
+    "PartTokenIDHeader": {
+      "type": "string",
+      "format": "uuid",
+      "name": "X-Part-Token-ID",
+      "in": "header"
     },
     "UserAgentHeader": {
       "type": "string",
