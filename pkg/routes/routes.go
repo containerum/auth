@@ -166,7 +166,21 @@ func SetupRoutes(engine gin.IRouter, server authProto.AuthServer) {
 
 	user := engine.Group("/user")
 	{
-		// Delete user tokens
+		// swagger:operation DELETE /user/{user_id}/tokens DeleteUserTokens
+		// Delete user (refresh) tokens. Also makes access tokens invalid.
+		//
+		// ---
+		// parameters:
+		//  - name: user_id
+		//    in: path
+		//    type: string
+		//    format: uuid
+		//    required: true
+		// responses:
+		//  '200':
+		//    description: tokens deleted
+		//  default:
+		//    description: error
 		user.DELETE("/:user_id/tokens", deleteUserTokensHandler)
 	}
 }

@@ -187,6 +187,29 @@
           }
         }
       }
+    },
+    "/user/{user_id}/tokens": {
+      "delete": {
+        "summary": "Delete user (refresh) tokens. Also makes access tokens invalid.",
+        "operationId": "DeleteUserTokens",
+        "parameters": [
+          {
+            "type": "string",
+            "format": "uuid",
+            "name": "user_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "tokens deleted"
+          },
+          "default": {
+            "description": "error"
+          }
+        }
+      }
     }
   },
   "definitions": {
