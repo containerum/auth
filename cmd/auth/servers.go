@@ -15,6 +15,7 @@ import (
 	"git.containerum.net/ch/auth/static"
 	"git.containerum.net/ch/kube-client/pkg/cherry/adaptors/cherrygrpc"
 	"git.containerum.net/ch/kube-client/pkg/cherry/auth"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/contrib/ginrus"
 	"github.com/gin-gonic/gin"
 	"github.com/grpc-ecosystem/go-grpc-middleware"
@@ -49,7 +50,9 @@ func NewHTTPServer(listenAddr string, tracer opentracing.Tracer, storage authPro
 	engine.Use(gin.RecoveryWithWriter(logrus.WithField("component", "gin_recovery").WriterLevel(logrus.ErrorLevel)))
 	engine.Use(ginrus.Ginrus(logrus.StandardLogger(), time.RFC3339, true))
 
-	engine.StaticFS("/static", static.HTTP)
+	engine.Group("/static").
+		Use(cors.Default()).
+		StaticFS("/", static.HTTP)
 
 	routes.SetupRoutes(engine, storage)
 
