@@ -1,4 +1,4 @@
-.PHONY: build test clean release single_release
+.PHONY: build test clean release single_release generate
 
 CMD_DIR:=cmd/auth
 #get current package, assuming it`s in GOPATH sources
@@ -16,6 +16,9 @@ BUILDS_DIR:=$(PWD)/build
 EXECUTABLE:=auth
 DEV_LDFLAGS=-X '$(PACKAGE)/pkg/utils.VERSION=v$(VERSION)'
 RELEASE_LDFLAGS=-X '$(PACKAGE)/pkg/utils.VERSION=v$(VERSION)' -w -s
+
+generate:
+	go generate -v ./...
 
 # go has build artifacts caching so soruce tracking not needed
 build:

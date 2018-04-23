@@ -68,6 +68,12 @@
   version = "v1.1.0"
 
 [[projects]]
+  name = "github.com/gin-contrib/cors"
+  packages = ["."]
+  revision = "cf4846e6a636a76237a28d9286f163c132e841bc"
+  version = "v1.2"
+
+[[projects]]
   branch = "master"
   name = "github.com/gin-contrib/sse"
   packages = ["."]
@@ -325,7 +331,9 @@
     "idna",
     "internal/timeseries",
     "lex/httplex",
-    "trace"
+    "trace",
+    "webdav",
+    "webdav/internal/xml"
   ]
   revision = "d866cfc389cec985d6fda2859936a575a55a3ab6"
 
@@ -423,6 +431,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "d1b0452996dedf81a30ba7696cc1527e4c70c6b4bbc3209b2d43b4c43d73cf87"
+  inputs-digest = "2b28818f887680aea423f5d15b11bacbe6e8182400dcffd124c912210d065adc"
   solver-name = "gps-cdcl"
   solver-version = 1

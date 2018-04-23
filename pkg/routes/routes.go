@@ -15,14 +15,33 @@ import (
 var srv authProto.AuthServer
 
 // SetupRoutes sets up router and services needed for server operation
-func SetupRoutes(engine *gin.Engine, server authProto.AuthServer) {
+func SetupRoutes(engine gin.IRouter, server authProto.AuthServer) {
 	srv = server
 
+	engine = engine.Group("/")
 	engine.Use(httputil.PrepareContext)
 
 	token := engine.Group("/token")
 	{
-		// Create token
+		// swagger:operation POST /token CreateToken
+		// Creates token for user.
+		//
+		// ---
+		// x-method-visibility: private
+		// parameters:
+		//  - $ref: '#/parameters/UserAgentHeader'
+		//  - $ref: '#/parameters/FingerprintHeader'
+		//  - $ref: '#/parameters/UserIDHeader'
+		//  - $ref: '#/parameters/UserRoleHeader'
+		//  - $ref: '#/parameters/ClientIPHeader'
+		//  - $ref: '#/parameters/PartTokenIDHeader'
+		// responses:
+		//  '200':
+		//    description: access and refresh tokens created
+		//    schema:
+		//      $ref: '#/definitions/CreateTokenResponse'
+		//  default:
+		//    description: error
 		token.POST("", httputil.RequireHeaders(
 			autherr.ErrValidation,
 			umtypes.UserAgentHeader,
@@ -32,7 +51,29 @@ func SetupRoutes(engine *gin.Engine, server authProto.AuthServer) {
 			umtypes.UserRoleHeader,
 		), createTokenHandler)
 
-		// Check token
+		// swagger:operation GET /token/{access_token} CheckToken
+		// Checks token and returns resources accesses.
+		//
+		// ---
+		// x-method-visibility: private
+		// parameters:
+		//  - $ref: '#/parameters/UserAgentHeader'
+		//  - $ref: '#/parameters/FingerprintHeader'
+		//  - $ref: '#/parameters/ClientIPHeader'
+		//  - name: access_token
+		//    in: path
+		//    type: string
+		//    required: true
+		// responses:
+		//  '200':
+		//    description: token valid
+		//    schema:
+		//      type: object
+		//      properties:
+		//        access:
+		//          $ref: '#/definitions/ResourcesAccess'
+		//  default:
+		//    description: error
 		token.GET("/:access_token", httputil.RequireHeaders(
 			autherr.ErrValidation,
 			umtypes.UserAgentHeader,
@@ -40,17 +81,67 @@ func SetupRoutes(engine *gin.Engine, server authProto.AuthServer) {
 			umtypes.ClientIPHeader,
 		), checkTokenHandler)
 
-		// Get user tokens
+		// swagger:operation GET /token GetUserTokens
+		// Get user tokens.
+		//
+		// ---
+		// x-method-visibility: public
+		// x-authorization-required: true
+		// parameters:
+		//  - $ref: '#/parameters/UserIDHeader'
+		// responses:
+		//  '200':
+		//    description: user tokens
+		//    schema:
+		//      $ref: '#/definitions/GetUserTokensResponse'
+		//  default:
+		//    description: error
 		token.GET("",
 			httputil.RequireHeaders(autherr.ErrValidation, umtypes.UserIDHeader),
 			getUserTokensHandler)
 
-		// Extend token (refresh only)
+		// swagger:operation PUT /token/{refresh_token} ExtendToken
+		// Get new access/refresh token pair using refresh token.
+		//
+		// ---
+		// x-method-visibility: public
+		// x-authorization-required: false
+		// parameters:
+		//  - $ref: '#/parameters/FingerprintHeader'
+		//  - name: refresh_token
+		//    description: valid refresh token
+		//    in: path
+		//    type: string
+		//    required: true
+		// responses:
+		//  '200':
+		//    description: access and refresh tokens extended
+		//    schema:
+		//      $ref: '#/definitions/ExtendTokenResponse'
+		//  default:
+		//    description: error
 		token.PUT("/:refresh_token",
 			httputil.RequireHeaders(autherr.ErrValidation, umtypes.FingerprintHeader),
 			extendTokenHandler)
 
-		// Delete token by ID
+		// swagger:operation DELETE /token/{token_id} DeleteTokenByID
+		// Delete token (record) by id.
+		//
+		// ---
+		// x-method-visibility: public
+		// x-authorization-required: true
+		// parameters:
+		//  - $ref: '#/parameters/UserIDHeader'
+		//  - name: token_id
+		//    in: path
+		//    type: string
+		//    format: uuid
+		//    required: true
+		// responses:
+		//  '200':
+		//    description: token deleted
+		//  default:
+		//    description: error
 		token.DELETE("/:token_id",
 			httputil.RequireHeaders(autherr.ErrValidation, umtypes.UserIDHeader),
 			deleteTokenByIDHandler)
@@ -58,7 +149,24 @@ func SetupRoutes(engine *gin.Engine, server authProto.AuthServer) {
 
 	byID := engine.Group("/byid/")
 	{
-		// Get access token by ID
+		// swagger:operation GET /byid/access/{token_id} GetAccessTokenByID
+		// Get access token by ID.
+		//
+		// ---
+		// parameters:
+		//  - $ref: '#/parameters/UserRoleHeader'
+		//  - name: token_id
+		//    in: path
+		//    type: string
+		//    format: uuid
+		//    required: true
+		// responses:
+		//  '200':
+		//    description: access token
+		//    schema:
+		//     $ref: '#/definitions/AccessTokenByIDResponse'
+		//  default:
+		//    description: error
 		byID.GET("/access/:token_id",
 			httputil.RequireHeaders(autherr.ErrValidation, umtypes.UserRoleHeader),
 			getAccessTokenByIDHandler,
@@ -67,7 +175,22 @@ func SetupRoutes(engine *gin.Engine, server authProto.AuthServer) {
 
 	user := engine.Group("/user")
 	{
-		// Delete user tokens
+		// swagger:operation DELETE /user/{user_id}/tokens DeleteUserTokens
+		// Delete user (refresh) tokens. Also makes access tokens invalid.
+		//
+		// ---
+		// x-method-visibility: private
+		// parameters:
+		//  - name: user_id
+		//    in: path
+		//    type: string
+		//    format: uuid
+		//    required: true
+		// responses:
+		//  '200':
+		//    description: tokens deleted
+		//  default:
+		//    description: error
 		user.DELETE("/:user_id/tokens", deleteUserTokensHandler)
 	}
 }

@@ -17,6 +17,7 @@ service Auth {
     rpc AccessTokenByID (AccessTokenByIDRequest) returns (AccessTokenByIDResponse) {} // Get access token by id (reconstruct from stored refresh token)
 }
 
+//swagger:ignore
 message CreateTokenRequest {
     string user_agent = 1;
     string fingerprint = 2;
@@ -31,11 +32,15 @@ message CreateTokenRequest {
     string part_token_id = 8;
 }
 
+// CreateTokenResponse contains access and refresh token.
+//
+// swagger:model
 message CreateTokenResponse {
     string access_token = 1;
     string refresh_token = 2;
 }
 
+//swagger:ignore
 message CheckTokenRequest {
     string access_token = 1;
     string user_agent = 2;
@@ -44,6 +49,7 @@ message CheckTokenRequest {
     string user_ip = 4;
 }
 
+//swagger:ignore
 message CheckTokenResponse {
     ResourcesAccess access = 1;
     // @inject_tag: binding:"uuid"
@@ -55,35 +61,46 @@ message CheckTokenResponse {
     string part_token_id = 5;
 }
 
+//swagger:ignore
 message ExtendTokenRequest {
     string refresh_token = 1;
     string fingerprint = 2;
 }
 
+// ExtendTokenResponse contains new access and refresh tokens
+//
+// swagger:model
 message ExtendTokenResponse {
     string access_token = 1;
     string refresh_token = 2;
 }
 
+//swagger:ignore
 message UpdateAccessRequestElement {
     // @inject_tag: binding:"uuid"
     string user_id = 1;
     ResourcesAccess access = 2;
 }
 
+//swagger:ignore
 message UpdateAccessRequest {
     repeated UpdateAccessRequestElement users = 1;
 }
 
+//swagger:ignore
 message GetUserTokensRequest {
     // @inject_tag: binding:"uuid"
     string user_id = 1;
 }
 
+// GetUserTokensResponse contains user tokens
+//
+// swagger:model
 message GetUserTokensResponse {
     repeated StoredTokenForUser tokens = 1;
 }
 
+//swagger:ignore
 message DeleteTokenRequest {
     // @inject_tag: binding:"uuid"
     string token_id = 1;
@@ -91,17 +108,22 @@ message DeleteTokenRequest {
     string user_id = 2;
 }
 
+//swagger:ignore
 message DeleteUserTokensRequest {
     // @inject_tag: binding:"uuid"
     string user_id = 1;
 }
 
+//swagger:ignore
 message AccessTokenByIDRequest {
     // @inject_tag: binding:"uuid"
     string token_id = 1;
     string user_role = 2;
 }
 
+// AccessTokenByIDResponse contains access token get by ID.
+//
+// swagger:model
 message AccessTokenByIDResponse {
     string access_token = 1;
 }
