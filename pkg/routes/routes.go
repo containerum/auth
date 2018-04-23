@@ -193,6 +193,23 @@ func SetupRoutes(engine gin.IRouter, server authProto.AuthServer) {
 		//    description: error
 		user.DELETE("/:user_id/tokens", deleteUserTokensHandler)
 	}
+
+	// swagger:operation PUT /access UpdateUserAccesses
+	// Rewrite user-namespace and user-volume accesses in DB for each user.
+	//
+	// ---
+	// x-method-visibility: private
+	// parameters:
+	//  - name: body
+	//    in: body
+	//    schema:
+	//      $ref: '#/definitions/UpdateAccessRequest'
+	// responses:
+	//  '200':
+	//    description: accesses updated
+	//  default:
+	//    description: error
+	engine.PUT("/access", updateAccessesHandler)
 }
 
 func createTokenHandler(ctx *gin.Context) {
@@ -324,4 +341,20 @@ func getAccessTokenByIDHandler(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, resp)
+}
+
+func updateAccessesHandler(ctx *gin.Context) {
+	var req authProto.UpdateAccessRequest
+
+	if err := ctx.ShouldBindWith(&req, binding.JSON); err != nil {
+		ctx.AbortWithStatusJSON(badRequest(err))
+		return
+	}
+
+	if _, err := srv.UpdateAccess(ctx, &req); err != nil {
+		ctx.AbortWithStatusJSON(handleServerError(err))
+		return
+	}
+
+	ctx.Status(http.StatusOK)
 }

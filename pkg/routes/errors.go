@@ -17,3 +17,8 @@ func handleServerError(err error) (statusCode int, ret *cherry.Err) {
 		return
 	}
 }
+
+func badRequest(err error) (statusCode int, ret *cherry.Err) {
+	ret = autherr.ErrValidation().AddDetailsErr(err)
+	return ret.StatusHTTP, ret
+}

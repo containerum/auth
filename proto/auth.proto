@@ -75,14 +75,18 @@ message ExtendTokenResponse {
     string refresh_token = 2;
 }
 
-//swagger:ignore
+// UpdateAccessRequestElement describes element for updating user resources accesses.
+//
+// swagger:model
 message UpdateAccessRequestElement {
     // @inject_tag: binding:"uuid"
     string user_id = 1;
     ResourcesAccess access = 2;
 }
 
-//swagger:ignore
+// UpdateAccessRequest describes request for updating user resources accesses.
+//
+// swagger:model
 message UpdateAccessRequest {
     repeated UpdateAccessRequestElement users = 1;
 }
