@@ -156,13 +156,13 @@ var (
 
 	HTTPListenAddrFlag = cli.StringFlag{
 		Name:    "http_listenaddr",
-		EnvVars: []string{"CH_AUTH_HTTP_LISTEN_ADDR"},
+		EnvVars: []string{"CH_AUTH_HTTP_LISTENADDR"},
 		Value:   ":8080",
 	}
 
 	GRPCListenAddrFlag = cli.StringFlag{
 		Name:    "grpc_listenaddr",
-		EnvVars: []string{"CH_AUTH_GRPC_LISTEN_ADDR"},
+		EnvVars: []string{"CH_AUTH_GRPC_LISTENADDR"},
 		Value:   ":8888",
 	}
 )
