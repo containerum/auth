@@ -11,6 +11,30 @@
     "title": "Auth API"
   },
   "paths": {
+    "/access": {
+      "put": {
+        "summary": "Rewrite user-namespace and user-volume accesses in DB for each user.",
+        "operationId": "UpdateUserAccesses",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/UpdateAccessRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "accesses updated"
+          },
+          "default": {
+            "description": "error"
+          }
+        },
+        "x-method-visibility": "private"
+      }
+    },
     "/byid/access/{token_id}": {
       "get": {
         "summary": "Get access token by ID.",
@@ -460,6 +484,35 @@
         }
       },
       "x-go-package": "git.containerum.net/ch/auth/vendor/github.com/golang/protobuf/ptypes/timestamp"
+    },
+    "UpdateAccessRequest": {
+      "type": "object",
+      "title": "UpdateAccessRequest describes request for updating user resources accesses.",
+      "properties": {
+        "users": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/UpdateAccessRequestElement"
+          },
+          "x-go-name": "Users"
+        }
+      },
+      "x-go-package": "git.containerum.net/ch/auth/proto"
+    },
+    "UpdateAccessRequestElement": {
+      "type": "object",
+      "title": "UpdateAccessRequestElement describes element for updating user resources accesses.",
+      "properties": {
+        "access": {
+          "$ref": "#/definitions/ResourcesAccess"
+        },
+        "user_id": {
+          "description": "@inject_tag: binding:\"uuid\"",
+          "type": "string",
+          "x-go-name": "UserId"
+        }
+      },
+      "x-go-package": "git.containerum.net/ch/auth/proto"
     },
     "authClient": {
       "type": "object",

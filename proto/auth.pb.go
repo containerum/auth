@@ -300,7 +300,9 @@ func (m *ExtendTokenResponse) GetRefreshToken() string {
 	return ""
 }
 
-// swagger:ignore
+// UpdateAccessRequestElement describes element for updating user resources accesses.
+//
+// swagger:model
 type UpdateAccessRequestElement struct {
 	// @inject_tag: binding:"uuid"
 	UserId string           `protobuf:"bytes,1,opt,name=user_id,json=userId" json:"user_id,omitempty" binding:"uuid"`
@@ -326,7 +328,9 @@ func (m *UpdateAccessRequestElement) GetAccess() *ResourcesAccess {
 	return nil
 }
 
-// swagger:ignore
+// UpdateAccessRequest describes request for updating user resources accesses.
+//
+// swagger:model
 type UpdateAccessRequest struct {
 	Users []*UpdateAccessRequestElement `protobuf:"bytes,1,rep,name=users" json:"users,omitempty"`
 }
