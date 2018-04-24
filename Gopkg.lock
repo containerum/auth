@@ -2,10 +2,10 @@
 
 
 [[projects]]
-  branch = "master"
-  name = "git.containerum.net/ch/json-types"
-  packages = ["user-manager"]
-  revision = "2b91a176625129c8b8d97820c4016459a89530d5"
+  branch = "develop"
+  name = "git.containerum.net/ch/api-gateway"
+  packages = ["pkg/utils/headers"]
+  revision = "55ced2a80678bc484a30e802acc4450905b7f968"
 
 [[projects]]
   name = "git.containerum.net/ch/kube-client"
@@ -23,7 +23,7 @@
   branch = "master"
   name = "git.containerum.net/ch/utils"
   packages = ["httputil"]
-  revision = "0c31c414efa017dc1932f5e663dba8f00b3dcfe9"
+  revision = "70aa71366d3fabbf10492c003fedaf3980cf33f1"
 
 [[projects]]
   name = "github.com/Shopify/sarama"
@@ -431,6 +431,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "2b28818f887680aea423f5d15b11bacbe6e8182400dcffd124c912210d065adc"
+  inputs-digest = "9c43b28f2420e7d6f9ba56f4cc4dfebe46d7894e3e7c1e9b3d416e32854208be"
   solver-name = "gps-cdcl"
   solver-version = 1
