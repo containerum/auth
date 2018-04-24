@@ -3,8 +3,8 @@ package routes
 import (
 	"net/http"
 
+	"git.containerum.net/ch/api-gateway/pkg/utils/headers"
 	"git.containerum.net/ch/auth/proto"
-	umtypes "git.containerum.net/ch/json-types/user-manager"
 	"git.containerum.net/ch/kube-client/pkg/cherry/adaptors/gonic"
 	"git.containerum.net/ch/kube-client/pkg/cherry/auth"
 	"git.containerum.net/ch/utils/httputil"
@@ -34,7 +34,6 @@ func SetupRoutes(engine gin.IRouter, server authProto.AuthServer) {
 		//  - $ref: '#/parameters/UserIDHeader'
 		//  - $ref: '#/parameters/UserRoleHeader'
 		//  - $ref: '#/parameters/ClientIPHeader'
-		//  - $ref: '#/parameters/PartTokenIDHeader'
 		// responses:
 		//  '200':
 		//    description: access and refresh tokens created
@@ -44,11 +43,11 @@ func SetupRoutes(engine gin.IRouter, server authProto.AuthServer) {
 		//    description: error
 		token.POST("", httputil.RequireHeaders(
 			autherr.ErrValidation,
-			umtypes.UserAgentHeader,
-			umtypes.FingerprintHeader,
-			umtypes.UserIDHeader,
-			umtypes.ClientIPHeader,
-			umtypes.UserRoleHeader,
+			headers.UserAgentXHeader,
+			headers.UserClientXHeader,
+			headers.UserIDXHeader,
+			headers.UserIPXHeader,
+			headers.UserRoleXHeader,
 		), createTokenHandler)
 
 		// swagger:operation GET /token/{access_token} CheckToken
@@ -76,9 +75,9 @@ func SetupRoutes(engine gin.IRouter, server authProto.AuthServer) {
 		//    description: error
 		token.GET("/:access_token", httputil.RequireHeaders(
 			autherr.ErrValidation,
-			umtypes.UserAgentHeader,
-			umtypes.FingerprintHeader,
-			umtypes.ClientIPHeader,
+			headers.UserAgentXHeader,
+			headers.UserClientXHeader,
+			headers.UserIPXHeader,
 		), checkTokenHandler)
 
 		// swagger:operation GET /token GetUserTokens
@@ -97,7 +96,7 @@ func SetupRoutes(engine gin.IRouter, server authProto.AuthServer) {
 		//  default:
 		//    description: error
 		token.GET("",
-			httputil.RequireHeaders(autherr.ErrValidation, umtypes.UserIDHeader),
+			httputil.RequireHeaders(autherr.ErrValidation, headers.UserIDXHeader),
 			getUserTokensHandler)
 
 		// swagger:operation PUT /token/{refresh_token} ExtendToken
@@ -121,7 +120,7 @@ func SetupRoutes(engine gin.IRouter, server authProto.AuthServer) {
 		//  default:
 		//    description: error
 		token.PUT("/:refresh_token",
-			httputil.RequireHeaders(autherr.ErrValidation, umtypes.FingerprintHeader),
+			httputil.RequireHeaders(autherr.ErrValidation, headers.UserClientXHeader),
 			extendTokenHandler)
 
 		// swagger:operation DELETE /token/{token_id} DeleteTokenByID
@@ -143,7 +142,7 @@ func SetupRoutes(engine gin.IRouter, server authProto.AuthServer) {
 		//  default:
 		//    description: error
 		token.DELETE("/:token_id",
-			httputil.RequireHeaders(autherr.ErrValidation, umtypes.UserIDHeader),
+			httputil.RequireHeaders(autherr.ErrValidation, headers.UserIDXHeader),
 			deleteTokenByIDHandler)
 	}
 
@@ -168,7 +167,7 @@ func SetupRoutes(engine gin.IRouter, server authProto.AuthServer) {
 		//  default:
 		//    description: error
 		byID.GET("/access/:token_id",
-			httputil.RequireHeaders(autherr.ErrValidation, umtypes.UserRoleHeader),
+			httputil.RequireHeaders(autherr.ErrValidation, headers.UserRoleXHeader),
 			getAccessTokenByIDHandler,
 		)
 	}
@@ -220,10 +219,6 @@ func createTokenHandler(ctx *gin.Context) {
 		UserIp:      httputil.MustGetClientIP(ctx.Request.Context()),
 		UserRole:    httputil.MustGetUserRole(ctx.Request.Context()),
 	}
-	ptID, ptIDExist := httputil.GetPartTokenID(ctx.Request.Context())
-	if ptIDExist {
-		req.PartTokenId = ptID
-	}
 
 	var access struct {
 		Access *authProto.ResourcesAccess `json:"access" binding:"required"`
@@ -259,12 +254,9 @@ func checkTokenHandler(ctx *gin.Context) {
 		return
 	}
 
-	ctx.Set(umtypes.UserIDHeader, resp.GetUserId())
-	ctx.Set(umtypes.UserRoleHeader, resp.GetUserRole())
-	ctx.Set(umtypes.TokenIDHeader, resp.GetTokenId())
-	if resp.PartTokenId != "" {
-		ctx.Set(umtypes.PartTokenIDHeader, resp.GetPartTokenId())
-	}
+	ctx.Set(headers.UserIDXHeader, resp.GetUserId())
+	ctx.Set(headers.UserRoleXHeader, resp.GetUserRole())
+	ctx.Set(headers.TokenIDXHeader, resp.GetTokenId())
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"access": resp.GetAccess(),

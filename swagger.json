@@ -5,7 +5,7 @@
   "produces": [
     "application/json"
   ],
-  "swagger": "2.0",
+  "swagger": "3.0",
   "info": {
     "description": "Auth service is an OAuth authentication server that is used to authenticate users.",
     "title": "Auth API"
@@ -105,9 +105,6 @@
           },
           {
             "$ref": "#/parameters/ClientIPHeader"
-          },
-          {
-            "$ref": "#/parameters/PartTokenIDHeader"
           }
         ],
         "responses": {
@@ -521,46 +518,19 @@
   },
   "parameters": {
     "ClientIPHeader": {
-      "type": "string",
-      "format": "ip",
-      "name": "X-Client-IP",
-      "in": "header",
-      "required": true
+      "$ref": "vendor/git.containerum.net/ch/api-gateway/pkg/utils/headers/swagger.json#/parameters/ClientIPHeader"
     },
     "FingerprintHeader": {
-      "type": "string",
-      "name": "X-User-Client",
-      "in": "header",
-      "required": true
-    },
-    "PartTokenIDHeader": {
-      "type": "string",
-      "format": "uuid",
-      "name": "X-Part-Token-ID",
-      "in": "header"
+      "$ref": "vendor/git.containerum.net/ch/api-gateway/pkg/utils/headers/swagger.json#/parameters/UserClientHeader"
     },
     "UserAgentHeader": {
-      "type": "string",
-      "name": "X-User-Agent",
-      "in": "header",
-      "required": true
+      "$ref": "vendor/git.containerum.net/ch/api-gateway/pkg/utils/headers/swagger.json#/parameters/UserAgentHeader"
     },
     "UserIDHeader": {
-      "type": "string",
-      "format": "uuid",
-      "name": "X-User-ID",
-      "in": "header",
-      "required": true
+      "$ref": "vendor/git.containerum.net/ch/api-gateway/pkg/utils/headers/swagger.json#/parameters/UserIDHeader"
     },
     "UserRoleHeader": {
-      "enum": [
-        "user",
-        "admin"
-      ],
-      "type": "string",
-      "name": "X-User-Role",
-      "in": "header",
-      "required": true
+      "$ref": "vendor/git.containerum.net/ch/api-gateway/pkg/utils/headers/swagger.json#/parameters/UserRoleHeader"
     }
   }
 }

@@ -1,4 +1,5 @@
 {
   "fast": true,
-  "vendor": true
+  "vendor": true,
+  "exclude": ["static"]
 }
