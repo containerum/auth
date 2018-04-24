@@ -1,38 +1,12 @@
-swagger: "2.0"
+swagger: "3.0"
 parameters:
   UserIDHeader:
-    name: X-User-ID
-    in: header
-    type: string
-    format: uuid
-    required: true
+    $ref: "vendor/git.containerum.net/ch/api-gateway/pkg/utils/headers/swagger.json#/parameters/UserIDHeader"
   FingerprintHeader:
-    name: X-User-Client
-    in: header
-    type: string
-    required: true
+    $ref: "vendor/git.containerum.net/ch/api-gateway/pkg/utils/headers/swagger.json#/parameters/UserClientHeader"
   UserAgentHeader:
-    name: X-User-Agent
-    in: header
-    type: string
-    required: true
+    $ref: "vendor/git.containerum.net/ch/api-gateway/pkg/utils/headers/swagger.json#/parameters/UserAgentHeader"
   ClientIPHeader:
-    name: X-Client-IP
-    in: header
-    type: string
-    format: ip
-    required: true
+    $ref: "vendor/git.containerum.net/ch/api-gateway/pkg/utils/headers/swagger.json#/parameters/ClientIPHeader"
   UserRoleHeader:
-    name: X-User-Role
-    in: header
-    type: string
-    enum:
-      - user
-      - admin
-    required: true
-  PartTokenIDHeader:
-    name: X-Part-Token-ID
-    in: header
-    type: string
-    format: uuid
-    required: false
+    $ref: "vendor/git.containerum.net/ch/api-gateway/pkg/utils/headers/swagger.json#/parameters/UserRoleHeader"
