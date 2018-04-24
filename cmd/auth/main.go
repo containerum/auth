@@ -18,7 +18,7 @@ import (
 //go:generate protoc --go_out=plugins=grpc:../../proto -I../../proto auth.proto auth_types.proto
 //go:generate protoc-go-inject-tag -input=../../proto/auth.pb.go
 //go:generate protoc-go-inject-tag -input=../../proto/auth_types.pb.go
-//go:generate swagger generate spec -i ../../swagger-basic.yml -o ../../swagger.json
+//go:generate swagger generate spec -m -i ../../swagger-basic.yml -o ../../swagger.json
 
 func logExit(err error) {
 	if err != nil {
