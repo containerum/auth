@@ -8,6 +8,7 @@ import (
 
 	"os"
 
+	"git.containerum.net/ch/auth/pkg/errors"
 	"git.containerum.net/ch/auth/pkg/token"
 	"git.containerum.net/ch/auth/pkg/utils"
 	"git.containerum.net/ch/auth/proto"
