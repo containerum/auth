@@ -7,12 +7,12 @@ import (
 
 	"time"
 
+	"git.containerum.net/ch/auth/pkg/errors"
 	"git.containerum.net/ch/auth/pkg/token"
 	"git.containerum.net/ch/auth/pkg/utils"
 	"git.containerum.net/ch/auth/proto"
-	"git.containerum.net/ch/kube-client/pkg/cherry"
-	"git.containerum.net/ch/kube-client/pkg/cherry/adaptors/cherrylog"
-	"git.containerum.net/ch/kube-client/pkg/cherry/auth"
+	"git.containerum.net/ch/cherry"
+	"git.containerum.net/ch/cherry/adaptors/cherrylog"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/json-iterator/go"

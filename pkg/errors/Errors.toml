@@ -1,0 +1,32 @@
+Name = "autherr"
+SID = "auth"
+
+[[error]]
+    Name = "ErrInvalidToken"
+    StatusHTTP = 400
+    Message = "invalid token received"
+    Kind = 1
+
+[[error]]
+    Name = "ErrTokenNotOwnedBySender"
+    StatusHTTP = 403
+    Message = "Can`t identify sender as token owner"
+    Kind = 2
+
+[[error]]
+    Name = "ErrTokenNotFound"
+    StatusHTTP = 404
+    Message = "Token was not found in storage"
+    Kind = 3
+
+[[error]]
+    Name = "ErrInternal"
+    StatusHTTP = 500
+    Message = "Token was not found in storage"
+    Kind = 4
+
+[[error]]
+    Name = "ErrValidation"
+    StatusHTTP = 400
+    Message = "Validation error"
+    Kind = 5

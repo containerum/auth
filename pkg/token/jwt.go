@@ -3,8 +3,8 @@ package token
 import (
 	"time"
 
+	"git.containerum.net/ch/auth/pkg/errors"
 	"git.containerum.net/ch/auth/pkg/utils"
-	"git.containerum.net/ch/kube-client/pkg/cherry/auth"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/sirupsen/logrus"
 )

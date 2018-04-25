@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"git.containerum.net/ch/auth/proto"
-	"git.containerum.net/ch/kube-client/pkg/cherry"
-	"git.containerum.net/ch/kube-client/pkg/cherry/adaptors/cherrylog"
+	"git.containerum.net/ch/cherry"
+	"git.containerum.net/ch/cherry/adaptors/cherrylog"
 	"git.containerum.net/ch/utils/httputil"
 	"github.com/go-playground/universal-translator"
 	"github.com/golang/protobuf/ptypes/empty"

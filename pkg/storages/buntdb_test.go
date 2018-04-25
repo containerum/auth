@@ -8,11 +8,11 @@ import (
 
 	"os"
 
+	"git.containerum.net/ch/auth/pkg/errors"
 	"git.containerum.net/ch/auth/pkg/token"
 	"git.containerum.net/ch/auth/pkg/utils"
 	"git.containerum.net/ch/auth/proto"
-	"git.containerum.net/ch/kube-client/pkg/cherry"
-	"git.containerum.net/ch/kube-client/pkg/cherry/auth"
+	"git.containerum.net/ch/cherry"
 	"github.com/sirupsen/logrus"
 	. "github.com/smartystreets/goconvey/convey"
 )

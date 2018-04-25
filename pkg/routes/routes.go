@@ -4,10 +4,11 @@ import (
 	"net/http"
 
 	"git.containerum.net/ch/api-gateway/pkg/utils/headers"
+	"git.containerum.net/ch/auth/pkg/errors"
 	"git.containerum.net/ch/auth/proto"
-	"git.containerum.net/ch/kube-client/pkg/cherry/adaptors/gonic"
-	"git.containerum.net/ch/kube-client/pkg/cherry/auth"
+	"git.containerum.net/ch/cherry/adaptors/gonic"
 	"git.containerum.net/ch/utils/httputil"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 )
@@ -17,6 +18,17 @@ var srv authProto.AuthServer
 // SetupRoutes sets up router and services needed for server operation
 func SetupRoutes(engine gin.IRouter, server authProto.AuthServer) {
 	srv = server
+
+	corsCfg := cors.DefaultConfig()
+	corsCfg.AllowAllOrigins = true
+	corsCfg.AddAllowHeaders(
+		headers.UserAgentXHeader,
+		headers.UserClientXHeader,
+		headers.UserIDXHeader,
+		headers.UserIPXHeader,
+		headers.UserRoleXHeader,
+	)
+	engine.Use(cors.New(corsCfg))
 
 	engine = engine.Group("/")
 	engine.Use(httputil.PrepareContext)
@@ -34,13 +46,21 @@ func SetupRoutes(engine gin.IRouter, server authProto.AuthServer) {
 		//  - $ref: '#/parameters/UserIDHeader'
 		//  - $ref: '#/parameters/UserRoleHeader'
 		//  - $ref: '#/parameters/ClientIPHeader'
+		//  - name: resources_accesses
+		//    in: body
+		//    required: true
+		//    schema:
+		//      type: object
+		//      properties:
+		//        access:
+		//          $ref: '#/definitions/ResourcesAccess'
 		// responses:
 		//  '200':
 		//    description: access and refresh tokens created
 		//    schema:
 		//      $ref: '#/definitions/CreateTokenResponse'
 		//  default:
-		//    description: error
+		//    $ref: '#/responses/error'
 		token.POST("", httputil.RequireHeaders(
 			autherr.ErrValidation,
 			headers.UserAgentXHeader,
@@ -72,7 +92,7 @@ func SetupRoutes(engine gin.IRouter, server authProto.AuthServer) {
 		//        access:
 		//          $ref: '#/definitions/ResourcesAccess'
 		//  default:
-		//    description: error
+		//    $ref: '#/responses/error'
 		token.GET("/:access_token", httputil.RequireHeaders(
 			autherr.ErrValidation,
 			headers.UserAgentXHeader,
@@ -94,7 +114,7 @@ func SetupRoutes(engine gin.IRouter, server authProto.AuthServer) {
 		//    schema:
 		//      $ref: '#/definitions/GetUserTokensResponse'
 		//  default:
-		//    description: error
+		//    $ref: '#/responses/error'
 		token.GET("",
 			httputil.RequireHeaders(autherr.ErrValidation, headers.UserIDXHeader),
 			getUserTokensHandler)
@@ -118,7 +138,7 @@ func SetupRoutes(engine gin.IRouter, server authProto.AuthServer) {
 		//    schema:
 		//      $ref: '#/definitions/ExtendTokenResponse'
 		//  default:
-		//    description: error
+		//    $ref: '#/responses/error'
 		token.PUT("/:refresh_token",
 			httputil.RequireHeaders(autherr.ErrValidation, headers.UserClientXHeader),
 			extendTokenHandler)
@@ -140,7 +160,7 @@ func SetupRoutes(engine gin.IRouter, server authProto.AuthServer) {
 		//  '200':
 		//    description: token deleted
 		//  default:
-		//    description: error
+		//    $ref: '#/responses/error'
 		token.DELETE("/:token_id",
 			httputil.RequireHeaders(autherr.ErrValidation, headers.UserIDXHeader),
 			deleteTokenByIDHandler)
@@ -165,7 +185,7 @@ func SetupRoutes(engine gin.IRouter, server authProto.AuthServer) {
 		//    schema:
 		//     $ref: '#/definitions/AccessTokenByIDResponse'
 		//  default:
-		//    description: error
+		//    $ref: '#/responses/error'
 		byID.GET("/access/:token_id",
 			httputil.RequireHeaders(autherr.ErrValidation, headers.UserRoleXHeader),
 			getAccessTokenByIDHandler,
@@ -189,7 +209,7 @@ func SetupRoutes(engine gin.IRouter, server authProto.AuthServer) {
 		//  '200':
 		//    description: tokens deleted
 		//  default:
-		//    description: error
+		//    $ref: '#/responses/error'
 		user.DELETE("/:user_id/tokens", deleteUserTokensHandler)
 	}
 
@@ -207,7 +227,7 @@ func SetupRoutes(engine gin.IRouter, server authProto.AuthServer) {
 	//  '200':
 	//    description: accesses updated
 	//  default:
-	//    description: error
+	//    $ref: '#/responses/error'
 	engine.PUT("/access", updateAccessesHandler)
 }
 

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware"
+	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
 	"github.com/grpc-ecosystem/go-grpc-middleware/tags/logrus"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
@@ -21,7 +22,7 @@ var (
 	KindField = "span.kind"
 )
 
-// PayloadUnaryServerInterceptor returns a new unary server interceptors that adds logrus.Entry to the context.
+// UnaryServerInterceptor returns a new unary server interceptors that adds logrus.Entry to the context.
 func UnaryServerInterceptor(entry *logrus.Entry, opts ...Option) grpc.UnaryServerInterceptor {
 	o := evaluateServerOpt(opts)
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
@@ -47,7 +48,7 @@ func UnaryServerInterceptor(entry *logrus.Entry, opts ...Option) grpc.UnaryServe
 		levelLogf(
 			ctx_logrus.Extract(newCtx).WithFields(fields), // re-extract logger from newCtx, as it may have extra fields that changed in the holder.
 			level,
-			"finished unary call")
+			"finished unary call with code "+code.String())
 
 		return resp, err
 	}
@@ -81,7 +82,7 @@ func StreamServerInterceptor(entry *logrus.Entry, opts ...Option) grpc.StreamSer
 		levelLogf(
 			ctx_logrus.Extract(newCtx).WithFields(fields), // re-extract logger from newCtx, as it may have extra fields that changed in the holder.
 			level,
-			"finished streaming call")
+			"finished streaming call with code "+code.String())
 
 		return err
 	}
@@ -124,5 +125,5 @@ func newLoggerForCall(ctx context.Context, entry *logrus.Entry, fullMethodString
 	}
 
 	callLog = callLog.WithFields(ctx_logrus.Extract(ctx).Data)
-	return ctx_logrus.ToContext(ctx, callLog)
+	return ctxlogrus.ToContext(ctx, callLog)
 }
