@@ -8,6 +8,7 @@ import (
 	"git.containerum.net/ch/auth/proto"
 	"git.containerum.net/ch/cherry/adaptors/gonic"
 	"git.containerum.net/ch/utils/httputil"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 )
@@ -17,6 +18,17 @@ var srv authProto.AuthServer
 // SetupRoutes sets up router and services needed for server operation
 func SetupRoutes(engine gin.IRouter, server authProto.AuthServer) {
 	srv = server
+
+	corsCfg := cors.DefaultConfig()
+	corsCfg.AllowAllOrigins = true
+	corsCfg.AddAllowHeaders(
+		headers.UserAgentXHeader,
+		headers.UserClientXHeader,
+		headers.UserIDXHeader,
+		headers.UserIPXHeader,
+		headers.UserRoleXHeader,
+	)
+	engine.Use(cors.New(corsCfg))
 
 	engine = engine.Group("/")
 	engine.Use(httputil.PrepareContext)

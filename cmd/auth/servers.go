@@ -50,9 +50,7 @@ func NewHTTPServer(listenAddr string, tracer opentracing.Tracer, storage authPro
 	engine.Use(gin.RecoveryWithWriter(logrus.WithField("component", "gin_recovery").WriterLevel(logrus.ErrorLevel)))
 	engine.Use(ginrus.Ginrus(logrus.StandardLogger(), time.RFC3339, true))
 
-	engine.Group("/static").
-		Use(cors.Default()).
-		StaticFS("/", static.HTTP)
+	engine.Group("/static", cors.Default()).StaticFS("/", static.HTTP)
 
 	routes.SetupRoutes(engine, storage)
 
