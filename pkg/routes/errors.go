@@ -1,8 +1,8 @@
 package routes
 
 import (
-	"git.containerum.net/ch/kube-client/pkg/cherry"
-	"git.containerum.net/ch/kube-client/pkg/cherry/auth"
+	"git.containerum.net/ch/auth/pkg/errors"
+	"git.containerum.net/ch/cherry"
 )
 
 func handleServerError(err error) (statusCode int, ret *cherry.Err) {

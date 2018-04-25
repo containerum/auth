@@ -7,9 +7,9 @@ import (
 
 	"fmt"
 
+	"git.containerum.net/ch/auth/pkg/errors"
 	"git.containerum.net/ch/auth/pkg/utils"
 	"git.containerum.net/ch/auth/pkg/validation"
-	"git.containerum.net/ch/kube-client/pkg/cherry/auth"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/urfave/cli.v2"

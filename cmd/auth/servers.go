@@ -10,11 +10,11 @@ import (
 	"context"
 	"time"
 
+	"git.containerum.net/ch/auth/pkg/errors"
 	"git.containerum.net/ch/auth/pkg/routes"
 	"git.containerum.net/ch/auth/proto"
 	"git.containerum.net/ch/auth/static"
-	"git.containerum.net/ch/kube-client/pkg/cherry/adaptors/cherrygrpc"
-	"git.containerum.net/ch/kube-client/pkg/cherry/auth"
+	"git.containerum.net/ch/cherry/adaptors/cherrygrpc"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/contrib/ginrus"
 	"github.com/gin-gonic/gin"
@@ -95,7 +95,7 @@ func panicHandler(p interface{}) (err error) {
 	return autherr.ErrInternal()
 }
 
-// NewGRPCServer reteurns server which servers request using grpc protocol
+// NewGRPCServer returns server which servers request using grpc protocol
 func NewGRPCServer(listenAddr string, tracer opentracing.Tracer, storage authProto.AuthServer) Server {
 	cherrygrpc.JSONMarshal = jsoniter.ConfigFastest.Marshal
 	cherrygrpc.JSONUnmarshal = jsoniter.ConfigFastest.Unmarshal
