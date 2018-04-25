@@ -46,6 +46,14 @@ func SetupRoutes(engine gin.IRouter, server authProto.AuthServer) {
 		//  - $ref: '#/parameters/UserIDHeader'
 		//  - $ref: '#/parameters/UserRoleHeader'
 		//  - $ref: '#/parameters/ClientIPHeader'
+		//  - name: resources_accesses
+		//    in: body
+		//    required: true
+		//    schema:
+		//      type: object
+		//      properties:
+		//        access:
+		//          $ref: '#/definitions/ResourcesAccess'
 		// responses:
 		//  '200':
 		//    description: access and refresh tokens created

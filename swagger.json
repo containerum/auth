@@ -105,6 +105,19 @@
           },
           {
             "$ref": "#/parameters/ClientIPHeader"
+          },
+          {
+            "name": "resources_accesses",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "access": {
+                  "$ref": "#/definitions/ResourcesAccess"
+                }
+              }
+            }
           }
         ],
         "responses": {
