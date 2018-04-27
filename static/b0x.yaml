@@ -88,7 +88,7 @@ custom:
   # type: array of strings
   - files:
     - "../swagger.json"
-    - "../vendor/github.com/containerum/httputil/swagger.json"
+    - "../vendor/github.com/containerum/utils/httputil/swagger.json"
     - "../vendor/github.com/containerum/cherry/swagger.json"
 
     # base is the path that will be removed from all files' path

@@ -1,15 +1,15 @@
 swagger: "3.0"
 parameters:
   UserIDHeader:
-    $ref: "vendor/github.com/containerum/httputil/swagger.json#/parameters/UserIDHeader"
+    $ref: "vendor/github.com/containerum/utils/httputil/swagger.json#/parameters/UserIDHeader"
   FingerprintHeader:
-    $ref: "vendor/github.com/containerum/httputil/swagger.json#/parameters/UserClientHeader"
+    $ref: "vendor/github.com/containerum/utils/httputil/swagger.json#/parameters/UserClientHeader"
   UserAgentHeader:
-    $ref: "vendor/github.com/containerum/httputil/swagger.json#/parameters/UserAgentHeader"
+    $ref: "vendor/github.com/containerum/utils/httputil/swagger.json#/parameters/UserAgentHeader"
   ClientIPHeader:
-    $ref: "vendor/github.com/containerum/httputil/swagger.json#/parameters/ClientIPHeader"
+    $ref: "vendor/github.com/containerum/utils/httputil/swagger.json#/parameters/ClientIPHeader"
   UserRoleHeader:
-    $ref: "vendor/github.com/containerum/httputil/swagger.json#/parameters/UserRoleHeader"
+    $ref: "vendor/github.com/containerum/utils/httputil/swagger.json#/parameters/UserRoleHeader"
 responses:
   error:
     description: cherry error
