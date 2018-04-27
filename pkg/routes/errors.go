@@ -2,7 +2,7 @@ package routes
 
 import (
 	"git.containerum.net/ch/auth/pkg/errors"
-	"git.containerum.net/ch/cherry"
+	"github.com/containerum/cherry"
 )
 
 func handleServerError(err error) (statusCode int, ret *cherry.Err) {

@@ -3,8 +3,9 @@ package autherr
 
 import (
 	bytes "bytes"
-	cherry "git.containerum.net/ch/cherry"
 	template "text/template"
+
+	cherry "github.com/containerum/cherry"
 )
 
 const ()
