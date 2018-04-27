@@ -3,11 +3,10 @@ package routes
 import (
 	"net/http"
 
-	"git.containerum.net/ch/api-gateway/pkg/utils/headers"
 	"git.containerum.net/ch/auth/pkg/errors"
 	"git.containerum.net/ch/auth/proto"
-	"git.containerum.net/ch/cherry/adaptors/gonic"
-	"git.containerum.net/ch/utils/httputil"
+	"github.com/containerum/cherry/adaptors/gonic"
+	"github.com/containerum/utils/httputil"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -22,11 +21,11 @@ func SetupRoutes(engine gin.IRouter, server authProto.AuthServer) {
 	corsCfg := cors.DefaultConfig()
 	corsCfg.AllowAllOrigins = true
 	corsCfg.AddAllowHeaders(
-		headers.UserAgentXHeader,
-		headers.UserClientXHeader,
-		headers.UserIDXHeader,
-		headers.UserIPXHeader,
-		headers.UserRoleXHeader,
+		httputil.UserAgentXHeader,
+		httputil.UserClientXHeader,
+		httputil.UserIDXHeader,
+		httputil.UserIPXHeader,
+		httputil.UserRoleXHeader,
 	)
 	engine.Use(cors.New(corsCfg))
 
@@ -63,11 +62,11 @@ func SetupRoutes(engine gin.IRouter, server authProto.AuthServer) {
 		//    $ref: '#/responses/error'
 		token.POST("", httputil.RequireHeaders(
 			autherr.ErrValidation,
-			headers.UserAgentXHeader,
-			headers.UserClientXHeader,
-			headers.UserIDXHeader,
-			headers.UserIPXHeader,
-			headers.UserRoleXHeader,
+			httputil.UserAgentXHeader,
+			httputil.UserClientXHeader,
+			httputil.UserIDXHeader,
+			httputil.UserIPXHeader,
+			httputil.UserRoleXHeader,
 		), createTokenHandler)
 
 		// swagger:operation GET /token/{access_token} CheckToken
@@ -95,9 +94,9 @@ func SetupRoutes(engine gin.IRouter, server authProto.AuthServer) {
 		//    $ref: '#/responses/error'
 		token.GET("/:access_token", httputil.RequireHeaders(
 			autherr.ErrValidation,
-			headers.UserAgentXHeader,
-			headers.UserClientXHeader,
-			headers.UserIPXHeader,
+			httputil.UserAgentXHeader,
+			httputil.UserClientXHeader,
+			httputil.UserIPXHeader,
 		), checkTokenHandler)
 
 		// swagger:operation GET /token GetUserTokens
@@ -116,7 +115,7 @@ func SetupRoutes(engine gin.IRouter, server authProto.AuthServer) {
 		//  default:
 		//    $ref: '#/responses/error'
 		token.GET("",
-			httputil.RequireHeaders(autherr.ErrValidation, headers.UserIDXHeader),
+			httputil.RequireHeaders(autherr.ErrValidation, httputil.UserIDXHeader),
 			getUserTokensHandler)
 
 		// swagger:operation PUT /token/{refresh_token} ExtendToken
@@ -140,7 +139,7 @@ func SetupRoutes(engine gin.IRouter, server authProto.AuthServer) {
 		//  default:
 		//    $ref: '#/responses/error'
 		token.PUT("/:refresh_token",
-			httputil.RequireHeaders(autherr.ErrValidation, headers.UserClientXHeader),
+			httputil.RequireHeaders(autherr.ErrValidation, httputil.UserClientXHeader),
 			extendTokenHandler)
 
 		// swagger:operation DELETE /token/{token_id} DeleteTokenByID
@@ -162,7 +161,7 @@ func SetupRoutes(engine gin.IRouter, server authProto.AuthServer) {
 		//  default:
 		//    $ref: '#/responses/error'
 		token.DELETE("/:token_id",
-			httputil.RequireHeaders(autherr.ErrValidation, headers.UserIDXHeader),
+			httputil.RequireHeaders(autherr.ErrValidation, httputil.UserIDXHeader),
 			deleteTokenByIDHandler)
 	}
 
@@ -187,7 +186,7 @@ func SetupRoutes(engine gin.IRouter, server authProto.AuthServer) {
 		//  default:
 		//    $ref: '#/responses/error'
 		byID.GET("/access/:token_id",
-			httputil.RequireHeaders(autherr.ErrValidation, headers.UserRoleXHeader),
+			httputil.RequireHeaders(autherr.ErrValidation, httputil.UserRoleXHeader),
 			getAccessTokenByIDHandler,
 		)
 	}
@@ -274,9 +273,9 @@ func checkTokenHandler(ctx *gin.Context) {
 		return
 	}
 
-	ctx.Set(headers.UserIDXHeader, resp.GetUserId())
-	ctx.Set(headers.UserRoleXHeader, resp.GetUserRole())
-	ctx.Set(headers.TokenIDXHeader, resp.GetTokenId())
+	ctx.Set(httputil.UserIDXHeader, resp.GetUserId())
+	ctx.Set(httputil.UserRoleXHeader, resp.GetUserRole())
+	ctx.Set(httputil.TokenIDXHeader, resp.GetTokenId())
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"access": resp.GetAccess(),

@@ -12,7 +12,7 @@ import (
 	"git.containerum.net/ch/auth/pkg/token"
 	"git.containerum.net/ch/auth/pkg/utils"
 	"git.containerum.net/ch/auth/proto"
-	"git.containerum.net/ch/cherry"
+	"github.com/containerum/cherry"
 	"github.com/sirupsen/logrus"
 	. "github.com/smartystreets/goconvey/convey"
 )

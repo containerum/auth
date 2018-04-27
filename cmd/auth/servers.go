@@ -14,7 +14,7 @@ import (
 	"git.containerum.net/ch/auth/pkg/routes"
 	"git.containerum.net/ch/auth/proto"
 	"git.containerum.net/ch/auth/static"
-	"git.containerum.net/ch/cherry/adaptors/cherrygrpc"
+	"github.com/containerum/cherry/adaptors/cherrygrpc"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/contrib/ginrus"
 	"github.com/gin-gonic/gin"
