@@ -15,6 +15,7 @@ import (
 	"git.containerum.net/ch/auth/proto"
 	"git.containerum.net/ch/auth/static"
 	"github.com/containerum/cherry/adaptors/cherrygrpc"
+	"github.com/containerum/utils/httputil"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/contrib/ginrus"
 	"github.com/gin-gonic/gin"
@@ -44,13 +45,26 @@ type Server interface {
 }
 
 // NewHTTPServer returns server which servers REST requests
-func NewHTTPServer(listenAddr string, tracer opentracing.Tracer, storage authProto.AuthServer) Server {
+func NewHTTPServer(listenAddr string, tracer opentracing.Tracer, storage authProto.AuthServer, enableCors bool) Server {
 	engine := gin.New()
 
 	engine.Use(gin.RecoveryWithWriter(logrus.WithField("component", "gin_recovery").WriterLevel(logrus.ErrorLevel)))
 	engine.Use(ginrus.Ginrus(logrus.StandardLogger(), time.RFC3339, true))
 
-	engine.Group("/static", cors.Default()).StaticFS("/", static.HTTP)
+	if enableCors {
+		corsCfg := cors.DefaultConfig()
+		corsCfg.AllowAllOrigins = true
+		corsCfg.AddAllowHeaders(
+			httputil.UserIDXHeader,
+			httputil.UserRoleXHeader,
+			httputil.UserAgentXHeader,
+			httputil.UserClientXHeader,
+			httputil.UserIPXHeader,
+		)
+		engine.Use(cors.New(corsCfg))
+	}
+
+	engine.Group("/static").StaticFS("/", static.HTTP)
 
 	routes.SetupRoutes(engine, storage)
 

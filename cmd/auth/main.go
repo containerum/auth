@@ -74,6 +74,8 @@ func main() {
 			// listening
 			&HTTPListenAddrFlag,
 			&GRPCListenAddrFlag,
+			// other
+			&CORSFlag,
 		},
 		Before: func(ctx *cli.Context) error {
 			prettyPrintFlags(ctx)
@@ -113,7 +115,7 @@ func main() {
 			storage = validation.NewServerWrapper(storage, validator, translator, autherr.ErrValidation)
 
 			servers := []Server{
-				NewHTTPServer(httpListenAddr, httpTracer, storage),
+				NewHTTPServer(httpListenAddr, httpTracer, storage, ctx.Bool(CORSFlag.Name)),
 				NewGRPCServer(grpcListenAddr, grpcTracer, storage),
 			}
 
