@@ -165,4 +165,12 @@ var (
 		EnvVars: []string{"CH_AUTH_GRPC_LISTENADDR"},
 		Value:   ":8888",
 	}
+
+	/*
+		OTHER
+	*/
+
+	CORSFlag = cli.BoolFlag{
+		Name: "cors",
+	}
 )
