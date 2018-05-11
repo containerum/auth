@@ -20,6 +20,9 @@ ENV CH_AUTH_HTTP_LISTENADDR=0.0.0.0:8080 \
     CH_AUTH_BUNT_STORAGE_FILE=/storage/storage.db \
     CH_AUTH_TRACER=zipkin \
     CH_AUTH_ZIPKIN_COLLECTOR=nop
+
 VOLUME ["/keys", "/storage"]
+
 EXPOSE 8080 8888
+
 CMD ["/auth"]
