@@ -7,7 +7,7 @@ env:
   - OWNER=containerum
   - NAME=auth
   - IMAGE_NAME=$OWNER/$NAME
-  - HELM_URL=https://$OWNER.github.io/$NAME
+  - HELM_URL=https://$OWNER.github.io/$NAME/charts
 
 services:
   - docker
@@ -24,7 +24,7 @@ before_deploy:
   - docker tag "$IMAGE_NAME" "${IMAGE_NAME}:latest"
   - docker tag "$IMAGE_NAME" "${IMAGE_NAME}:${TRAVIS_TAG}"
   - helm package charts/$NAME --dependency-update --destination charts
-  - helm repo index --url $HELM_URL --merge index.yaml charts
+  - helm repo index --url $HELM_URL --merge charts/index.yaml charts
 
 deploy:
   - provider: script
