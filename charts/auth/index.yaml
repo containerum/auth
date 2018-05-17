@@ -1,0 +1,13 @@
+apiVersion: v1
+entries:
+  auth:
+  - apiVersion: v1
+    appVersion: "1"
+    created: 2018-05-17T18:37:44.145810276+03:00
+    description: Containerum Auth service
+    digest: 895212ceee13e21971119a144a3616d53fcf3b34593c105c595054246e8bd42e
+    name: auth
+    urls:
+    - auth-1.tgz
+    version: "1"
+generated: 2018-05-17T18:38:38.736292245+03:00
