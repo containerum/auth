@@ -33,7 +33,7 @@ persistence:
   ## If kuberntes version < 1.10 use volume.beta.kubernetes.io/storage-class:$store-class-name
   annotations: {}
   accessMode: ReadWriteOnce
-  mountPath: "/keys"
+  mountPath: "/storage"
   size: 5Gi
 
 env:
