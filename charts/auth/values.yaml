@@ -15,38 +15,43 @@ service:
     port: 1112
     targetPort: 1112
 
-volumeMounts:
-  name: auth-volume
-  mountPath: '/storage'
+persistence:
+  enabled: true
+  ## A manually managed Persistent Volume and Claim
+  ## Requires persistence.enabled: true
+  ## If defined, PVC must be created manually before volume will be bound
+  # existingClaim:
 
-volume:
-  name: auth-volume
-  empty:
-    emptyDir: {}
-  gluster:
-    glusterfs:
-      endpoints: glusterfs
-      path: sys_gv_hosting_ch-auth
-      readOnly: false
-
-configMap:
-  name: jwt-key
-  jwtKey: nhJRaMxdg7L7YYxM+PBKzF1q/75RIjqbU+gr2qj2TPY=
-  mountPath: '/keys'
+  ## Persistent Volume Storage Class
+  ## If defined, storageClassName: <storageClass>
+  ## If set to "-", storageClassName: "", which disables dynamic provisioning
+  ## If undefined (the default) or set to null, no storageClassName spec is
+  ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
+  ##   GKE, AWS & OpenStack)
+  ##
+  # storageClass: "-"
+  ## If kuberntes version < 1.10 use volume.beta.kubernetes.io/storage-class:$store-class-name
+  annotations: {}
+  accessMode: ReadWriteOnce
+  mountPath: "/keys"
+  size: 5Gi
 
 env:
-  CH_AUTH_HTTP_LISTENADDR: 0.0.0.0:1111
-  CH_AUTH_GRPC_LISTENADDR: 0.0.0.0:1112
-  CH_AUTH_LOG_MODE: text
-  CH_AUTH_LOG_LEVEL: 4
-  CH_AUTH_TOKENS: jwt
-  CH_AUTH_JWT_SIGNING_METHOD: HS256
-  CH_AUTH_ISSUER: containerum.com
-  CH_AUTH_ACCESS_TOKEN_LIFETIME: 15m
-  CH_AUTH_REFRESH_TOKEN_LIFETIME: 48h
-  CH_AUTH_JWT_SIGNING_KEY_FILE: /keys/jwt.key
-  CH_AUTH_JWT_VALIDATION_KEY_FILE: /keys/jwt.key
-  CH_AUTH_STORAGE: buntdb
-  CH_AUTH_BUNT_STORAGE_FILE: /storage/storage.db
-  CH_AUTH_TRACER: zipkin
-  CH_AUTH_ZIPKIN_COLLECTOR: nop
+  global:
+    CH_AUTH_LOG_MODE: text
+    CH_AUTH_LOG_LEVEL: 4
+    CH_AUTH_TOKENS: jwt
+    CH_AUTH_JWT_SIGNING_METHOD: HS256
+    CH_AUTH_HTTP_LISTENADDR: 0.0.0.0:1111
+    CH_AUTH_GRPC_LISTENADDR: 0.0.0.0:1112
+    CH_AUTH_ISSUER: containerum.com
+    CH_AUTH_ACCESS_TOKEN_LIFETIME: 15m
+    CH_AUTH_REFRESH_TOKEN_LIFETIME: 48h
+    CH_AUTH_JWT_SIGNING_KEY_FILE: /keys/jwt.key
+    CH_AUTH_JWT_VALIDATION_KEY_FILE: /keys/jwt.key
+    CH_AUTH_STORAGE: buntdb
+    CH_AUTH_BUNT_STORAGE_FILE: /storage/storage.db
+    CH_AUTH_TRACER: zipkin
+    CH_AUTH_ZIPKIN_COLLECTOR: nop
+  local:
+    JWT_KEY: null
