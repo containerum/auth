@@ -1,7 +1,16 @@
 # Auth 
-Auth is a service for Containerum that handles user authorization and token management.
+Auth is a OAuth authentication server for Containerum that handles user authorization and token management.
+
+## Features
+* Creates access tokens and refreshes tokens
+* Runs in In-Memory DB
+* Makes asynchronous DB snapshots
+* Checks token by Fingerprint and User Agent
+* Collects user access levels for existing tokens and user roles
+* Saves user IP
 
 ## Prerequisites
+* Kubernetes
 
 ## Installation
 
