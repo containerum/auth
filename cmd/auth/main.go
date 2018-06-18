@@ -19,6 +19,7 @@ import (
 //go:generate protoc-go-inject-tag -input=../../proto/auth.pb.go
 //go:generate protoc-go-inject-tag -input=../../proto/auth_types.pb.go
 //go:generate swagger generate spec -m -i ../../swagger-basic.yml -o ../../swagger.json
+//go:generate swagger flatten ../../swagger.json -o ../../swagger.json
 
 func logExit(err error) {
 	if err != nil {
