@@ -1,10 +1,7 @@
 package token
 
 import (
-	"encoding/base64"
 	"time"
-
-	"github.com/json-iterator/go"
 
 	"git.containerum.net/ch/auth/pkg/utils"
 	"git.containerum.net/ch/auth/proto"
@@ -63,40 +60,6 @@ type IssuerValidator interface {
 	Now() time.Time
 }
 
-// EncodeAccessObjects encodes resource access objects to store in database
-func EncodeAccessObjects(req []*authProto.AccessObject) string {
-	if req == nil {
-		return ""
-	}
-	ret, err := jsoniter.Marshal(req)
-	if err != nil {
-		logrus.WithError(err).Error("encode access objects failed")
-	}
-	return base64.StdEncoding.EncodeToString(ret)
-}
-
-// DecodeAccessObjects decodes resource access object from database record
-func DecodeAccessObjects(value string) (ret []*authProto.AccessObject) {
-	if len(value) >= 2 {
-		if value[0] == '\x00' {
-			value = string(value[1:])
-		}
-	} else {
-		return make([]*authProto.AccessObject, 0)
-	}
-	decoded, err := base64.StdEncoding.DecodeString(value)
-	if err != nil {
-		logrus.WithError(err).Error("decode access objects failed")
-		return make([]*authProto.AccessObject, 0)
-	}
-	err = jsoniter.Unmarshal(decoded, &ret)
-	if err != nil {
-		logrus.WithError(err).Error("decode access objects failed")
-		return make([]*authProto.AccessObject, 0)
-	}
-	return
-}
-
 // RequestToRecord prepares a value to store in database
 func RequestToRecord(req *authProto.CreateTokenRequest, token *IssuedToken) *authProto.StoredToken {
 	ret := &authProto.StoredToken{
@@ -105,11 +68,7 @@ func RequestToRecord(req *authProto.CreateTokenRequest, token *IssuedToken) *aut
 		Fingerprint:     req.GetFingerprint(),
 		UserId:          req.GetUserId(),
 		UserRole:        req.GetUserRole(),
-		UserNamespace:   EncodeAccessObjects(req.GetAccess().GetNamespace()),
-		UserVolume:      EncodeAccessObjects(req.GetAccess().GetVolume()),
-		RwAccess:        req.GetRwAccess(),
 		UserIp:          req.GetUserIp(),
-		PartTokenId:     req.GetPartTokenId(),
 		LifeTime:        ptypes.DurationProto(token.LifeTime),
 		RawRefreshToken: token.Value,
 	}

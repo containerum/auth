@@ -60,7 +60,6 @@ func (v *ServerWrapper) validateStruct(ctx context.Context, req interface{}) err
 
 // CreateToken performs request validation and calls underlying method
 func (v *ServerWrapper) CreateToken(ctx context.Context, req *authProto.CreateTokenRequest) (*authProto.CreateTokenResponse, error) {
-	req.PartTokenId = strings.ToLower(req.GetPartTokenId())
 	req.UserId = strings.ToLower(req.GetUserId())
 	if err := v.validateStruct(ctx, req); err != nil {
 		return nil, err
@@ -83,17 +82,6 @@ func (v *ServerWrapper) ExtendToken(ctx context.Context, req *authProto.ExtendTo
 		return nil, err
 	}
 	return v.upstream.ExtendToken(ctx, req)
-}
-
-// UpdateAccess performs request validation and calls underlying method
-func (v *ServerWrapper) UpdateAccess(ctx context.Context, req *authProto.UpdateAccessRequest) (*empty.Empty, error) {
-	for i := range req.Users {
-		req.Users[i].UserId = strings.ToLower(req.Users[i].GetUserId())
-	}
-	if err := v.validateStruct(ctx, req); err != nil {
-		return nil, err
-	}
-	return v.upstream.UpdateAccess(ctx, req)
 }
 
 // GetUserTokens performs request validation and calls underlying method
