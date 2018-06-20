@@ -70,8 +70,6 @@ func main() {
 			UserId:      utils.NewUUID(),
 			UserRole:    "user",
 			RwAccess:    true,
-			Access:      &authProto.ResourcesAccess{},
-			PartTokenId: "",
 		})
 		chkErr(err)
 		log.Printf("Got response %+v", resp)
