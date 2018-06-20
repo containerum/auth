@@ -11,33 +11,6 @@
     "title": "Auth API"
   },
   "paths": {
-    "/access": {
-      "put": {
-        "summary": "Rewrite user-namespace and user-volume accesses in DB for each user.",
-        "operationId": "UpdateUserAccesses",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/UpdateAccessRequest"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "accesses updated"
-          },
-          "default": {
-            "description": "cherry error",
-            "schema": {
-              "$ref": "#/definitions/errOAIGen"
-            }
-          }
-        },
-        "x-method-visibility": "private"
-      }
-    },
     "/byid/access/{token_id}": {
       "get": {
         "summary": "Get access token by ID.",
@@ -146,14 +119,6 @@
             "name": "X-Client-IP",
             "in": "header",
             "required": true
-          },
-          {
-            "name": "resources_accesses",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/createTokenParamsBody"
-            }
           }
         ],
         "responses": {
@@ -206,10 +171,7 @@
         ],
         "responses": {
           "200": {
-            "description": "token valid",
-            "schema": {
-              "$ref": "#/definitions/checkTokenOKBody"
-            }
+            "description": "token valid"
           },
           "default": {
             "description": "cherry error",
@@ -322,26 +284,6 @@
     }
   },
   "definitions": {
-    "AccessObject": {
-      "description": "AccessObject represents user access to resource",
-      "type": "object",
-      "properties": {
-        "access": {
-          "type": "string",
-          "x-go-name": "Access"
-        },
-        "id": {
-          "type": "string",
-          "format": "uuid",
-          "x-go-name": "Id"
-        },
-        "label": {
-          "type": "string",
-          "x-go-name": "Label"
-        }
-      },
-      "x-go-package": "git.containerum.net/ch/auth/proto"
-    },
     "AccessTokenByIDResponse": {
       "type": "object",
       "title": "AccessTokenByIDResponse contains access token get by ID.",
@@ -486,33 +428,14 @@
       },
       "x-go-package": "git.containerum.net/ch/auth/proto"
     },
-    "ResourcesAccess": {
-      "description": "ResourceAccesses contains user accesses to resources",
-      "type": "object",
-      "properties": {
-        "namespace": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/AccessObject"
-          },
-          "x-go-name": "Namespace"
-        },
-        "volume": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/AccessObject"
-          },
-          "x-go-name": "Volume"
-        }
-      },
-      "x-go-package": "git.containerum.net/ch/auth/proto"
-    },
     "StoredToken": {
       "description": "StoredToken is a representaion of token database record",
       "type": "object",
       "properties": {
         "created_at": {
-          "$ref": "#/definitions/Timestamp"
+          "type": "string",
+          "format": "uuid",
+          "x-go-name": "CreatedAt"
         },
         "fingerprint": {
           "type": "string",
@@ -521,11 +444,6 @@
         "life_time": {
           "$ref": "#/definitions/Duration"
         },
-        "part_token_id": {
-          "type": "string",
-          "format": "uuid",
-          "x-go-name": "PartTokenId"
-        },
         "platform": {
           "type": "string",
           "x-go-name": "Platform"
@@ -533,10 +451,6 @@
         "raw_refresh_token": {
           "type": "string",
           "x-go-name": "RawRefreshToken"
-        },
-        "rw_access": {
-          "type": "boolean",
-          "x-go-name": "RwAccess"
         },
         "token_id": {
           "type": "string",
@@ -553,21 +467,14 @@
           "x-go-name": "UserId"
         },
         "user_ip": {
+          "description": "string user_namespace = 7;\nstring user_volume = 8;\nbool rw_access = 9;",
           "type": "string",
           "format": "ip",
           "x-go-name": "UserIp"
         },
-        "user_namespace": {
-          "type": "string",
-          "x-go-name": "UserNamespace"
-        },
         "user_role": {
           "type": "string",
           "x-go-name": "UserRole"
-        },
-        "user_volume": {
-          "type": "string",
-          "x-go-name": "UserVolume"
         }
       },
       "x-go-package": "git.containerum.net/ch/auth/proto"
@@ -619,56 +526,9 @@
       },
       "x-go-package": "git.containerum.net/ch/auth/vendor/github.com/golang/protobuf/ptypes/timestamp"
     },
-    "UpdateAccessRequest": {
-      "type": "object",
-      "title": "UpdateAccessRequest describes request for updating user resources accesses.",
-      "properties": {
-        "users": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/UpdateAccessRequestElement"
-          },
-          "x-go-name": "Users"
-        }
-      },
-      "x-go-package": "git.containerum.net/ch/auth/proto"
-    },
-    "UpdateAccessRequestElement": {
-      "type": "object",
-      "title": "UpdateAccessRequestElement describes element for updating user resources accesses.",
-      "properties": {
-        "access": {
-          "$ref": "#/definitions/ResourcesAccess"
-        },
-        "user_id": {
-          "description": "@inject_tag: binding:\"uuid\"",
-          "type": "string",
-          "x-go-name": "UserId"
-        }
-      },
-      "x-go-package": "git.containerum.net/ch/auth/proto"
-    },
     "authClient": {
       "type": "object",
       "x-go-package": "git.containerum.net/ch/auth/proto"
-    },
-    "checkTokenOKBody": {
-      "type": "object",
-      "properties": {
-        "access": {
-          "$ref": "#/definitions/ResourcesAccess"
-        }
-      },
-      "x-go-gen-location": "operations"
-    },
-    "createTokenParamsBody": {
-      "type": "object",
-      "properties": {
-        "access": {
-          "$ref": "#/definitions/ResourcesAccess"
-        }
-      },
-      "x-go-gen-location": "operations"
     },
     "errOAIGen": {
       "description": "Err -- standard serializable API error\nMessage -- constant error message:\n+ \"invalid username\"\n+ \"quota exceeded\"\n+ \"validation error\"\n...etc...\nID -- unique error identification code\nDetails -- optional context error messages kinda\n+ \"field 'Replicas' must be non-zero value\"\n+ \"not enough tights to feed gopher\"\n+ \"resource 'God' does't exist\"\nFields -- optional set of key-value pairs",

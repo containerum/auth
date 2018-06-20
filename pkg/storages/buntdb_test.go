@@ -44,23 +44,6 @@ var testCreateTokenRequest = &authProto.CreateTokenRequest{
 	UserIp:      "127.0.0.1",
 	UserRole:    "user",
 	RwAccess:    true,
-	Access: &authProto.ResourcesAccess{
-		Namespace: []*authProto.AccessObject{
-			{
-				Label:  "ns1",
-				Id:     "ns1",
-				Access: "owner",
-			},
-		},
-		Volume: []*authProto.AccessObject{
-			{
-				Label:  "vol1",
-				Id:     "vol1",
-				Access: "owner",
-			},
-		},
-	},
-	PartTokenId: utils.NewUUID(),
 }
 
 func TestBuntDBNormal(t *testing.T) {
@@ -80,8 +63,6 @@ func TestBuntDBNormal(t *testing.T) {
 				UserIp:      testCreateTokenRequest.UserIp,
 			})
 			So(err, ShouldBeNil)
-			So(tvr.PartTokenId, ShouldResemble, testCreateTokenRequest.PartTokenId)
-			So(tvr.Access, ShouldResemble, testCreateTokenRequest.Access)
 			So(tvr.UserRole, ShouldEqual, testCreateTokenRequest.UserRole)
 			So(tvr.UserId, ShouldResemble, testCreateTokenRequest.UserId)
 			So(tvr.TokenId, ShouldNotBeNil)
@@ -142,8 +123,6 @@ func TestBuntDBNormal(t *testing.T) {
 					UserIp:      testCreateTokenRequest.UserIp,
 				})
 				So(err, ShouldBeNil)
-				So(tvr.PartTokenId, ShouldResemble, testCreateTokenRequest.PartTokenId)
-				So(tvr.Access, ShouldResemble, testCreateTokenRequest.Access)
 				So(tvr.UserRole, ShouldEqual, testCreateTokenRequest.UserRole)
 				So(tvr.UserId, ShouldResemble, testCreateTokenRequest.UserId)
 				So(tvr.TokenId, ShouldNotBeNil)
@@ -207,43 +186,6 @@ func TestBuntDBNormal(t *testing.T) {
 			})
 			So(getErr, ShouldBeNil)
 			So(gtr.Tokens, ShouldHaveLength, 0)
-		})
-
-		Convey("Update resources access in token", func() {
-			issuedTokens, createErr := storage.CreateToken(context.Background(), testCreateTokenRequest)
-			So(createErr, ShouldBeNil)
-			tvr, checkErr := storage.CheckToken(context.Background(), &authProto.CheckTokenRequest{
-				AccessToken: issuedTokens.AccessToken,
-				UserAgent:   testCreateTokenRequest.UserAgent,
-				FingerPrint: testCreateTokenRequest.Fingerprint,
-				UserIp:      testCreateTokenRequest.UserIp,
-			})
-			So(checkErr, ShouldBeNil)
-			So(tvr.Access, ShouldResemble, testCreateTokenRequest.Access)
-
-			newAccesses := &authProto.ResourcesAccess{
-				Namespace: []*authProto.AccessObject{
-					{Label: "a", Id: utils.NewUUID(), Access: "owner"},
-				},
-				Volume: []*authProto.AccessObject{
-					{Label: "b", Id: utils.NewUUID(), Access: "owner"},
-				},
-			}
-
-			_, updErr := storage.UpdateAccess(context.Background(), &authProto.UpdateAccessRequest{
-				Users: []*authProto.UpdateAccessRequestElement{
-					{UserId: testCreateTokenRequest.UserId, Access: newAccesses},
-				},
-			})
-			So(updErr, ShouldBeNil)
-			tvr, checkErr = storage.CheckToken(context.Background(), &authProto.CheckTokenRequest{
-				AccessToken: issuedTokens.AccessToken,
-				UserAgent:   testCreateTokenRequest.UserAgent,
-				FingerPrint: testCreateTokenRequest.Fingerprint,
-				UserIp:      testCreateTokenRequest.UserIp,
-			})
-			So(checkErr, ShouldBeNil)
-			So(tvr.Access, ShouldResemble, newAccesses)
 		})
 	})
 

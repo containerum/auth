@@ -5,8 +5,6 @@ import (
 
 	"crypto/sha256"
 
-	"time"
-
 	"git.containerum.net/ch/auth/pkg/errors"
 	"git.containerum.net/ch/auth/pkg/token"
 	"git.containerum.net/ch/auth/pkg/utils"
@@ -205,9 +203,8 @@ func (s *BuntDBStorage) CreateToken(ctx context.Context, req *authProto.CreateTo
 		userIDHash := sha256.Sum256([]byte(req.GetUserId()))
 		logger.WithField("userIDHash", userIDHash).Debug("Issue tokens")
 		accessToken, refreshToken, err = s.TokenFactory.IssueTokens(token.ExtensionFields{
-			UserIDHash:  hex.EncodeToString(userIDHash[:]),
-			Role:        req.GetUserRole(),
-			PartTokenID: req.GetPartTokenId(),
+			UserIDHash: hex.EncodeToString(userIDHash[:]),
+			Role:       req.GetUserRole(),
 		})
 		if err != nil {
 			s.logger.WithError(err).Error("token issue failed")
@@ -266,14 +263,9 @@ func (s *BuntDBStorage) CheckToken(ctx context.Context, req *authProto.CheckToke
 	}
 
 	return &authProto.CheckTokenResponse{
-		Access: &authProto.ResourcesAccess{
-			Namespace: token.DecodeAccessObjects(rec.UserNamespace),
-			Volume:    token.DecodeAccessObjects(rec.UserVolume),
-		},
-		UserId:      rec.UserId,
-		UserRole:    rec.UserRole,
-		TokenId:     rec.TokenId,
-		PartTokenId: rec.PartTokenId,
+		UserId:   rec.UserId,
+		UserRole: rec.UserRole,
+		TokenId:  rec.TokenId,
 	}, nil
 }
 
@@ -352,57 +344,6 @@ func (s *BuntDBStorage) ExtendToken(ctx context.Context, req *authProto.ExtendTo
 		AccessToken:  accessToken.Value,
 		RefreshToken: refreshToken.Value,
 	}, nil
-}
-
-// UpdateAccess updates resources accesses for user.
-func (s *BuntDBStorage) UpdateAccess(ctx context.Context, req *authProto.UpdateAccessRequest) (*empty.Empty, error) {
-	logger := s.logger.WithField("request", req)
-
-	logger.Infof("Update auth")
-	now := s.TokenFactory.Now()
-	err := s.db.Update(func(tx *buntdb.Tx) error {
-		for _, entry := range req.GetUsers() {
-			if entry == nil {
-				continue
-			}
-			kvToUpdate := make(map[string]*authProto.StoredToken)
-			var setErr error
-			iterErr := s.forTokensByUsers(tx, entry.GetUserId(), func(key, value string) bool {
-				rec := s.unmarshalRecord(value)
-				rec.UserVolume = token.EncodeAccessObjects(entry.GetAccess().GetVolume())
-				rec.UserNamespace = token.EncodeAccessObjects(entry.GetAccess().GetNamespace())
-				kvToUpdate[key] = rec
-				return true
-			})
-			if iterErr != nil {
-				return iterErr
-			}
-			for key, rec := range kvToUpdate {
-				value := s.marshalRecord(rec)
-				var createdAt time.Time
-				if createdAt, setErr = ptypes.Timestamp(rec.CreatedAt); setErr != nil {
-					return setErr
-				}
-				var lifeTime time.Duration
-				if lifeTime, setErr = ptypes.Duration(rec.LifeTime); setErr != nil {
-					return setErr
-				}
-				_, _, setErr = tx.Set(key, value, &buntdb.SetOptions{
-					Expires: true,
-					TTL:     createdAt.Add(lifeTime).Sub(now), // set TTL to difference between end-of-life time and now
-				})
-				if setErr != nil {
-					return setErr
-				}
-			}
-			return nil
-		}
-		return nil
-	})
-	if err != nil {
-		return nil, s.wrapTXError(err)
-	}
-	return &empty.Empty{}, nil
 }
 
 // GetUserTokens returns meta information (token id, user agent, user IP) for user

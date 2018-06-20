@@ -5,10 +5,8 @@ import (
 
 	"git.containerum.net/ch/auth/pkg/errors"
 	"git.containerum.net/ch/auth/proto"
-	"github.com/containerum/cherry/adaptors/gonic"
 	"github.com/containerum/utils/httputil"
 	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
 )
 
 var srv authProto.AuthServer
@@ -33,14 +31,6 @@ func SetupRoutes(engine gin.IRouter, server authProto.AuthServer) {
 		//  - $ref: '#/parameters/UserIDHeader'
 		//  - $ref: '#/parameters/UserRoleHeader'
 		//  - $ref: '#/parameters/ClientIPHeader'
-		//  - name: resources_accesses
-		//    in: body
-		//    required: true
-		//    schema:
-		//      type: object
-		//      properties:
-		//        access:
-		//          $ref: '#/definitions/ResourcesAccess'
 		// responses:
 		//  '200':
 		//    description: access and refresh tokens created
@@ -73,11 +63,6 @@ func SetupRoutes(engine gin.IRouter, server authProto.AuthServer) {
 		// responses:
 		//  '200':
 		//    description: token valid
-		//    schema:
-		//      type: object
-		//      properties:
-		//        access:
-		//          $ref: '#/definitions/ResourcesAccess'
 		//  default:
 		//    $ref: '#/responses/error'
 		token.GET("/:access_token", httputil.RequireHeaders(
@@ -199,23 +184,6 @@ func SetupRoutes(engine gin.IRouter, server authProto.AuthServer) {
 		//    $ref: '#/responses/error'
 		user.DELETE("/:user_id/tokens", deleteUserTokensHandler)
 	}
-
-	// swagger:operation PUT /access UpdateUserAccesses
-	// Rewrite user-namespace and user-volume accesses in DB for each user.
-	//
-	// ---
-	// x-method-visibility: private
-	// parameters:
-	//  - name: body
-	//    in: body
-	//    schema:
-	//      $ref: '#/definitions/UpdateAccessRequest'
-	// responses:
-	//  '200':
-	//    description: accesses updated
-	//  default:
-	//    $ref: '#/responses/error'
-	engine.PUT("/access", updateAccessesHandler)
 }
 
 func createTokenHandler(ctx *gin.Context) {
@@ -226,17 +194,6 @@ func createTokenHandler(ctx *gin.Context) {
 		UserIp:      httputil.MustGetClientIP(ctx.Request.Context()),
 		UserRole:    httputil.MustGetUserRole(ctx.Request.Context()),
 	}
-
-	var access struct {
-		Access *authProto.ResourcesAccess `json:"access" binding:"required"`
-	}
-
-	if err := ctx.ShouldBindWith(&access, binding.JSON); err != nil {
-		gonic.Gonic(autherr.ErrValidation().AddDetailsErr(err), ctx)
-		return
-	}
-
-	req.Access = access.Access
 
 	resp, err := srv.CreateToken(ctx.Request.Context(), req)
 	if err != nil {
@@ -265,9 +222,7 @@ func checkTokenHandler(ctx *gin.Context) {
 	ctx.Set(httputil.UserRoleXHeader, resp.GetUserRole())
 	ctx.Set(httputil.TokenIDXHeader, resp.GetTokenId())
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"access": resp.GetAccess(),
-	})
+	ctx.Status(http.StatusOK)
 }
 
 func extendTokenHandler(ctx *gin.Context) {
@@ -340,20 +295,4 @@ func getAccessTokenByIDHandler(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, resp)
-}
-
-func updateAccessesHandler(ctx *gin.Context) {
-	var req authProto.UpdateAccessRequest
-
-	if err := ctx.ShouldBindWith(&req, binding.JSON); err != nil {
-		ctx.AbortWithStatusJSON(badRequest(err))
-		return
-	}
-
-	if _, err := srv.UpdateAccess(ctx, &req); err != nil {
-		ctx.AbortWithStatusJSON(handleServerError(err))
-		return
-	}
-
-	ctx.Status(http.StatusOK)
 }
