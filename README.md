@@ -23,7 +23,7 @@ Auth is a OAuth authentication server for Containerum that handles user authoriz
 ```
 
 ## Contributions
-Please submit all contributions concerning Auth component to this repository. Contributing guidelines are available [here](https://github.com/containerum/auth/blob/master/CONTRIBUTING.md). 
+Please submit all contributions concerning Auth component to this repository. Contributing guidelines are available [here](https://github.com/containerum/containerum/blob/master/CONTRIBUTING.md). 
 
 ## License
 Auth project is licensed under the terms of the Apache License Version 2.0. Please see LICENSE in this repository for more details.
