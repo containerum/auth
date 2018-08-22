@@ -5,17 +5,11 @@ CMD_DIR:=cmd/auth
 PACKAGE := $(shell go list -f '{{.ImportPath}}' ./$(CMD_DIR))
 PACKAGE := $(PACKAGE:%/$(CMD_DIR)=%)
 
-COMMIT_HASH=$(shell git rev-parse --short HEAD 2>/dev/null)
-BUILD_DATE=$(shell date +%FT%T%Z)
-LATEST_TAG=$(shell git describe --tags $(shell git rev-list --tags --max-count=1))
-
-VERSION?=$(LATEST_TAG:v%=%)
-
 # make directory and store path to variable
 BUILDS_DIR:=$(PWD)/build
 EXECUTABLE:=auth
-DEV_LDFLAGS=-X '$(PACKAGE)/pkg/utils.VERSION=v$(VERSION)'
-RELEASE_LDFLAGS=-X '$(PACKAGE)/pkg/utils.VERSION=v$(VERSION)' -w -s
+DEV_LDFLAGS=-X 'main.version=$(VERSION)'
+RELEASE_LDFLAGS=-X 'main.version=$(VERSION)' -w -s
 
 generate:
 	go generate -v ./...
@@ -72,6 +66,5 @@ single_release:
 	$(call build_release,$(OS),$(ARCH))
 
 dev:
-	$(eval VERSION=$(LATEST_TAG:v%=%)+dev)
 	@echo building $(VERSION)
 	go build -v -tags="dev" -ldflags="$(DEV_LDFLAGS)" ./$(CMD_DIR)
