@@ -8,8 +8,8 @@ import (
 	"fmt"
 
 	"git.containerum.net/ch/auth/pkg/errors"
-	"git.containerum.net/ch/auth/pkg/utils"
 	"git.containerum.net/ch/auth/pkg/validation"
+	"github.com/containerum/kube-client/pkg/model"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/urfave/cli.v2"
@@ -40,11 +40,13 @@ func prettyPrintFlags(ctx *cli.Context) {
 	w.Flush()
 }
 
+var version string
+
 func main() {
 	app := cli.App{
 		Name:        "auth",
 		Description: "Authorization (token management) service for Container hosting",
-		Version:     utils.VERSION,
+		Version:     version,
 		Flags: []cli.Flag{
 			// logging
 			&LogLevelFlag,
@@ -115,8 +117,13 @@ func main() {
 			// wrap with validation proxy
 			storage = validation.NewServerWrapper(storage, validator, translator, autherr.ErrValidation)
 
+			status := model.ServiceStatus{
+				Name:     ctx.App.Name,
+				Version:  ctx.App.Version,
+				StatusOK: true,
+			}
 			servers := []Server{
-				NewHTTPServer(httpListenAddr, httpTracer, storage, ctx.Bool(CORSFlag.Name)),
+				NewHTTPServer(httpListenAddr, httpTracer, storage, &status, ctx.Bool(CORSFlag.Name)),
 				NewGRPCServer(grpcListenAddr, grpcTracer, storage),
 			}
 
