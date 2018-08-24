@@ -1,23 +1,24 @@
 .PHONY: build test clean release single_release generate
 
 CMD_DIR:=cmd/auth
-#get current package, assuming it`s in GOPATH sources
-PACKAGE := $(shell go list -f '{{.ImportPath}}' ./$(CMD_DIR))
-PACKAGE := $(PACKAGE:%/$(CMD_DIR)=%)
 
 # make directory and store path to variable
 BUILDS_DIR:=$(PWD)/build
 EXECUTABLE:=auth
-DEV_LDFLAGS=-X 'main.version=$(VERSION)'
-RELEASE_LDFLAGS=-X 'main.version=$(VERSION)' -w -s
+LDFLAGS=-X 'main.version=$(VERSION)' -w -s -extldflags '-static'
 
 generate:
 	go generate -v ./...
 
 # go has build artifacts caching so soruce tracking not needed
 build:
-	@echo "Building auth for current OS/architecture"
-	@go build -v -ldflags="$(RELEASE_LDFLAGS)" -o $(BUILDS_DIR)/$(EXECUTABLE) ./$(CMD_DIR)
+	@echo "Building mail-templater for current OS/architecture"
+	@echo $(LDFLAGS)
+	@CGO_ENABLED=0 go build -v -ldflags="$(LDFLAGS)" -o $(BUILDS_DIR)/$(EXECUTABLE) ./$(CMD_DIR)
+
+build-for-docker:
+	@echo $(LDFLAGS)
+	@CGO_ENABLED=0 go build -v -ldflags="$(LDFLAGS)" -o  /tmp/$(EXECUTABLE) ./$(CMD_DIR)
 
 test:
 	@echo "Running tests"
