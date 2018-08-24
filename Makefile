@@ -68,4 +68,4 @@ single_release:
 
 dev:
 	@echo building $(VERSION)
-	go build -v -tags="dev" -ldflags="$(DEV_LDFLAGS)" ./$(CMD_DIR)
+	go build -v -tags="dev" -ldflags="$(LDFLAGS)" ./$(CMD_DIR)
