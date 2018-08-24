@@ -1,4 +1,4 @@
-.PHONY: build test clean release single_release generate
+.PHONY: build build-for-docker test clean release single_release generate
 
 CMD_DIR:=cmd/auth
 
