@@ -26,6 +26,10 @@ func (v *GinValidatorV9) ValidateStruct(obj interface{}) error {
 	return nil
 }
 
+func (v *GinValidatorV9) Engine() interface{} {
+	return v.Validate
+}
+
 func kindOfData(data interface{}) reflect.Kind {
 	value := reflect.ValueOf(data)
 	valueType := value.Kind()
