@@ -261,7 +261,7 @@ func (s *BuntDBStorage) CheckToken(ctx context.Context, req *authProto.CheckToke
 	if txErr := s.wrapTXError(err); txErr != nil {
 		return nil, err
 	}
-	if rec.GetUserIp() != req.GetUserIp() || rec.GetFingerprint() != req.GetFingerPrint() {
+	if rec.GetFingerprint() != req.GetFingerPrint() {
 		return nil, autherr.ErrTokenNotOwnedBySender()
 	}
 
