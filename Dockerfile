@@ -9,21 +9,21 @@ FROM alpine:3.7
 VOLUME ["/keys", "/storage"]
 
 COPY --from=builder /tmp/auth /
-ENV CH_AUTH_HTTP_LISTENADDR=0.0.0.0:1111 \
-    CH_AUTH_GRPC_LISTENADDR=0.0.0.0:1112 \
-    CH_AUTH_LOG_MODE=text \
-    CH_AUTH_LOG_LEVEL=4 \
-    CH_AUTH_TOKENS=jwt \
-    CH_AUTH_JWT_SIGNING_METHOD=HS256 \
-    CH_AUTH_ISSUER=containerum.com \
-    CH_AUTH_ACCESS_TOKEN_LIFETIME=15m \
-    CH_AUTH_REFRESH_TOKEN_LIFETIME=48h \
-    CH_AUTH_JWT_SIGNING_KEY_FILE=/keys/jwt.key \
-    CH_AUTH_JWT_VALIDATION_KEY_FILE=/keys/jwt.key \
-    CH_AUTH_STORAGE=buntdb \
-    CH_AUTH_BUNT_STORAGE_FILE=/storage/storage.db \
-    CH_AUTH_TRACER=zipkin \
-    CH_AUTH_ZIPKIN_COLLECTOR=nop
+ENV HTTP_LISTENADDR=0.0.0.0:1111 \
+    GRPC_LISTENADDR=0.0.0.0:1112 \
+    LOG_MODE=text \
+    LOG_LEVEL=4 \
+    TOKENS=jwt \
+    JWT_SIGNING_METHOD=HS256 \
+    ISSUER=containerum.com \
+    ACCESS_TOKEN_LIFETIME=15m \
+    REFRESH_TOKEN_LIFETIME=48h \
+    JWT_SIGNING_KEY_FILE=/keys/jwt.key \
+    JWT_VALIDATION_KEY_FILE=/keys/jwt.key \
+    STORAGE=buntdb \
+    BUNT_STORAGE_FILE=/storage/storage.db \
+    TRACER=zipkin \
+    ZIPKIN_COLLECTOR=nop
 
 EXPOSE 1111 1112
 
